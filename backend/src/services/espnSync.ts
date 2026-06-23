@@ -11,10 +11,25 @@ export const syncESPNData = async () => {
 
     const events = data.events || [];
 
+    // Pre-fetch all teams and matches to run memory caching & skip redundant writes
+    const allTeams = await prisma.team.findMany();
+    const allMatches = await prisma.match.findMany({
+      where: { apiFixtureId: { not: null } }
+    });
+
+    const teamCache = new Map(allTeams.map(t => [t.code, t]));
+    const matchCache = new Map(allMatches.map(m => [m.apiFixtureId as number, m]));
+
     for (const event of events) {
       const apiFixtureId = parseInt(event.id);
       const date = new Date(event.date);
       const statusType = event.status.type.name; // e.g., STATUS_SCHEDULED, STATUS_IN_PROGRESS, STATUS_FULL_TIME
+
+      // If the match is already finished in the DB, we can skip processing it completely
+      const existingMatch = matchCache.get(apiFixtureId);
+      if (existingMatch && existingMatch.status === 'FINISHED') {
+        continue;
+      }
 
       let matchStatus: 'UPCOMING' | 'OPEN' | 'LOCKED' | 'LIVE' | 'FINISHED' = 'UPCOMING';
       
@@ -42,52 +57,63 @@ export const syncESPNData = async () => {
       const team1Goals = matchStatus !== 'UPCOMING' && matchStatus !== 'OPEN' ? parseInt(homeCompetitor.score) : null;
       const team2Goals = matchStatus !== 'UPCOMING' && matchStatus !== 'OPEN' ? parseInt(awayCompetitor.score) : null;
 
-      // Upsert Teams
-      const team1 = await prisma.team.upsert({
-        where: { code: homeCompetitor.team.abbreviation },
-        update: { flagUrl: homeCompetitor.team.logo, name: homeCompetitor.team.displayName },
-        create: {
-          name: homeCompetitor.team.displayName,
-          code: homeCompetitor.team.abbreviation,
-          flagUrl: homeCompetitor.team.logo,
+      // Upsert Teams ONLY if they do not exist in the cache
+      let team1 = teamCache.get(homeCompetitor.team.abbreviation);
+      if (!team1) {
+        team1 = await prisma.team.create({
+          data: {
+            name: homeCompetitor.team.displayName,
+            code: homeCompetitor.team.abbreviation,
+            flagUrl: homeCompetitor.team.logo,
+          }
+        });
+        teamCache.set(team1.code, team1);
+      }
+
+      let team2 = teamCache.get(awayCompetitor.team.abbreviation);
+      if (!team2) {
+        team2 = await prisma.team.create({
+          data: {
+            name: awayCompetitor.team.displayName,
+            code: awayCompetitor.team.abbreviation,
+            flagUrl: awayCompetitor.team.logo,
+          }
+        });
+        teamCache.set(team2.code, team2);
+      }
+
+      // Diff Check: Only update the database if the status, score, or kickoff time has changed
+      const hasChanged =
+        !existingMatch ||
+        existingMatch.status !== matchStatus ||
+        existingMatch.team1Goals !== team1Goals ||
+        existingMatch.team2Goals !== team2Goals ||
+        existingMatch.kickoffTime.getTime() !== date.getTime();
+
+      if (hasChanged) {
+        const updatedMatch = await prisma.match.upsert({
+          where: { apiFixtureId },
+          update: {
+            kickoffTime: date,
+            status: matchStatus,
+            team1Goals,
+            team2Goals,
+          },
+          create: {
+            apiFixtureId,
+            team1Id: team1.id,
+            team2Id: team2.id,
+            kickoffTime: date,
+            status: matchStatus,
+            team1Goals,
+            team2Goals,
+          }
+        });
+
+        // If match just finished, trigger scoring calculation
+        if (matchStatus === 'FINISHED' && existingMatch?.status !== 'FINISHED') {
+          await calculatePointsForMatch(updatedMatch.id);
         }
-      });
-
-      const team2 = await prisma.team.upsert({
-        where: { code: awayCompetitor.team.abbreviation },
-        update: { flagUrl: awayCompetitor.team.logo, name: awayCompetitor.team.displayName },
-        create: {
-          name: awayCompetitor.team.displayName,
-          code: awayCompetitor.team.abbreviation,
-          flagUrl: awayCompetitor.team.logo,
-        }
-      });
-
-      // Upsert Match
-      const existingMatch = await prisma.match.findUnique({ where: { apiFixtureId } });
-
-      const updatedMatch = await prisma.match.upsert({
-        where: { apiFixtureId },
-        update: {
-          kickoffTime: date,
-          status: matchStatus,
-          team1Goals,
-          team2Goals,
-        },
-        create: {
-          apiFixtureId,
-          team1Id: team1.id,
-          team2Id: team2.id,
-          kickoffTime: date,
-          status: matchStatus,
-          team1Goals,
-          team2Goals,
-        }
-      });
-
-      // If match just finished, trigger scoring calculation
-      if (matchStatus === 'FINISHED' && existingMatch?.status !== 'FINISHED') {
-        await calculatePointsForMatch(updatedMatch.id);
       }
     }
 
