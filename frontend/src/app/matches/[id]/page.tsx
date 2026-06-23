@@ -90,7 +90,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to submit prediction');
 
-      alert('Prediction submitted successfully!');
+      window.location.reload();
     } catch (err: any) {
       setPredError(err.message);
     } finally {
