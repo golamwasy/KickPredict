@@ -45,7 +45,10 @@ router.post('/signup', async (req: Request, res: Response) => {
       },
     });
 
-    await sendVerificationEmail(email, code);
+    // Send verification email in the background to prevent slow SMTP/network timeouts from blocking the signup response
+    sendVerificationEmail(email, code).catch((err) => {
+      console.error('[Email Error] Background email send failed:', err);
+    });
 
     res.status(201).json({ message: 'Registration initiated. Please check your email for the verification code.' });
   } catch (error) {
