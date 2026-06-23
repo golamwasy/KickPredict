@@ -10,10 +10,15 @@ type TabType = 'open' | 'upcoming' | 'past';
 export default function MatchesListClient({ matches }: { matches: any[] }) {
   const [activeTab, setActiveTab] = useState<TabType>('open');
   const [predictedMatchIds, setPredictedMatchIds] = useState<Set<string>>(new Set());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
+    }
+    setIsLoggedIn(true);
 
     fetch(`${API_BASE_URL}/api/predictions/me`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -139,7 +144,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
                 {group.matches.map((match: any) => (
-                  <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block' }}>
+                  <Link href={!isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`} key={match.id} style={{ display: 'block' }}>
                     <div className="premium-match-card" style={{ height: '100%' }}>
                       <div className="match-content">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
