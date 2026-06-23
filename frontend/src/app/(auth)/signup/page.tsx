@@ -42,7 +42,7 @@ export default function Signup() {
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚽</div>
         <h2 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Join KickPredict</h2>
-        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Create your free account and start predicting</p>
+        <p style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 600, textShadow: '0 2px 8px #000000, 0 0 4px #000000', letterSpacing: '0.02em' }}>Create your free account and start predicting</p>
       </div>
 
       <div className="card" style={{ borderColor: 'rgba(255,0,102,0.12)' }}>

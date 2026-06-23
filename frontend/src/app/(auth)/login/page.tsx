@@ -46,7 +46,7 @@ export default function Login() {
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚽</div>
         <h2 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Welcome Back</h2>
-        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Log in to your KickPredict account</p>
+        <p style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 600, textShadow: '0 2px 8px #000000, 0 0 4px #000000', letterSpacing: '0.02em' }}>Log in to your KickPredict account</p>
       </div>
 
       <div className="card" style={{ borderColor: 'rgba(0,229,255,0.12)' }}>
