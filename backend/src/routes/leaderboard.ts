@@ -8,7 +8,11 @@ router.get('/', async (req: Request, res: Response) => {
     const users = await prisma.user.findMany({
       include: {
         points: true,
-        predictions: true,
+        predictions: {
+          include: {
+            match: true,
+          },
+        },
       },
     });
 
@@ -16,6 +20,12 @@ router.get('/', async (req: Request, res: Response) => {
       const totalPoints = user.points.reduce((acc, p) => acc + p.totalPoints, 0);
       const correctResults = user.points.filter(p => p.pointsResult > 0).length;
       const exactScores = user.points.filter(p => p.pointsExactScore > 0).length;
+      
+      // Only count resolved predictions (finished matches and not skipped)
+      const resolvedPredictions = user.predictions.filter(
+        p => p.match.status === 'FINISHED' && !p.skipped
+      );
+      const totalResolved = resolvedPredictions.length;
       const totalPredictions = user.predictions.length;
       
       return {
@@ -25,7 +35,7 @@ router.get('/', async (req: Request, res: Response) => {
         correctResults,
         exactScores,
         totalPredictions,
-        accuracy: totalPredictions > 0 ? Math.round((correctResults / totalPredictions) * 100) : 0,
+        accuracy: totalResolved > 0 ? Math.round((correctResults / totalResolved) * 100) : 0,
       };
     }).sort((a, b) => {
       // 1. Highest Total Points
