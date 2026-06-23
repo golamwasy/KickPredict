@@ -24,8 +24,8 @@ router.get('/', async (req: Request, res: Response) => {
         orderBy: { createdAt: 'desc' }
       });
 
-      const twoMinutesAgo = new Date(Date.now() - 120000); // 2 minutes threshold
-      if (!lastSync || lastSync.createdAt < twoMinutesAgo) {
+      const oneMinuteAgo = new Date(Date.now() - 60000); // 1 minute threshold
+      if (!lastSync || lastSync.createdAt < oneMinuteAgo) {
         console.log('[Sync] Triggering on-demand ESPN sync for active/locked matches');
         await syncESPNData();
       }
