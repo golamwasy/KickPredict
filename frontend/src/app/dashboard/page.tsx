@@ -78,10 +78,16 @@ export default function Dashboard() {
                   {pred.match.team1?.name} <span style={{ color: '#555555' }}>vs</span> {pred.match.team2?.name}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#555555' }}>
-                  Your Prediction: <strong style={{ color: 'var(--fifa-purple)' }}>
-                    {pred.team1Goals !== null && pred.team2Goals !== null ? `${pred.team1Goals} - ${pred.team2Goals} ` : ''}
-                  </strong>
-                  ({pred.result === 'TEAM1' ? `${pred.match.team1?.name} Win` : pred.result === 'TEAM2' ? `${pred.match.team2?.name} Win` : 'Draw'})
+                  {pred.skipped ? (
+                    <>Your Prediction: <strong style={{ color: '#888888' }}>Opted Out</strong></>
+                  ) : (
+                    <>
+                      Your Prediction: <strong style={{ color: 'var(--fifa-purple)' }}>
+                        {pred.team1Goals !== null && pred.team2Goals !== null ? `${pred.team1Goals} - ${pred.team2Goals} ` : ''}
+                      </strong>
+                      {' '}({pred.result === 'TEAM1' ? `${pred.match.team1?.name} Win` : pred.result === 'TEAM2' ? `${pred.match.team2?.name} Win` : 'Draw'})
+                    </>
+                  )}
                 </div>
                 {pred.match.status === 'FINISHED' && (
                   <div style={{ fontSize: '0.85rem', color: '#555555', marginTop: '0.25rem' }}>
@@ -91,33 +97,48 @@ export default function Dashboard() {
                 )}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                {pred.match.status === 'OPEN' && (
-                  <Link
-                    href={`/matches/${pred.match.id}`}
-                    className="badge badge-open"
-                    style={{
-                      display: 'inline-flex',
-                      textDecoration: 'none',
-                      textAlign: 'center'
-                    }}
-                  >
-                    OPEN
-                  </Link>
-                )}
-                {(pred.match.status === 'LIVE' || pred.match.status === 'LOCKED') && (
+                {pred.skipped ? (
                   <span style={{
                     fontFamily: 'Outfit, sans-serif',
                     fontWeight: 900,
                     fontSize: '0.85rem',
-                    color: 'var(--fifa-orange)',
+                    color: '#888888',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    In Progress
+                    Opted Out
                   </span>
-                )}
-                {pred.match.status === 'FINISHED' && (
-                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--fifa-green)' }}>+{pred.points?.totalPoints || 0} pts</div>
+                ) : (
+                  <>
+                    {pred.match.status === 'OPEN' && (
+                      <Link
+                        href={`/matches/${pred.match.id}`}
+                        className="badge badge-open"
+                        style={{
+                          display: 'inline-flex',
+                          textDecoration: 'none',
+                          textAlign: 'center'
+                        }}
+                      >
+                        OPEN
+                      </Link>
+                    )}
+                    {(pred.match.status === 'LIVE' || pred.match.status === 'LOCKED') && (
+                      <span style={{
+                        fontFamily: 'Outfit, sans-serif',
+                        fontWeight: 900,
+                        fontSize: '0.85rem',
+                        color: 'var(--fifa-orange)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                  }}>
+                        In Progress
+                      </span>
+                    )}
+                    {pred.match.status === 'FINISHED' && (
+                      <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--fifa-green)' }}>+{pred.points?.totalPoints || 0} pts</div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
