@@ -37,6 +37,7 @@ router.get('/', async (req: Request, res: Response) => {
         LEFT JOIN "Match" m ON pred."matchId" = m.id
         GROUP BY pred."userId"
       ) pred_summary ON u.id = pred_summary."userId"
+      WHERE u.role::text != 'ADMIN'
       ORDER BY "totalPoints" DESC, "exactScores" DESC, "correctResults" DESC, "accuracy" DESC;
     `;
 
