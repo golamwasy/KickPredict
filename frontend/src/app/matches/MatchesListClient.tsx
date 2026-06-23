@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getFlag } from '../utils/flags';
+import { getFlag, getFlagImgUrl } from '../utils/flags';
 import { API_BASE_URL } from '../utils/api';
 
 type TabType = 'open' | 'upcoming' | 'past';
@@ -93,13 +93,20 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
             {ongoingMatches.map((match: any) => {
+              const flag1Url = getFlagImgUrl(match.team1?.code);
+              const flag2Url = getFlagImgUrl(match.team2?.code);
+
               return (
                 <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
                   {/* TV Scoreboard Pill Graphic as the Card */}
                   <div className="scoreboard-pill-card">
                     {/* Team 1 Name & Flag */}
                     <div className="scoreboard-team-wrap">
-                      <span className="scoreboard-team-flag">{getFlag(match.team1?.code)}</span>
+                      {flag1Url ? (
+                        <img src={flag1Url} alt={match.team1?.name} className="scoreboard-team-flag-img" />
+                      ) : (
+                        <span className="scoreboard-team-flag">{getFlag(match.team1?.code)}</span>
+                      )}
                       <span className="scoreboard-team-text hide-mobile">
                         {match.team1?.name || 'TBD'}
                       </span>
@@ -110,11 +117,18 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
                     {/* Score Capsule */}
                     <div className="live-score-capsule">
-                      <span>{match.team1Goals ?? 0}</span>
-                      <div className="live-score-trophy">
-                        🏆
+                      <span className="live-score-text">{match.team1Goals ?? 0}</span>
+                      
+                      {/* FIFA 26 Logo Badge */}
+                      <div className="fifa-logo-badge">
+                        <img 
+                          src="/fifa-logo-2026.png" 
+                          alt="FIFA 2026" 
+                          className="fifa-logo-img"
+                        />
                       </div>
-                      <span>{match.team2Goals ?? 0}</span>
+                      
+                      <span className="live-score-text">{match.team2Goals ?? 0}</span>
                     </div>
 
                     {/* Team 2 Name & Flag */}
@@ -125,11 +139,12 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       <span className="scoreboard-team-text hide-desktop">
                         {match.team2?.code || 'TBD'}
                       </span>
-                      <span className="scoreboard-team-flag">{getFlag(match.team2?.code)}</span>
+                      {flag2Url ? (
+                        <img src={flag2Url} alt={match.team2?.name} className="scoreboard-team-flag-img" />
+                      ) : (
+                        <span className="scoreboard-team-flag">{getFlag(match.team2?.code)}</span>
+                      )}
                     </div>
-
-                    {/* Bottom Neon Accent Line */}
-                    <div className="scoreboard-bottom-accent" />
                   </div>
                 </Link>
               );

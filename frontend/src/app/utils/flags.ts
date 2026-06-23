@@ -39,3 +39,10 @@ export function getFlag(code: string): string {
     .map((c: string) => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65))
     .join('');
 }
+
+export function getFlagImgUrl(code: string): string | null {
+  const iso2 = CODE_MAP[code?.toUpperCase() as keyof typeof CODE_MAP];
+  if (!iso2) return null;
+  return `https://flagcdn.com/w80/${iso2.toLowerCase()}.png`;
+}
+

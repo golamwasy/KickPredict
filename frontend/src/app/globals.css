@@ -818,68 +818,168 @@ button {
 
 /* === LIVE SCOREBOARD TV PILL CARD === */
 .scoreboard-pill-card {
-  background: #111111;
-  border-radius: 50px;
-  padding: 0.5rem 1.5rem;
+  position: relative;
+  border-radius: 100px;
+  padding: 0 2.5rem;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 3px solid var(--fifa-black);
-  box-shadow: 6px 6px 0px var(--fifa-black);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  margin-bottom: 2rem;
+  z-index: 1;
+
+  /* Native CSS Gradient Border trick: outer gradient and inner solid black */
+  border: 3px solid transparent;
+  background: linear-gradient(#000000, #000000) padding-box,
+              linear-gradient(to right, #3bf6e4 0%, #7000ff 25%, #ff0d1e 50%, #ffe600 70%, #3bff37 85%, #7000ff 100%) border-box;
 }
 
 .scoreboard-pill-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0px var(--fifa-black);
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(59, 246, 228, 0.25), 0 0 20px rgba(255, 13, 30, 0.15);
 }
 
 /* Score Capsule inside pill */
 .live-score-capsule {
-  display: flex;
-  align-items: center;
-  background: #3BF6E4; /* Neon Cyan */
-  color: #000000;
-  border-radius: 24px;
-  padding: 0.35rem 1.5rem;
-  gap: 1.1rem;
-  font-weight: 900;
-  font-size: 1.5rem;
-  font-family: 'Outfit', sans-serif;
-  margin: 0 1.5rem;
-  flex-shrink: 0;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
-}
-
-.live-score-trophy {
-  background: #111111;
-  color: #FFFFFF;
-  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 84px;
+  background: #3bf6e4; /* Neon Cyan */
+  color: #0d0d0d;
+  border-radius: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 0.85rem;
+  gap: 1.5rem;
+  padding: 0 2.2rem;
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(59, 246, 228, 0.4);
+  border: 4px solid #000000;
+}
+
+.live-score-text {
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: #000000;
+  font-family: 'Outfit', 'Arial Black', sans-serif;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: -1px;
+}
+
+/* FIFA 26 Logo Badge */
+.fifa-logo-badge {
+  position: relative;
+  background: #000000;
+  border-radius: 12px;
+  width: 44px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 2px solid #000000;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.fifa-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Scoreboard Team Container & Text Styles */
+.scoreboard-team-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex: 1;
+  min-width: 0;
+  padding-right: 110px; /* clear center capsule space */
+}
+
+.scoreboard-team-wrap.team-right {
+  justify-content: flex-end;
+  padding-right: 0;
+  padding-left: 110px; /* clear center capsule space */
+}
+
+.scoreboard-team-flag-img {
+  width: 44px;
+  height: 30px;
+  object-fit: cover;
+  border: 2px solid #FFFFFF;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.scoreboard-team-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  flex: 1;
+  text-align: center;
 }
 
 /* Mobile responsive scoreboard overrides */
 @media (max-width: 640px) {
   .scoreboard-pill-card {
-    padding: 0.4rem 0.85rem !important;
+    height: 56px;
+    padding: 0 1rem;
+    border-radius: 50px;
+    margin-bottom: 1.5rem;
+    
+    /* Mobile responsive gradient border */
+    border: 2px solid transparent;
+    background: linear-gradient(#000000, #000000) padding-box,
+                linear-gradient(to right, #3bf6e4 0%, #7000ff 25%, #ff0d1e 50%, #ffe600 70%, #3bff37 85%, #7000ff 100%) border-box;
   }
   .live-score-capsule {
-    padding: 0.25rem 0.85rem !important;
-    gap: 0.6rem !important;
-    margin: 0 0.5rem !important;
-    font-size: 1.25rem !important;
+    height: 64px;
+    padding: 0 1.2rem;
+    gap: 0.8rem;
+    border-radius: 35px;
+    border-width: 3px;
   }
-  .live-score-trophy {
-    width: 20px !important;
-    height: 20px !important;
-    font-size: 0.7rem !important;
+  .live-score-text {
+    font-size: 1.8rem;
+  }
+  .fifa-logo-badge {
+    width: 34px;
+    height: 46px;
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .scoreboard-team-wrap {
+    gap: 0.6rem;
+    padding-right: 75px; /* clear center capsule space on mobile */
+  }
+  .scoreboard-team-wrap.team-right {
+    padding-right: 0;
+    padding-left: 75px; /* clear center capsule space on mobile */
+  }
+  .scoreboard-team-flag-img {
+    width: 32px;
+    height: 22px;
+    border-width: 1.5px;
+    border-radius: 4px;
+  }
+  .scoreboard-team-text {
+    font-size: 1.1rem;
   }
   .hide-mobile {
     display: none !important;
@@ -889,58 +989,5 @@ button {
 @media (min-width: 641px) {
   .hide-desktop {
     display: none !important;
-  }
-}
-
-/* Scoreboard Team Container & Text Styles */
-.scoreboard-team-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.scoreboard-team-wrap.team-right {
-  justify-content: flex-end;
-}
-
-.scoreboard-team-flag {
-  font-size: 1.8rem;
-  line-height: 1;
-}
-
-.scoreboard-team-text {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 900;
-  font-size: 1.3rem;
-  color: #FFFFFF;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.scoreboard-bottom-accent {
-  position: absolute;
-  bottom: 0;
-  left: 20px;
-  right: 20px;
-  height: 3px;
-  background: linear-gradient(90deg, #FFE600 0%, #3BFF37 30%, #3BF6E4 60%, #B93BFF 100%);
-  border-radius: 2px;
-}
-
-/* Mobile adjustments for scoreboard team container */
-@media (max-width: 640px) {
-  .scoreboard-team-wrap {
-    gap: 0.4rem;
-  }
-  .scoreboard-team-flag {
-    font-size: 1.4rem;
-  }
-  .scoreboard-team-text {
-    font-size: 1rem;
   }
 }
