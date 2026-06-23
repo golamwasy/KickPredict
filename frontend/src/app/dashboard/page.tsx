@@ -91,9 +91,6 @@ export default function Dashboard() {
                 )}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                {pred.match.status !== 'FINISHED' && (
-                  <span className={`badge badge-${pred.match.status.toLowerCase()}`} style={{ display: 'block', marginBottom: '0.4rem', textAlign: 'center' }}>{pred.match.status}</span>
-                )}
                 {pred.match.status === 'FINISHED' && (
                   <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--fifa-green)' }}>+{pred.points?.totalPoints || 0} pts</div>
                 )}
