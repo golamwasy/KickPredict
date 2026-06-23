@@ -32,6 +32,14 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date() });
 });
 
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   startCronJobs();
