@@ -77,7 +77,7 @@ export default function Signup() {
         </form>
 
         <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
-          Already have an account? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 600 }}>Log In</Link>
+          Already have an account? <Link href="/login" style={{ color: 'var(--fifa-red)', fontWeight: 700, textDecoration: 'underline' }}>Log In</Link>
         </p>
       </div>
       <style>{`

@@ -68,7 +68,7 @@ export default function Login() {
         </form>
 
         <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
-          Don't have an account? <Link href="/signup" style={{ color: 'var(--teal)', fontWeight: 600 }}>Sign Up</Link>
+          Don't have an account? <Link href="/signup" style={{ color: 'var(--fifa-red)', fontWeight: 700, textDecoration: 'underline' }}>Sign Up</Link>
         </p>
       </div>
       <style>{`@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`}</style>
