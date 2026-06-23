@@ -143,66 +143,74 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                 {group.date}
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                {group.matches.map((match: any) => (
-                  <Link href={!isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`} key={match.id} style={{ display: 'block' }}>
-                    <div className="premium-match-card" style={{ height: '100%' }}>
-                      <div className="match-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                          {activeTab === 'open' && (
-                            predictedMatchIds.has(match.id) ? (
-                              <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ PREDICTED</span>
-                            ) : (
-                              <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
-                            )
-                          )}
-                          {activeTab === 'upcoming' && <span className="badge badge-upcoming" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>📅 UPCOMING</span>}
-                          {activeTab === 'past' && <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🏆 FINISHED</span>}
-                          
-                          <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
-                            {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour: 'numeric', minute: '2-digit', hour12: true })}
-                          </span>
-                        </div>
+                {group.matches.map((match: any) => {
+                  const isUpcoming = match.status === 'UPCOMING';
+                  const CardWrapper = isUpcoming ? 'div' : Link;
+                  const wrapperProps = isUpcoming
+                    ? { key: match.id, style: { display: 'block', cursor: 'default', opacity: 0.85 } }
+                    : { href: !isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`, key: match.id, style: { display: 'block' } };
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ textAlign: 'center', flex: 1 }}>
-                            <div className="team-flag-lg">{getFlag(match.team1?.code)}</div>
-                            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team1?.code || 'TBD'}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team1?.name}</div>
-                          </div>
-                          
-                          <div style={{ textAlign: 'center', padding: '0 0.5rem' }}>
-                            {match.status === 'FINISHED' || match.status === 'LIVE' ? (
-                              <div className="score-pill">{match.team1Goals} – {match.team2Goals}</div>
-                            ) : (
-                              <div className="vs-pill">VS</div>
+                  return (
+                    <CardWrapper {...(wrapperProps as any)}>
+                      <div className="premium-match-card" style={{ height: '100%', ...(isUpcoming ? { boxShadow: 'none' } : {}) }}>
+                        <div className="match-content">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                            {activeTab === 'open' && (
+                              predictedMatchIds.has(match.id) ? (
+                                <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ PREDICTED</span>
+                              ) : (
+                                <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
+                              )
                             )}
-                          </div>
-                          
-                          <div style={{ textAlign: 'center', flex: 1 }}>
-                            <div className="team-flag-lg">{getFlag(match.team2?.code)}</div>
-                            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team2?.code || 'TBD'}</div>
-                            <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team2?.name}</div>
-                          </div>
-                        </div>
-                      </div>
+                            {activeTab === 'upcoming' && <span className="badge badge-upcoming" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>📅 UPCOMING</span>}
+                            {activeTab === 'past' && <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🏆 FINISHED</span>}
 
-                      {activeTab === 'open' && (
-                        <div className="action-area">
-                          <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
-                            {predictedMatchIds.has(match.id) ? 'Update Prediction →' : 'Predict Now →'}
-                          </span>
+                            <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
+                              {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour: 'numeric', minute: '2-digit', hour12: true })}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ textAlign: 'center', flex: 1 }}>
+                              <div className="team-flag-lg">{getFlag(match.team1?.code)}</div>
+                              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team1?.code || 'TBD'}</div>
+                              <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team1?.name}</div>
+                            </div>
+
+                            <div style={{ textAlign: 'center', padding: '0 0.5rem' }}>
+                              {match.status === 'FINISHED' || match.status === 'LIVE' ? (
+                                <div className="score-pill">{match.team1Goals} – {match.team2Goals}</div>
+                              ) : (
+                                <div className="vs-pill">VS</div>
+                              )}
+                            </div>
+
+                            <div style={{ textAlign: 'center', flex: 1 }}>
+                              <div className="team-flag-lg">{getFlag(match.team2?.code)}</div>
+                              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team2?.code || 'TBD'}</div>
+                              <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team2?.name}</div>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {activeTab === 'past' && (
-                        <div className="action-area">
-                          <span className="action-text" style={{ color: '#AAAAAA' }}>
-                            View Details →
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+
+                        {activeTab === 'open' && (
+                          <div className="action-area">
+                            <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
+                              {predictedMatchIds.has(match.id) ? 'Update Prediction →' : 'Predict Now →'}
+                            </span>
+                          </div>
+                        )}
+                        {activeTab === 'past' && (
+                          <div className="action-area">
+                            <span className="action-text" style={{ color: '#AAAAAA' }}>
+                              View Details →
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </CardWrapper>
+                  );
+                })}
               </div>
             </div>
           ))}
