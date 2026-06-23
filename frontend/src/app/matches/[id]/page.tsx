@@ -215,12 +215,20 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       )}
                     </div>
                   ) : (
-                    <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>
-                      <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚠️</div>
-                      <div style={{ color: 'var(--muted)', fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>You didn't predict this match.</div>
-                      <p style={{ color: '#555555', fontSize: '0.85rem' }}>Predictions closed when the match kicked off.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '280px', padding: '1.5rem', border: '3px dashed var(--fifa-black)', background: '#FFF5F5', textAlign: 'center', gap: '1rem', margin: '0.5rem 0' }}>
+                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="var(--fifa-red)" strokeWidth="2.5" strokeLinejoin="round"/>
+                      <path d="M12 8V13" stroke="var(--fifa-red)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 16H12.01" stroke="var(--fifa-red)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div>
+                      <h4 style={{ color: 'var(--fifa-red)', fontSize: '1.15rem', fontWeight: 900, marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>No Prediction Placed</h4>
+                      <p style={{ color: 'var(--fifa-black)', fontSize: '0.88rem', fontWeight: 600, lineHeight: 1.4 }}>
+                        Predictions locked when this match kicked off. No points were accumulated.
+                      </p>
                     </div>
-                  )
+                  </div>
+                )
                 ) : (
                   /* Match is LOCKED or LIVE but NOT finished yet */
                   <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
