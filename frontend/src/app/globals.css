@@ -1,0 +1,490 @@
+/* =============================================
+   FIFA WORLD CUP 2026 - OFFICIAL DESIGN SYSTEM (FLAT & BOLD)
+   Dark Green Pitch Background + High Contrast Cards
+   ============================================= */
+
+:root {
+  /* === Official FIFA 2026 Palette (Flat Vectors) === */
+  --fifa-purple:    #6300E4;
+  --fifa-red:       #FF0D1E;
+  --fifa-blue:      #161B83;
+  --fifa-cyan:      #00F0FF;
+  --fifa-green:     #0ED64B;
+  --fifa-lime:      #B2FF00;
+  --fifa-orange:    #FF5722;
+  --fifa-peach:     #FFB28A;
+  --fifa-black:     #000000;
+  --fifa-white:     #FFFFFF;
+
+  /* === Semantic Tokens === */
+  --bg:             #377D40; /* Dark pitch green */
+  --surface:        var(--fifa-white); /* Cards remain white to pop */
+  --surface-hover:  #F0F0F0;
+  --border:         var(--fifa-black);
+  
+  /* Global text is white for the dark background */
+  --text:           var(--fifa-white); 
+  --muted:          rgba(255, 255, 255, 0.65);
+  
+  --success:        var(--fifa-green);
+  --warning:        #FFC107;
+  --danger:         var(--fifa-red);
+  --radius:         0px; 
+  --radius-sm:      0px;
+
+  /* Legacy compat */
+  --primary-color:   var(--fifa-purple);
+  --secondary-color: var(--fifa-red);
+  --teal:            var(--fifa-cyan);
+  --bg-color:        var(--bg);
+  --surface-color:   var(--surface);
+  --text-main:       var(--text);
+  --text-muted:      var(--muted);
+  --border-color:    var(--border);
+  --danger-color:    var(--fifa-red);
+}
+
+/* === RESET === */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', 'Noto Sans', system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Photorealistic Football Pitch Pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0; z-index: -2;
+  background-color: #2F6131; /* Base pitch color */
+  background-image: url('/grass-texture.png');
+  background-size: 500px 500px; /* Scale the texture so grass blades look life-sized */
+  background-repeat: repeat;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0; z-index: -1;
+  /* Very subtle horizontal gradient to simulate pitch mowing lines */
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.04),
+    rgba(0, 0, 0, 0.04) 10vh,
+    rgba(255, 255, 255, 0.04) 10vh,
+    rgba(255, 255, 255, 0.04) 20vh
+  );
+  pointer-events: none;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Outfit', 'Noto Sans', system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: inherit; /* Inherit white on bg, black on cards */
+}
+
+a { color:inherit; text-decoration:none; }
+button { cursor:pointer; border:none; background:none; font-family:inherit; }
+
+/* === LAYOUT === */
+.main-content {
+  position: relative; z-index: 1;
+  min-height: calc(100vh - 72px);
+  padding: 3rem 1.5rem 5rem;
+}
+
+.container { max-width: 1200px; margin: 0 auto; }
+
+/* === FIFA-STYLE CARD (FLAT & BOLD) === */
+.card, .glass-panel {
+  background: var(--surface);
+  color: var(--fifa-black); /* Force black text inside white cards */
+  border: 3px solid var(--fifa-black);
+  padding: 2rem;
+  position: relative;
+  box-shadow: 8px 8px 0px var(--fifa-black);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 2rem;
+}
+
+/* Ensure headings/text inside cards are black */
+.card h1, .card h2, .card h3, .card h4, .card h5, .card h6, .card p, .card div,
+.glass-panel h1, .glass-panel h2, .glass-panel h3, .glass-panel h4, .glass-panel h5, .glass-panel h6, .glass-panel p, .glass-panel div {
+  color: var(--fifa-black);
+}
+
+/* Muted text inside cards */
+.card .text-muted, .card [style*="color: var(--muted)"],
+.glass-panel .text-muted, .glass-panel [style*="color: var(--muted)"] {
+  color: #555555 !important;
+}
+
+.card:hover, .glass-panel:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0px var(--fifa-black);
+}
+
+/* === FIFA BADGE VARIANTS === */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem; font-weight: 900;
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border: 2px solid var(--fifa-black);
+  box-shadow: 3px 3px 0px var(--fifa-black);
+  color: var(--fifa-black) !important;
+}
+
+.badge-open     { background: var(--fifa-lime); }
+.badge-upcoming { background: #E0E0E0; }
+.badge-locked   { background: var(--fifa-orange); }
+.badge-finished { background: var(--fifa-cyan); }
+.badge-live     { background: var(--fifa-red); color: var(--fifa-white) !important; }
+
+/* === FORMS === */
+.input-group { margin-bottom:1.5rem; }
+
+.input-group label {
+  display:block; margin-bottom:0.5rem;
+  font-size:0.85rem; font-family:'Outfit',sans-serif;
+  font-weight:900; text-transform:uppercase; letter-spacing:0.05em;
+  color:var(--fifa-black) !important;
+}
+
+.input-group input,
+.input-group select {
+  width:100%; padding:1rem;
+  background: var(--fifa-white);
+  border: 3px solid var(--fifa-black);
+  color:var(--fifa-black); font-size:1rem; font-family:inherit;
+  font-weight: 600;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline:none;
+  background: var(--fifa-white);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--fifa-cyan);
+}
+
+/* === FIFA-STYLE BUTTON === */
+.btn-primary {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:100%; padding:1.2rem 1.5rem;
+  background: var(--fifa-red);
+  color:var(--fifa-white) !important;
+  font-family:'Outfit',sans-serif; font-weight:900;
+  font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;
+  border: 3px solid var(--fifa-black);
+  cursor:pointer;
+  box-shadow: 6px 6px 0px var(--fifa-black);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary:hover { 
+  transform: translate(-2px, -2px); 
+  box-shadow: 8px 8px 0px var(--fifa-black); 
+  background: var(--fifa-purple);
+}
+
+.btn-primary:active {
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0px var(--fifa-black);
+}
+
+.btn-primary:disabled { 
+  background: #CCC; color: #666 !important;
+  box-shadow: none; transform: none; cursor:not-allowed;
+}
+
+/* === ANIMATIONS === */
+@keyframes floatIn {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Flat bold gradient text - pops on dark green */
+.gradient-text {
+  color: var(--fifa-lime);
+  text-shadow: 4px 4px 0px var(--fifa-black);
+}
+
+/* === SCORE BAR === */
+.score-bar-track { height:12px; background:var(--fifa-black); overflow:hidden; border: 2px solid var(--fifa-black); }
+.score-bar-fill  { height:100%; background: var(--fifa-lime); transition:width 1s; border-right: 2px solid var(--fifa-black); }
+
+/* === STAT CARD ACCENTS === */
+.stat-accent-green  { background: var(--fifa-lime); border-bottom: 8px solid var(--fifa-black); }
+.stat-accent-purple { background: var(--fifa-purple); border-bottom: 8px solid var(--fifa-black); }
+.stat-accent-purple h3, .stat-accent-purple div { color: white !important; }
+.stat-accent-gold   { background: #FFD600; border-bottom: 8px solid var(--fifa-black); }
+.stat-accent-teal   { background: var(--fifa-cyan); border-bottom: 8px solid var(--fifa-black); }
+
+/* === LEADERBOARD === */
+.lb-row {
+  display:grid; grid-template-columns:64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+  align-items:center; padding:1.25rem;
+  border: 3px solid var(--fifa-black); 
+  background: var(--fifa-white);
+  color: var(--fifa-black);
+  margin-bottom: 0.5rem;
+  box-shadow: 4px 4px 0px var(--fifa-black);
+  transition: transform 0.15s;
+}
+.lb-row:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--fifa-black); background: var(--fifa-lime); }
+
+/* Ensure text inside leaderboard rows is black */
+.lb-row h3, .lb-row div { color: var(--fifa-black) !important; }
+
+.rank-badge {
+  width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Outfit',sans-serif; font-weight:900; font-size:1.1rem;
+  border: 3px solid var(--fifa-black);
+  background: var(--fifa-white);
+  color: var(--fifa-black);
+  box-shadow: 2px 2px 0px var(--fifa-black);
+}
+.rank-1     { background: #FFD600; }
+.rank-2     { background: #E0E0E0; }
+.rank-3     { background: #FF8C00; }
+
+/* === ALERT BANNERS === */
+.alert-error {
+  padding:1rem; margin-bottom:1.5rem;
+  background: var(--fifa-red); color: white !important;
+  border: 3px solid var(--fifa-black);
+  box-shadow: 4px 4px 0px var(--fifa-black);
+  font-weight: 800; font-size: 1rem; text-transform: uppercase;
+}
+
+.alert-success {
+  padding:1rem; margin-bottom:1.5rem;
+  background: var(--fifa-lime); color: var(--fifa-black) !important;
+  border: 3px solid var(--fifa-black);
+  box-shadow: 4px 4px 0px var(--fifa-black);
+  font-weight: 800; font-size: 1rem; text-transform: uppercase;
+}
+
+/* === RESPONSIVE UTILITIES === */
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.lb-header {
+  display: grid;
+  grid-template-columns: 64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+}
+
+@media (max-width:768px) {
+  .main-content { padding:2rem 1rem 4rem; }
+  .lb-row, .lb-header { 
+    grid-template-columns: 64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+    min-width: 800px;
+  }
+  .responsive-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* === MATCH TABS === */
+.match-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .match-tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* === MATCH CARD GOALPOST DESIGN === */
+.premium-match-card {
+  background: linear-gradient(145deg, rgba(20, 30, 24, 0.95) 0%, rgba(10, 15, 12, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 1.5rem;
+  color: #FFFFFF;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-match-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.premium-match-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at center, rgba(178, 255, 0, 0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.premium-match-card:hover::before {
+  opacity: 1;
+}
+
+.match-content {
+  position: relative;
+  z-index: 1;
+  flex-grow: 1;
+}
+
+.team-flag-lg {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+}
+
+.score-pill {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 0.5rem 1.25rem;
+  border-radius: 30px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--fifa-lime);
+  display: inline-block;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.vs-pill {
+  background: rgba(255,255,255,0.05);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #888888;
+}
+
+.action-area {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.action-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.match-card {
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.2); /* Darkened inner goal area */
+  
+  /* The Net Pattern */
+  background-image: 
+    linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%, rgba(255,255,255,0.15)),
+    linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%, rgba(255,255,255,0.15));
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  
+  /* Thick white posts */
+  border-top: 16px solid #FFFFFF;
+  border-left: 16px solid #FFFFFF;
+  border-right: 16px solid #FFFFFF;
+  border-bottom: 3px solid rgba(255,255,255,0.4); /* Goal line */
+  border-radius: 8px 8px 0 0;
+  
+  /* Soft shadow for the posts */
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  
+  padding: 2rem;
+  margin-bottom: 3rem;
+  margin-top: 1rem;
+  color: #FFFFFF;
+  transition: transform 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.match-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+}
+
+.match-card h1, .match-card h2, .match-card h3, .match-card p, .match-card div {
+  color: #FFFFFF;
+  position: relative;
+  z-index: 2; /* keep text above net */
+}
+
+/* Modifier for Whitish interior */
+.match-card-whitish {
+  background-color: #F7F9F7;
+  background-image: 
+    linear-gradient(45deg, rgba(0,0,0,0.04) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.04) 75%, rgba(0,0,0,0.04)),
+    linear-gradient(45deg, rgba(0,0,0,0.04) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.04) 75%, rgba(0,0,0,0.04));
+  border-bottom: 3px solid rgba(0,0,0,0.1);
+  box-shadow: 
+    inset 0 2px 8px rgba(0,0,0,0.05),
+    0 12px 30px rgba(0,0,0,0.4);
+  color: #000000;
+}
+
+.match-card-whitish h1, .match-card-whitish h2, .match-card-whitish h3, .match-card-whitish p, .match-card-whitish div {
+  color: #000000;
+}
+
+/* Make inner cards like OPEN badge pop */
+.match-card .badge {
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+  color: #000 !important;
+}
+
+/* === COLORFUL LEADERBOARD ROWS === */
+.lb-row-0 { background: var(--fifa-purple) !important; color: var(--fifa-white) !important; }
+.lb-row-0 h3, .lb-row-0 div, .lb-row-0 span { color: var(--fifa-white) !important; }
+
+.lb-row-1 { background: var(--fifa-cyan) !important; color: var(--fifa-black) !important; }
+.lb-row-1 h3, .lb-row-1 div, .lb-row-1 span { color: var(--fifa-black) !important; }
+
+.lb-row-2 { background: var(--fifa-lime) !important; color: var(--fifa-black) !important; }
+.lb-row-2 h3, .lb-row-2 div, .lb-row-2 span { color: var(--fifa-black) !important; }
+
+.lb-row-3 { background: var(--fifa-red) !important; color: var(--fifa-white) !important; }
+.lb-row-3 h3, .lb-row-3 div, .lb-row-3 span { color: var(--fifa-white) !important; }
+
+.lb-row-4 { background: var(--fifa-orange) !important; color: var(--fifa-black) !important; }
+.lb-row-4 h3, .lb-row-4 div, .lb-row-4 span { color: var(--fifa-black) !important; }
+
+.lb-row-default { background: var(--fifa-blue) !important; color: var(--fifa-white) !important; }
+.lb-row-default h3, .lb-row-default div, .lb-row-default span { color: var(--fifa-white) !important; }

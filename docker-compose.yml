@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: kickpredict_db
+    environment:
+      POSTGRES_USER: kickpredict
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kickpredict_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # backend:
+  #   build: ./backend
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://kickpredict:password@db:5432/kickpredict_db?schema=public
+  #   depends_on:
+  #     - db
+
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+
+volumes:
+  pgdata:

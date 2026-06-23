@@ -1,0 +1,157 @@
+/* FIFA 2026 Official Navbar - Pitch Green Theme */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8, 38, 20, 0.9); /* Dark green matching pitch, slightly translucent */
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+}
+
+.container {
+  max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  height: 80px; display: flex; align-items: center;
+  justify-content: space-between; gap: 1.5rem;
+}
+
+/* Logo - bold white, chunky */
+.logo {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900; font-size: 1.8rem; letter-spacing: -0.05em;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.logo:hover { transform: scale(1.05); color: #B2FF00; }
+
+.links { display: flex; align-items: center; gap: 1rem; }
+
+.link {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900; font-size: 1rem;
+  color: #FFFFFF;
+  padding: 0.5rem 1rem;
+  border: 3px solid transparent;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  transition: all 0.15s;
+}
+
+.link:hover { 
+  background: var(--fifa-purple); 
+  color: var(--fifa-white);
+  border: 3px solid var(--fifa-purple);
+  transform: translate(-4px, -4px);
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.4);
+}
+
+.auth { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+
+.loginBtn {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900; font-size: 1rem; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #000000; background: #FFFFFF;
+  border: 3px solid #000000;
+  padding: 0.6rem 1.2rem; cursor: pointer;
+  box-shadow: 4px 4px 0px #000000;
+  transition: all 0.15s;
+}
+
+.loginBtn:hover { 
+  transform: translate(-2px, -2px); 
+  box-shadow: 6px 6px 0px #000000; 
+  background: var(--fifa-lime); 
+}
+
+.loginBtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* Signup - FIFA Red */
+.signupBtn {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900; font-size: 1rem; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #FFFFFF;
+  background: #FF0D1E;
+  border: 3px solid #000000;
+  padding: 0.6rem 1.2rem; cursor: pointer;
+  box-shadow: 4px 4px 0px #000000;
+  transition: all 0.15s;
+}
+
+.signupBtn:hover { 
+  transform: translate(-2px, -2px); 
+  box-shadow: 6px 6px 0px #000000; 
+  background: #6300E4; 
+}
+
+.signupBtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.logoutBtn {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900; font-size: 1rem; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #000000; background: #FFFFFF;
+  border: 3px solid #000000;
+  padding: 0.6rem 1.2rem; cursor: pointer;
+  box-shadow: 4px 4px 0px #000000;
+  transition: all 0.15s;
+}
+
+.logoutBtn:hover { 
+  transform: translate(-2px, -2px); 
+  box-shadow: 6px 6px 0px #000000; 
+  background: #FF5722; 
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.mobileMenu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .mobileMenuBtn {
+    display: block;
+  }
+  
+  .mobileMenu {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    background: rgba(8, 38, 20, 0.98);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1.5rem;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    transform: translateY(-150%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+  }
+  
+  .mobileMenu.open {
+    transform: translateY(0);
+  }
+  
+  .auth {
+    width: 100%;
+    justify-content: center;
+  }
+}
