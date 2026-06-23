@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/app/utils/api';
 
-export default function Verify() {
+function VerifyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -80,5 +80,13 @@ export default function Verify() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function Verify() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '4rem' }}>Loading...</div>}>
+      <VerifyForm />
+    </Suspense>
   );
 }
