@@ -133,18 +133,114 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
           <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Your Prediction</h3>
           
           {match.status !== 'OPEN' ? (
-            <div style={{ padding: '2rem 0', textAlign: 'center' }}>
-              <div style={{ color: 'var(--fifa-orange)', marginBottom: '1rem', fontWeight: 'bold' }}>Predictions are currently locked for this match.</div>
-              {userPrediction && (
-                <div style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: '8px' }}>
-                  <p>You predicted: <strong>
-                    {userPrediction.team1Goals !== null && userPrediction.team2Goals !== null ? `${userPrediction.team1Goals} - ${userPrediction.team2Goals} ` : ''}
-                    ({userPrediction.result === 'TEAM1' ? `${match.team1?.name} Win` : userPrediction.result === 'TEAM2' ? `${match.team2?.name} Win` : 'Draw'})
-                  </strong></p>
-                  {match.status === 'FINISHED' && userPrediction.points && (
-                    <p style={{ marginTop: '0.5rem', color: 'var(--fifa-purple)', fontWeight: 'bold' }}>
-                      Points Earned: +{userPrediction.points.totalPoints}
-                    </p>
+            <div style={{ padding: '0.5rem 0' }}>
+              {/* Match is FINISHED */}
+              {match.status === 'FINISHED' ? (
+                userPrediction ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>YOUR PREDICTED OUTCOME</p>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                        {userPrediction.result === 'TEAM1' ? `${match.team1?.name} Win` : userPrediction.result === 'TEAM2' ? `${match.team2?.name} Win` : 'Draw'}
+                      </p>
+                      
+                      {userPrediction.team1Goals !== null && userPrediction.team2Goals !== null && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>YOUR PREDICTED SCORE</p>
+                          <p style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '2px', color: 'var(--fifa-lime)' }}>
+                            {userPrediction.team1Goals} – {userPrediction.team2Goals}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scoring Breakdown</p>
+                      
+                      {/* Match Outcome Result Points */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        <span style={{ fontSize: '0.95rem' }}>Match Outcome Prediction</span>
+                        {userPrediction.points && userPrediction.points.pointsResult > 0 ? (
+                          <span className="badge" style={{ background: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71', border: 'none', boxShadow: 'none' }}>Correct (+3 pts)</span>
+                        ) : (
+                          <span className="badge" style={{ background: 'rgba(231, 76, 60, 0.15)', color: '#e74c3c', border: 'none', boxShadow: 'none' }}>Incorrect (+0 pts)</span>
+                        )}
+                      </div>
+
+                      {userPrediction.team1Goals !== null && userPrediction.team2Goals !== null && userPrediction.points && (
+                        <>
+                          {/* Exact Score Points */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <span style={{ fontSize: '0.95rem' }}>Exact Score Prediction</span>
+                            {userPrediction.points.pointsExactScore > 0 ? (
+                              <span className="badge" style={{ background: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71', border: 'none', boxShadow: 'none' }}>Correct (+5 pts)</span>
+                            ) : (
+                              <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: '#888888', border: 'none', boxShadow: 'none' }}>Incorrect (+0 pts)</span>
+                            )}
+                          </div>
+
+                          {/* Team 1 Goals Points */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <span style={{ fontSize: '0.95rem' }}>{match.team1?.code} Goals ({userPrediction.team1Goals})</span>
+                            {userPrediction.points.pointsTeam1Goals > 0 ? (
+                              <span className="badge" style={{ background: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71', border: 'none', boxShadow: 'none' }}>Correct (+1 pt)</span>
+                            ) : (
+                              <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: '#888888', border: 'none', boxShadow: 'none' }}>Incorrect (+0 pts)</span>
+                            )}
+                          </div>
+
+                          {/* Team 2 Goals Points */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <span style={{ fontSize: '0.95rem' }}>{match.team2?.code} Goals ({userPrediction.team2Goals})</span>
+                            {userPrediction.points.pointsTeam2Goals > 0 ? (
+                              <span className="badge" style={{ background: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71', border: 'none', boxShadow: 'none' }}>Correct (+1 pt)</span>
+                            ) : (
+                              <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: '#888888', border: 'none', boxShadow: 'none' }}>Incorrect (+0 pts)</span>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {userPrediction.points && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', padding: '1rem', background: 'var(--fifa-purple)', borderRadius: '8px', border: '3px solid #000000', boxShadow: '4px 4px 0px #000000' }}>
+                        <span style={{ fontWeight: 900, textTransform: 'uppercase', color: 'white', letterSpacing: '0.05em' }}>Total Points Earned</span>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--fifa-lime)' }}>+{userPrediction.points.totalPoints} pts</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚠️</div>
+                    <div style={{ color: 'var(--muted)', fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>You didn't predict this match.</div>
+                    <p style={{ color: '#555555', fontSize: '0.85rem' }}>Predictions closed when the match kicked off.</p>
+                  </div>
+                )
+              ) : (
+                /* Match is LOCKED or LIVE but NOT finished yet */
+                <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+                  <div style={{ color: 'var(--fifa-orange)', marginBottom: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <span>🔒</span> Predictions are locked for this match.
+                  </div>
+                  {userPrediction ? (
+                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', border: '1px solid var(--border)', textAlign: 'left' }}>
+                      <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>YOUR PREDICTED OUTCOME</p>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
+                        {userPrediction.result === 'TEAM1' ? `${match.team1?.name} Win` : userPrediction.result === 'TEAM2' ? `${match.team2?.name} Win` : 'Draw'}
+                      </p>
+                      {userPrediction.team1Goals !== null && userPrediction.team2Goals !== null && (
+                        <div>
+                          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>YOUR PREDICTED SCORE</p>
+                          <p style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '2px', color: 'var(--fifa-lime)' }}>
+                            {userPrediction.team1Goals} – {userPrediction.team2Goals}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div style={{ color: 'var(--muted)', fontWeight: 'bold' }}>You didn't predict this match.</div>
+                    </div>
                   )}
                 </div>
               )}
