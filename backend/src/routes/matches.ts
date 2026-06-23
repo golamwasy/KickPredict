@@ -26,8 +26,11 @@ router.get('/', async (req: Request, res: Response) => {
 
       const oneMinuteAgo = new Date(Date.now() - 60000); // 1 minute threshold
       if (!lastSync || lastSync.createdAt < oneMinuteAgo) {
-        console.log('[Sync] Triggering on-demand ESPN sync for active/locked matches');
-        await syncESPNData();
+        console.log('[Sync] Triggering on-demand ESPN sync for active/locked matches (async)');
+        // Run sync asynchronously in the background so it doesn't block the HTTP response
+        syncESPNData().catch((err) => {
+          console.error('[Matches Route] Background ESPN sync failed:', err);
+        });
       }
     }
 

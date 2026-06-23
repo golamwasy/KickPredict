@@ -5,48 +5,40 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany({
-      include: {
-        points: true,
-        predictions: {
-          include: {
-            match: true,
-          },
-        },
-      },
-    });
-
-    const leaderboard = users.map(user => {
-      const totalPoints = user.points.reduce((acc, p) => acc + p.totalPoints, 0);
-      const correctResults = user.points.filter(p => p.pointsResult > 0).length;
-      const exactScores = user.points.filter(p => p.pointsExactScore > 0).length;
-      
-      // Only count resolved predictions (finished matches and not skipped)
-      const resolvedPredictions = user.predictions.filter(
-        p => p.match.status === 'FINISHED' && !p.skipped
-      );
-      const totalResolved = resolvedPredictions.length;
-      const totalPredictions = user.predictions.length;
-      
-      return {
-        id: user.id,
-        username: user.username,
-        totalPoints,
-        correctResults,
-        exactScores,
-        totalPredictions,
-        accuracy: totalResolved > 0 ? Math.round((correctResults / totalResolved) * 100) : 0,
-      };
-    }).sort((a, b) => {
-      // 1. Highest Total Points
-      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
-      // 2. Highest Exact Scores predicted
-      if (b.exactScores !== a.exactScores) return b.exactScores - a.exactScores;
-      // 3. Highest Correct Results predicted
-      if (b.correctResults !== a.correctResults) return b.correctResults - a.correctResults;
-      // 4. Highest overall Accuracy %
-      return b.accuracy - a.accuracy;
-    });
+    const leaderboard: any[] = await prisma.$queryRaw`
+      SELECT
+        u.id,
+        u.username,
+        COALESCE(p_summary."totalPoints", 0)::int as "totalPoints",
+        COALESCE(p_summary."correctResults", 0)::int as "correctResults",
+        COALESCE(p_summary."exactScores", 0)::int as "exactScores",
+        COALESCE(pred_summary."totalPredictions", 0)::int as "totalPredictions",
+        CASE
+          WHEN COALESCE(pred_summary."resolvedPredictions", 0) > 0
+          THEN ROUND((COALESCE(p_summary."correctResults", 0)::float / COALESCE(pred_summary."resolvedPredictions", 0)::float) * 100)::int
+          ELSE 0
+        END as "accuracy"
+      FROM "User" u
+      LEFT JOIN (
+        SELECT
+          "userId",
+          SUM("totalPoints") as "totalPoints",
+          SUM(CASE WHEN "pointsResult" > 0 THEN 1 ELSE 0 END) as "correctResults",
+          SUM(CASE WHEN "pointsExactScore" > 0 THEN 1 ELSE 0 END) as "exactScores"
+        FROM "Point"
+        GROUP BY "userId"
+      ) p_summary ON u.id = p_summary."userId"
+      LEFT JOIN (
+        SELECT
+          pred."userId",
+          COUNT(pred.id) as "totalPredictions",
+          COUNT(CASE WHEN m.status = 'FINISHED' AND pred.skipped = false THEN 1 END) as "resolvedPredictions"
+        FROM "Prediction" pred
+        LEFT JOIN "Match" m ON pred."matchId" = m.id
+        GROUP BY pred."userId"
+      ) pred_summary ON u.id = pred_summary."userId"
+      ORDER BY "totalPoints" DESC, "exactScores" DESC, "correctResults" DESC, "accuracy" DESC;
+    `;
 
     // Add rank
     const rankedLeaderboard = leaderboard.map((user, index) => ({
@@ -56,6 +48,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json(rankedLeaderboard);
   } catch (error) {
+    console.error('[Leaderboard Error]', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

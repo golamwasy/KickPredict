@@ -16,6 +16,9 @@ router.post('/:matchId/skip', authenticate, async (req: AuthRequest, res: Respon
     if (match.status !== 'OPEN') {
       return res.status(400).json({ error: `Match is ${match.status}. Cannot opt out now.` });
     }
+    if (new Date() > new Date(match.kickoffTime)) {
+      return res.status(400).json({ error: 'Match has already kicked off. Predictions are locked.' });
+    }
 
     const prediction = await prisma.prediction.upsert({
       where: { userId_matchId: { userId, matchId } },
@@ -49,8 +52,8 @@ router.post('/:matchId', authenticate, async (req: AuthRequest, res: Response) =
       return res.status(400).json({ error: 'Invalid result. Must be TEAM1, DRAW, or TEAM2' });
     }
 
-    const t1 = team1Goals !== null && team1Goals !== undefined ? Number(team1Goals) : null;
-    const t2 = team2Goals !== null && team2Goals !== undefined ? Number(team2Goals) : null;
+    const t1 = team1Goals !== null && team1Goals !== undefined && team1Goals !== '' ? Number(team1Goals) : null;
+    const t2 = team2Goals !== null && team2Goals !== undefined && team2Goals !== '' ? Number(team2Goals) : null;
 
     const t1Provided = t1 !== null && !isNaN(t1);
     const t2Provided = t2 !== null && !isNaN(t2);
@@ -59,6 +62,13 @@ router.post('/:matchId', authenticate, async (req: AuthRequest, res: Response) =
     }
 
     if (t1Provided && t2Provided) {
+      if (!Number.isInteger(t1) || !Number.isInteger(t2) || t1! < 0 || t2! < 0) {
+        return res.status(400).json({ error: 'Goals must be non-negative integers.' });
+      }
+      if (t1! > 99 || t2! > 99) {
+        return res.status(400).json({ error: 'Goals count cannot exceed 99.' });
+      }
+
       let expectedResult: string;
       if (t1! > t2!) expectedResult = 'TEAM1';
       else if (t1! < t2!) expectedResult = 'TEAM2';
@@ -76,6 +86,9 @@ router.post('/:matchId', authenticate, async (req: AuthRequest, res: Response) =
     if (match.status !== 'OPEN') {
       return res.status(400).json({ error: `Match is ${match.status}. Predictions are locked.` });
     }
+    if (new Date() > new Date(match.kickoffTime)) {
+      return res.status(400).json({ error: 'Match has already kicked off. Predictions are locked.' });
+    }
 
     const prediction = await prisma.prediction.upsert({
       where: { userId_matchId: { userId, matchId } },
@@ -86,6 +99,26 @@ router.post('/:matchId', authenticate, async (req: AuthRequest, res: Response) =
     res.json(prediction);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get prediction for a single match
+router.get('/match/:matchId', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const matchId = req.params.matchId as string;
+    const userId = req.user!.id;
+
+    const prediction = await prisma.prediction.findUnique({
+      where: { userId_matchId: { userId, matchId } },
+      include: {
+        points: true
+      }
+    });
+
+    res.json(prediction || null);
+  } catch (error) {
+    console.error('[Get Single Prediction Error]', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

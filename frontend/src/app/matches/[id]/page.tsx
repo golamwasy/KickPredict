@@ -32,21 +32,18 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
     const token = localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
-      fetch(`${API_BASE_URL}/api/predictions/me`, { headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`${API_BASE_URL}/api/predictions/match/${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
         .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const pred = data.find((p: any) => p.matchId === id);
-            if (pred) {
-              setUserPrediction(pred);
-              let correctResult = pred.result;
-              if (pred.team1Goals !== null && pred.team2Goals !== null) {
-                if (pred.team1Goals > pred.team2Goals) correctResult = 'TEAM1';
-                else if (pred.team1Goals < pred.team2Goals) correctResult = 'TEAM2';
-                else correctResult = 'DRAW';
-              }
-              setPrediction({ team1Goals: pred.team1Goals, team2Goals: pred.team2Goals, result: correctResult });
+        .then(pred => {
+          if (pred) {
+            setUserPrediction(pred);
+            let correctResult = pred.result;
+            if (pred.team1Goals !== null && pred.team2Goals !== null) {
+              if (pred.team1Goals > pred.team2Goals) correctResult = 'TEAM1';
+              else if (pred.team1Goals < pred.team2Goals) correctResult = 'TEAM2';
+              else correctResult = 'DRAW';
             }
+            setPrediction({ team1Goals: pred.team1Goals, team2Goals: pred.team2Goals, result: correctResult || '' });
           }
         })
         .catch(console.error);
@@ -106,7 +103,20 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to submit prediction');
 
-      window.location.reload();
+      setUserPrediction(data);
+      let correctResult = data.result;
+      if (data.team1Goals !== null && data.team2Goals !== null) {
+        if (data.team1Goals > data.team2Goals) correctResult = 'TEAM1';
+        else if (data.team1Goals < data.team2Goals) correctResult = 'TEAM2';
+        else correctResult = 'DRAW';
+      }
+      setPrediction({ team1Goals: data.team1Goals, team2Goals: data.team2Goals, result: correctResult || '' });
+
+      // Refresh match stats dynamically
+      fetch(`${API_BASE_URL}/api/matches/${id}`)
+        .then(r => r.json())
+        .then(matchData => setMatch(matchData))
+        .catch(console.error);
     } catch (err: any) {
       setPredError(err.message);
     } finally {
@@ -126,7 +136,15 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to opt out');
-      window.location.reload();
+
+      setUserPrediction(data);
+      setPrediction({ team1Goals: null, team2Goals: null, result: '' });
+
+      // Refresh match stats dynamically
+      fetch(`${API_BASE_URL}/api/matches/${id}`)
+        .then(r => r.json())
+        .then(matchData => setMatch(matchData))
+        .catch(console.error);
     } catch (err: any) {
       setPredError(err.message);
     } finally {

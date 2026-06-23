@@ -3,9 +3,22 @@ import { calculatePointsForMatch } from './scoring';
 
 const ESPN_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100';
 
+let isSyncing = false;
+
 export const syncESPNData = async () => {
+  if (isSyncing) {
+    console.log('[Sync] ESPN sync already in progress, skipping.');
+    return;
+  }
+  isSyncing = true;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
   try {
-    const response = await fetch(ESPN_API_URL);
+    const response = await fetch(ESPN_API_URL, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) throw new Error(`ESPN API returned ${response.status}`);
     const data = await response.json();
 
@@ -28,6 +41,23 @@ export const syncESPNData = async () => {
       // If the match is already finished in the DB, we can skip processing it completely
       const existingMatch = matchCache.get(apiFixtureId);
       if (existingMatch && existingMatch.status === 'FINISHED') {
+        // Self-healing: Check if there are active predictions that still do not have points
+        const hasUncalculatedPoints = await prisma.prediction.findFirst({
+          where: {
+            matchId: existingMatch.id,
+            skipped: false,
+            points: null,
+          },
+        });
+
+        if (hasUncalculatedPoints) {
+          console.log(`[Sync] Self-healing: Match ${existingMatch.id} is FINISHED but has predictions without points. Retrying scoring...`);
+          try {
+            await calculatePointsForMatch(existingMatch.id);
+          } catch (scoringError) {
+            console.error(`[Sync Error] Self-healing points recalculation failed for match ${existingMatch.id}:`, scoringError);
+          }
+        }
         continue;
       }
 
@@ -112,7 +142,13 @@ export const syncESPNData = async () => {
 
         // If match just finished, trigger scoring calculation
         if (matchStatus === 'FINISHED' && existingMatch?.status !== 'FINISHED') {
-          await calculatePointsForMatch(updatedMatch.id);
+          try {
+            await calculatePointsForMatch(updatedMatch.id);
+          } catch (scoringError) {
+            console.error(`[Sync Error] Points calculation failed for match ${updatedMatch.id}:`, scoringError);
+            // We intentionally do not throw the error here, allowing the match to remain FINISHED in the DB.
+            // The self-healing logic above will automatically retry point calculation on the next sync tick.
+          }
         }
       }
     }
@@ -124,9 +160,12 @@ export const syncESPNData = async () => {
     console.log(`[Sync] Successfully synced ${events.length} matches from ESPN.`);
 
   } catch (error: any) {
+    clearTimeout(timeoutId);
     console.error('[Sync Error] Failed to sync ESPN data:', error);
     await prisma.apiSyncLog.create({
       data: { endpoint: ESPN_API_URL, status: 'ERROR', message: error.message }
     });
+  } finally {
+    isSyncing = false;
   }
 };
