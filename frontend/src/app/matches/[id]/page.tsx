@@ -112,21 +112,21 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
           Kickoff: {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', dateStyle: 'short', timeStyle: 'medium', hour12: true })} (Helsinki Time)
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>{getFlag(match.team1?.code)}</div>
-            <h2 style={{ fontSize: '1.75rem' }}>{match.team1?.name}</h2>
-            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)' }}>{match.team1?.code}</div>
+        <div className="vs-container">
+          <div className="vs-team">
+            <div className="vs-flag">{getFlag(match.team1?.code)}</div>
+            <h2 className="vs-team-name">{match.team1?.name}</h2>
+            <div className="vs-team-code">{match.team1?.code}</div>
           </div>
-          <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--fifa-lime)', textAlign: 'center', padding: '0 1rem' }}>
+          <div className="vs-divider">
             {match.status === 'FINISHED' || match.status === 'LIVE' 
               ? `${match.team1Goals} – ${match.team2Goals}` 
               : 'VS'}
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>{getFlag(match.team2?.code)}</div>
-            <h2 style={{ fontSize: '1.75rem' }}>{match.team2?.name}</h2>
-            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)' }}>{match.team2?.code}</div>
+          <div className="vs-team">
+            <div className="vs-flag">{getFlag(match.team2?.code)}</div>
+            <h2 className="vs-team-name">{match.team2?.name}</h2>
+            <div className="vs-team-code">{match.team2?.code}</div>
           </div>
         </div>
       </div>

@@ -714,3 +714,104 @@ button {
 .lb-row-default span {
   color: var(--fifa-white) !important;
 }
+
+/* === MATCH DETAILS "VS" AREA (NEOBRUTALIST RESPONSIVE STYLING) === */
+.vs-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vs-team {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.vs-flag {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.vs-team-name {
+  font-size: 1.75rem;
+  font-weight: 900;
+  margin: 0;
+  color: #FFFFFF !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.vs-team-code {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.vs-divider {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--fifa-lime);
+  text-align: center;
+  padding: 0 1rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .match-card {
+    padding: 1.25rem !important;
+    border-top-width: 10px !important;
+    border-left-width: 10px !important;
+    border-right-width: 10px !important;
+  }
+
+  .vs-container {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  .vs-flag {
+    font-size: 3rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .vs-team-name {
+    font-size: 1.35rem;
+  }
+
+  .vs-team-code {
+    font-size: 0.85rem;
+  }
+
+  .vs-divider {
+    font-size: 2rem;
+    padding: 0.5rem 0;
+  }
+}
+
+/* === DASHBOARD STATS GRID (MOBILE HORIZONTAL LAYOUT) === */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    gap: 0.5rem;
+  }
+  .stats-grid .card {
+    padding: 1rem 0.5rem !important;
+    margin-bottom: 0;
+    box-shadow: 4px 4px 0px var(--fifa-black) !important;
+  }
+  .stats-grid .card p {
+    font-size: 0.62rem !important;
+    margin-bottom: 0.4rem !important;
+    letter-spacing: 0.02em !important;
+  }
+  .stats-grid .card div {
+    font-size: 1.75rem !important;
+  }
+}

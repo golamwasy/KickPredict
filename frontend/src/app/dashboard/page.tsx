@@ -49,7 +49,7 @@ export default function Dashboard() {
         </h1>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+      <div className="stats-grid">
         {stats.map((stat, i) => (
           <div key={stat.label} className={`card ${stat.accent}`} style={{ textAlign: 'center', animation: `floatIn 0.5s ease ${0.1 + i * 0.05}s both` }}>
             <p style={{ color: '#000000', fontSize: '0.78rem', fontFamily: 'Outfit, sans-serif', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>{stat.label}</p>
