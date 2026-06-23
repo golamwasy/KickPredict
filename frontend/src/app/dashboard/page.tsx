@@ -31,9 +31,7 @@ export default function Dashboard() {
   const totalPoints = predictions.reduce((acc, p) => acc + (p.points?.totalPoints || 0), 0);
   const finished = predictions.filter(p => p.match.status === 'FINISHED');
   const sorted = [...predictions].sort((a, b) => {
-    if (a.match.status === 'OPEN' && b.match.status !== 'OPEN') return -1;
-    if (b.match.status === 'OPEN' && a.match.status !== 'OPEN') return 1;
-    return 0;
+    return new Date(b.match.kickoffTime).getTime() - new Date(a.match.kickoffTime).getTime();
   });
 
   const stats = [
@@ -73,6 +71,9 @@ export default function Dashboard() {
           {sorted.map((pred, i) => (
             <div key={pred.id} className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.05}s both` }}>
               <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--fifa-orange)', marginBottom: '0.25rem', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>
+                  {new Date(pred.match.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                </div>
                 <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', marginBottom: '0.4rem' }}>
                   {pred.match.team1?.name} <span style={{ color: '#555555' }}>vs</span> {pred.match.team2?.name}
                 </div>
