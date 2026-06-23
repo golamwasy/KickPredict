@@ -64,8 +64,91 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
     }
   });
 
+  const ongoingMatches = matches
+    .filter((m: any) => m.status === 'LOCKED' || m.status === 'LIVE')
+    .sort((a: any, b: any) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
+
   return (
     <>
+      {/* ── Live Now section (always visible when matches are ongoing) ── */}
+      {ongoingMatches.length > 0 && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+            {/* pulsing red dot */}
+            <span style={{
+              display: 'inline-block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: 'var(--fifa-red)',
+              boxShadow: '0 0 0 0 rgba(255,13,30,0.6)',
+              animation: 'livePulse 1.4s ease-in-out infinite',
+            }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--fifa-red)', margin: 0 }}>
+              Live Now
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            {ongoingMatches.map((match: any) => (
+              <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block' }}>
+                <div className="premium-match-card" style={{ height: '100%' }}>
+                  <div className="match-content">
+                    {/* status badge + time */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                      {match.status === 'LIVE' ? (
+                        <span className="badge badge-live" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🔴 LIVE</span>
+                      ) : (
+                        <span className="badge badge-locked" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🔒 LOCKED</span>
+                      )}
+                      <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
+                        {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour: 'numeric', minute: '2-digit', hour12: true })}
+                      </span>
+                    </div>
+
+                    {/* teams */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ textAlign: 'center', flex: 1 }}>
+                        <div className="team-flag-lg">{getFlag(match.team1?.code)}</div>
+                        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team1?.code || 'TBD'}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team1?.name}</div>
+                      </div>
+
+                      <div style={{ textAlign: 'center', padding: '0 0.5rem' }}>
+                        <div className="score-pill">
+                          {match.team1Goals ?? 0} – {match.team2Goals ?? 0}
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'center', flex: 1 }}>
+                        <div className="team-flag-lg">{getFlag(match.team2?.code)}</div>
+                        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team2?.code || 'TBD'}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team2?.name}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* footer cta */}
+                  <div className="action-area">
+                    <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
+                      View Live Stats →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <style>{`
+            @keyframes livePulse {
+              0%   { box-shadow: 0 0 0 0 rgba(255,13,30,0.6); }
+              70%  { box-shadow: 0 0 0 8px rgba(255,13,30,0); }
+              100% { box-shadow: 0 0 0 0 rgba(255,13,30,0); }
+            }
+          `}</style>
+        </div>
+      )}
+
       <div className="match-tabs">
         <button
           onClick={() => setActiveTab('open')}
