@@ -7,6 +7,7 @@ import predictionRoutes from './routes/predictions';
 import leaderboardRoutes from './routes/leaderboard';
 import adminRoutes from './routes/admin';
 import { startCronJobs } from './services/cron';
+import { syncESPNData } from './services/espnSync';
 
 dotenv.config();
 
@@ -31,7 +32,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date() });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   startCronJobs();
+
+  // Run initial sync on startup to populate matches immediately
+  try {
+    console.log('[Startup] Running initial ESPN sync...');
+    await syncESPNData();
+    console.log('[Startup] Initial ESPN sync completed successfully');
+  } catch (error) {
+    console.error('[Startup] Initial ESPN sync failed:', error);
+  }
 });
