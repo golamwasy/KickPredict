@@ -705,14 +705,14 @@ button {
 }
 
 .lb-row-default {
-  background: var(--fifa-blue) !important;
-  color: var(--fifa-white) !important;
+  background: #FFFFFF !important;
+  color: var(--fifa-black) !important;
 }
 
 .lb-row-default h3,
 .lb-row-default div,
 .lb-row-default span {
-  color: var(--fifa-white) !important;
+  color: var(--fifa-black) !important;
 }
 
 /* === MATCH DETAILS "VS" AREA (NEOBRUTALIST RESPONSIVE STYLING) === */

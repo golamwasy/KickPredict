@@ -39,7 +39,7 @@ export default async function LeaderboardPage() {
           <div style={{ padding: "3rem", textAlign: "center", color: "#555555" }}>No users ranked yet. Be the first to predict!</div>
         ) : (
           leaderboard.map((user: any, i: number) => {
-            const colorClass = i === 0 ? "lb-row-0" : i === 1 ? "lb-row-1" : i === 2 ? "lb-row-2" : i === 3 ? "lb-row-3" : i === 4 ? "lb-row-4" : "lb-row-default";
+            const colorClass = i === 0 ? "lb-row-0" : i === 1 ? "lb-row-1" : i === 2 ? "lb-row-2" : "lb-row-default";
             return (
               <div key={user.id} className={`lb-row ${colorClass}`} style={{ animation: `floatIn 0.5s ease ${i * 0.05}s both` }}>
                 <div>
