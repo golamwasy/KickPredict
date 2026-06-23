@@ -91,6 +91,31 @@ export default function Dashboard() {
                 )}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                {pred.match.status === 'OPEN' && (
+                  <Link
+                    href={`/matches/${pred.match.id}`}
+                    className="badge badge-open"
+                    style={{
+                      display: 'inline-flex',
+                      textDecoration: 'none',
+                      textAlign: 'center'
+                    }}
+                  >
+                    OPEN
+                  </Link>
+                )}
+                {(pred.match.status === 'LIVE' || pred.match.status === 'LOCKED') && (
+                  <span style={{
+                    fontFamily: 'Outfit, sans-serif',
+                    fontWeight: 900,
+                    fontSize: '0.85rem',
+                    color: 'var(--fifa-orange)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    In Progress
+                  </span>
+                )}
                 {pred.match.status === 'FINISHED' && (
                   <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--fifa-green)' }}>+{pred.points?.totalPoints || 0} pts</div>
                 )}
