@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getFlag } from '../utils/flags';
+import { API_BASE_URL } from '../utils/api';
 
 type TabType = 'open' | 'upcoming' | 'past';
 
@@ -14,7 +15,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    fetch('http://127.0.0.1:5001/api/predictions/me', {
+    fetch(`${API_BASE_URL}/api/predictions/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => res.json())

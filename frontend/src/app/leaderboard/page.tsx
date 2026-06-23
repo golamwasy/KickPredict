@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { API_BASE_URL } from "../utils/api";
 
 
 async function getLeaderboard() {
   try {
-    const res = await fetch("http://127.0.0.1:5001/api/leaderboard", { cache: "no-store" });
+    const res = await fetch(`${API_BASE_URL}/api/leaderboard`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed");
     return res.json();
   } catch { return []; }

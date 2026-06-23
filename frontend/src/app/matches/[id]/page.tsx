@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFlag } from '../../utils/flags';
+import { API_BASE_URL } from '../../utils/api';
 
 export default function MatchDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -16,7 +17,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5001/api/matches/${id}`)
+    fetch(`${API_BASE_URL}/api/matches/${id}`)
       .then(res => res.json())
       .then(data => {
         setMatch(data);
@@ -26,7 +27,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
 
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:5001/api/predictions/me', { headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`${API_BASE_URL}/api/predictions/me`, { headers: { 'Authorization': `Bearer ${token}` } })
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -73,7 +74,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
     }
 
     try {
-      const res = await fetch(`http://localhost:5001/api/predictions/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/predictions/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

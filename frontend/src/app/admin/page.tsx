@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '../utils/api';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -20,8 +21,8 @@ export default function AdminDashboard() {
     }
 
     Promise.all([
-      fetch('http://localhost:5001/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
-      fetch('http://localhost:5001/api/admin/summary', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
+      fetch(`${API_BASE_URL}/api/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/admin/summary`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
     ]).then(([usersData, summaryData]) => {
       if (usersData.error) throw new Error(usersData.error);
       setUsers(usersData);
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
   const toggleUserStatus = async (userId: string) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5001/api/admin/users/${userId}/toggle-status`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/toggle-status`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -52,7 +53,7 @@ export default function AdminDashboard() {
   const recalculatePoints = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5001/api/admin/recalculate-points`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/recalculate-points`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

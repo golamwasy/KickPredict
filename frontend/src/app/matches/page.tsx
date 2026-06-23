@@ -1,8 +1,9 @@
 import MatchesListClient from './MatchesListClient';
+import { API_BASE_URL } from '../utils/api';
 
 async function getMatches() {
   try {
-    const res = await fetch('http://127.0.0.1:5001/api/matches', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE_URL}/api/matches`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     return res.json();
   } catch { return []; }

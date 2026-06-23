@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE_URL } from '../utils/api';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function Dashboard() {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
     setUser(JSON.parse(localStorage.getItem('user') || '{}'));
-    fetch('http://localhost:5001/api/predictions/me', { headers: { 'Authorization': `Bearer ${token}` } })
+    fetch(`${API_BASE_URL}/api/predictions/me`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setPredictions(data); setLoading(false); })
       .catch(() => setLoading(false));

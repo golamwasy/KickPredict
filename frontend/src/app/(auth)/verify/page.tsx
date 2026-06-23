@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/app/utils/api';
 
 export default function Verify() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function Verify() {
     setSuccess('');
 
     try {
-      const res = await fetch('http://localhost:5001/api/auth/verify', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
