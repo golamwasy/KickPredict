@@ -44,6 +44,11 @@ initTransporter();
 
 export const sendVerificationEmail = async (to: string, code: string) => {
   try {
+    // Print the code directly to backend console logs so developers can see it in Render/Dev logs easily
+    console.log(`[Email] =======================================`);
+    console.log(`[Email] VERIFICATION CODE FOR ${to} IS: ${code}`);
+    console.log(`[Email] =======================================`);
+
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || '"KickPredict Support" <noreply@kickpredict.com>',
       to,
