@@ -3,8 +3,8 @@ import prisma from '../prisma';
 import { syncESPNData } from './espnSync';
 
 export const startCronJobs = () => {
-  // Run ESPN Sync every minute
-  cron.schedule('* * * * *', async () => {
+  // Run ESPN Sync every 2 hours
+  cron.schedule('0 */2 * * *', async () => {
     try {
       await syncESPNData();
       
