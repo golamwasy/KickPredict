@@ -131,10 +131,10 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      <div className="responsive-grid-2">
+      <div className="responsive-grid-2" style={match.status === 'FINISHED' && !isLoggedIn ? { gridTemplateColumns: '1fr' } : {}}>
         {/* Prediction Form - Hidden if match is finished and user is logged out */}
         {!(match.status === 'FINISHED' && !isLoggedIn) && (
-          <div className="card">
+          <div className="card" style={{ height: '100%' }}>
             <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Your Prediction</h3>
             
             {match.status !== 'OPEN' ? (
@@ -292,7 +292,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
         )}
 
         {/* Community Stats */}
-        <div className="card">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Community Stats</h3>
           
           <div style={{ marginBottom: '1.5rem' }}>
@@ -301,7 +301,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
 
           {isLoggedIn ? (
             /* Bar Chart (Vertical) for logged in users to fill vertical space */
-            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '220px', padding: '1.5rem 0', margin: '1rem 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(255,255,255,0.01)' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', minHeight: '260px', padding: '1.5rem 0', margin: '1rem 0', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(255,255,255,0.01)' }}>
               {/* Team 1 Win Bar */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', width: '30%' }}>
                 <span style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.5rem', color: 'var(--fifa-purple)' }}>{match.stats?.team1WinPercentage || 0}%</span>
