@@ -10,6 +10,7 @@ type TabType = 'open' | 'upcoming' | 'past';
 export default function MatchesListClient({ matches }: { matches: any[] }) {
   const [activeTab, setActiveTab] = useState<TabType>('open');
   const [predictedMatchIds, setPredictedMatchIds] = useState<Set<string>>(new Set());
+  const [userPredictions, setUserPredictions] = useState<any[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -23,14 +24,15 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
     fetch(`${API_BASE_URL}/api/predictions/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        const ids = data.map((p: any) => p.matchId);
-        setPredictedMatchIds(new Set(ids));
-      }
-    })
-    .catch(console.error);
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setUserPredictions(data);
+          const ids = data.map((p: any) => p.matchId);
+          setPredictedMatchIds(new Set(ids));
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const filteredMatches = matches.filter((m: any) => {
@@ -84,66 +86,62 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               boxShadow: '0 0 0 0 rgba(255,13,30,0.6)',
               animation: 'livePulse 1.4s ease-in-out infinite',
             }} />
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--fifa-red)', margin: 0 }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#FFFFFF', margin: 0 }}>
               Live Now
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {ongoingMatches.map((match: any) => (
-              <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block' }}>
-                <div className="premium-match-card" style={{ height: '100%' }}>
-                  <div className="match-content">
-                    {/* status badge + time */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                      {match.status === 'LIVE' ? (
-                        <span className="badge badge-live" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🔴 LIVE</span>
-                      ) : (
-                        <span className="badge badge-locked" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🔒 LOCKED</span>
-                      )}
-                      <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
-                        {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour: 'numeric', minute: '2-digit', hour12: true })}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            {ongoingMatches.map((match: any) => {
+              return (
+                <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
+                  {/* TV Scoreboard Pill Graphic as the Card */}
+                  <div className="scoreboard-pill-card">
+                    {/* Team 1 Name & Flag */}
+                    <div className="scoreboard-team-wrap">
+                      <span className="scoreboard-team-flag">{getFlag(match.team1?.code)}</span>
+                      <span className="scoreboard-team-text hide-mobile">
+                        {match.team1?.name || 'TBD'}
+                      </span>
+                      <span className="scoreboard-team-text hide-desktop">
+                        {match.team1?.code || 'TBD'}
                       </span>
                     </div>
 
-                    {/* teams */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div className="team-flag-lg">{getFlag(match.team1?.code)}</div>
-                        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team1?.code || 'TBD'}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team1?.name}</div>
+                    {/* Score Capsule */}
+                    <div className="live-score-capsule">
+                      <span>{match.team1Goals ?? 0}</span>
+                      <div className="live-score-trophy">
+                        🏆
                       </div>
-
-                      <div style={{ textAlign: 'center', padding: '0 0.5rem' }}>
-                        <div className="score-pill">
-                          {match.team1Goals ?? 0} – {match.team2Goals ?? 0}
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div className="team-flag-lg">{getFlag(match.team2?.code)}</div>
-                        <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '0.05em' }}>{match.team2?.code || 'TBD'}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team2?.name}</div>
-                      </div>
+                      <span>{match.team2Goals ?? 0}</span>
                     </div>
-                  </div>
 
-                  {/* footer cta */}
-                  <div className="action-area">
-                    <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
-                      View Live Stats →
-                    </span>
+                    {/* Team 2 Name & Flag */}
+                    <div className="scoreboard-team-wrap team-right">
+                      <span className="scoreboard-team-text hide-mobile">
+                        {match.team2?.name || 'TBD'}
+                      </span>
+                      <span className="scoreboard-team-text hide-desktop">
+                        {match.team2?.code || 'TBD'}
+                      </span>
+                      <span className="scoreboard-team-flag">{getFlag(match.team2?.code)}</span>
+                    </div>
+
+                    {/* Bottom Neon Accent Line */}
+                    <div className="scoreboard-bottom-accent" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
 
           <style>{`
             @keyframes livePulse {
-              0%   { box-shadow: 0 0 0 0 rgba(255,13,30,0.6); }
+              0%   { box-shadow: 0 0 0 0 rgba(255,13,30,0.6); opacity: 0.3; }
+              50%  { opacity: 1; }
               70%  { box-shadow: 0 0 0 8px rgba(255,13,30,0); }
-              100% { box-shadow: 0 0 0 0 rgba(255,13,30,0); }
+              100% { box-shadow: 0 0 0 0 rgba(255,13,30,0); opacity: 0.3; }
             }
           `}</style>
         </div>
@@ -230,11 +228,11 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                   const isUpcoming = match.status === 'UPCOMING';
                   const CardWrapper = isUpcoming ? 'div' : Link;
                   const wrapperProps = isUpcoming
-                    ? { key: match.id, style: { display: 'block', cursor: 'default', opacity: 0.85 } }
-                    : { href: !isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`, key: match.id, style: { display: 'block' } };
+                    ? { style: { display: 'block', cursor: 'default', opacity: 0.85 } }
+                    : { href: !isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`, style: { display: 'block' } };
 
                   return (
-                    <CardWrapper {...(wrapperProps as any)}>
+                    <CardWrapper key={match.id} {...(wrapperProps as any)}>
                       <div className="premium-match-card" style={{ height: '100%', ...(isUpcoming ? { boxShadow: 'none' } : {}) }}>
                         <div className="match-content">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -260,9 +258,9 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                               <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team1?.name}</div>
                             </div>
 
-                            <div style={{ textAlign: 'center', padding: '0 0.5rem' }}>
+                            <div style={{ textAlign: 'center', padding: '0 0.5rem', flexShrink: 0 }}>
                               {match.status === 'FINISHED' || match.status === 'LIVE' ? (
-                                <div className="score-pill">{match.team1Goals} – {match.team2Goals}</div>
+                                <div className="score-pill" style={{ whiteSpace: 'nowrap' }}>{match.team1Goals} – {match.team2Goals}</div>
                               ) : (
                                 <div className="vs-pill">VS</div>
                               )}

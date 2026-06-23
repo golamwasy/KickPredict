@@ -1,11 +1,36 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../prisma';
+import { syncESPNData } from '../services/espnSync';
 
 const router = Router();
 
 // Get all matches
 router.get('/', async (req: Request, res: Response) => {
   try {
+    // Check if we should sync active/ongoing matches on demand
+    const now = new Date();
+    const needsSyncMatch = await prisma.match.findFirst({
+      where: {
+        OR: [
+          { status: { in: ['LIVE', 'LOCKED'] } },
+          { status: 'OPEN', kickoffTime: { lte: now } }
+        ]
+      }
+    });
+
+    if (needsSyncMatch) {
+      const lastSync = await prisma.apiSyncLog.findFirst({
+        where: { status: 'SUCCESS' },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const twoMinutesAgo = new Date(Date.now() - 120000); // 2 minutes threshold
+      if (!lastSync || lastSync.createdAt < twoMinutesAgo) {
+        console.log('[Sync] Triggering on-demand ESPN sync for active/locked matches');
+        await syncESPNData();
+      }
+    }
+
     const matches = await prisma.match.findMany({
       include: {
         team1: true,
