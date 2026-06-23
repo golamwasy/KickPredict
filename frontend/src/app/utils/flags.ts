@@ -4,6 +4,7 @@ const CODE_MAP = {
   USA:'US', CAN:'CA', MEX:'MX', BRA:'BR', ARG:'AR',
   URU:'UY', COL:'CO', ECU:'EC', CHI:'CL', PER:'PE',
   PAR:'PY', HON:'HN', CRC:'CR', PAN:'PA', JAM:'JM',
+  HAI:'HT', CUW:'CW',
 
   // Europe
   FRA:'FR', GER:'DE', ENG:'GB', ESP:'ES', POR:'PT',
@@ -17,6 +18,7 @@ const CODE_MAP = {
   ALG:'DZ', MAR:'MA', SEN:'SN', NGA:'NG', GHA:'GH',
   CMR:'CM', TUN:'TN', EGY:'EG', CIV:'CI', MLI:'ML',
   ANG:'AO', ZAM:'ZM', ZIM:'ZW', KEN:'KE', GUI:'GN',
+  COD:'CD', CGO:'CG', CPV:'CV', RSA:'ZA',
 
   // Asia
   JPN:'JP', KOR:'KR', AUS:'AU', IRN:'IR', SAU:'SA',
