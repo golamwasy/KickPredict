@@ -830,15 +830,28 @@ button {
   margin-bottom: 2rem;
   z-index: 1;
 
-  /* Native CSS Gradient Border trick: outer gradient and inner solid black */
+  /* Hard-stop gradient to form distinct solid color segments (FIFA Theme) */
   border: 3px solid transparent;
   background: linear-gradient(#000000, #000000) padding-box,
-              linear-gradient(to right, #3bf6e4 0%, #7000ff 25%, #ff0d1e 50%, #ffe600 70%, #3bff37 85%, #7000ff 100%) border-box;
+              linear-gradient(to right,
+                var(--fifa-cyan) 0%,
+                var(--fifa-cyan) 12%,
+                #1B49FF 12%,
+                #1B49FF 38%,
+                var(--fifa-red) 38%,
+                var(--fifa-red) 62%,
+                var(--fifa-lime) 62%,
+                var(--fifa-lime) 88%,
+                var(--fifa-purple) 88%,
+                var(--fifa-purple) 100%
+              ) border-box;
 }
 
 .scoreboard-pill-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(59, 246, 228, 0.25), 0 0 20px rgba(255, 13, 30, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 
+              0 0 20px rgba(0, 240, 255, 0.25), 
+              0 0 15px rgba(255, 13, 30, 0.15);
 }
 
 /* Center Score Capsule Wrapper */
@@ -1024,10 +1037,21 @@ button {
     border-radius: 50px;
     margin-bottom: 1.5rem;
     
-    /* Mobile responsive gradient border */
+    /* Mobile responsive solid segments border */
     border: 2px solid transparent;
     background: linear-gradient(#000000, #000000) padding-box,
-                linear-gradient(to right, #3bf6e4 0%, #7000ff 25%, #ff0d1e 50%, #ffe600 70%, #3bff37 85%, #7000ff 100%) border-box;
+                linear-gradient(to right,
+                  var(--fifa-cyan) 0%,
+                  var(--fifa-cyan) 12%,
+                  #1B49FF 12%,
+                  #1B49FF 38%,
+                  var(--fifa-red) 38%,
+                  var(--fifa-red) 62%,
+                  var(--fifa-lime) 62%,
+                  var(--fifa-lime) 88%,
+                  var(--fifa-purple) 88%,
+                  var(--fifa-purple) 100%
+                ) border-box;
   }
   .live-prediction-top-tab {
     padding: 0.2rem 1.2rem;
