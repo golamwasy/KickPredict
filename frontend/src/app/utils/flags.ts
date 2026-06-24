@@ -12,7 +12,7 @@ const CODE_MAP = {
   SUI: 'CH', DEN: 'DK', POL: 'PL', AUT: 'AT', HUN: 'HU',
   CZE: 'CZ', SVK: 'SK', GRE: 'GR', TUR: 'TR', UKR: 'UA',
   SWE: 'SE', NOR: 'NO', FIN: 'FI', ROM: 'RO', SLO: 'SI',
-  BIH: 'BA', ISL: 'IS', IRL: 'IE', SCO: 'GB-SCT', WAL: 'GB',
+  BIH: 'BA', ISL: 'IS', IRL: 'IE', SCO: 'GB', WAL: 'GB',
 
   // Africa
   ALG: 'DZ', MAR: 'MA', SEN: 'SN', NGA: 'NG', GHA: 'GH',
