@@ -444,7 +444,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={submitting}>
-                      {submitting ? 'Submitting...' : 'Submit Prediction'}
+                      {submitting ? 'Submitting...' : (userPrediction && !userPrediction.skipped ? 'Update Prediction' : 'Submit Prediction')}
                     </button>
 
                     {/* Khelbo na — opt out section */}
