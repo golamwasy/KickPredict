@@ -66,7 +66,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
     // Aggregate predictions anonymously
-    const totalPredictions = await prisma.prediction.count({ where: { matchId: id } });
+    const totalPredictions = await prisma.prediction.count({ where: { matchId: id, skipped: false } });
     const team1Wins = await prisma.prediction.count({ where: { matchId: id, result: 'TEAM1' } });
     const draws = await prisma.prediction.count({ where: { matchId: id, result: 'DRAW' } });
     const team2Wins = await prisma.prediction.count({ where: { matchId: id, result: 'TEAM2' } });

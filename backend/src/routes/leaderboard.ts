@@ -31,7 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
       LEFT JOIN (
         SELECT
           pred."userId",
-          COUNT(pred.id) as "totalPredictions",
+          COUNT(CASE WHEN pred.skipped = false THEN 1 END) as "totalPredictions",
           COUNT(CASE WHEN m.status = 'FINISHED' AND pred.skipped = false THEN 1 END) as "resolvedPredictions"
         FROM "Prediction" pred
         LEFT JOIN "Match" m ON pred."matchId" = m.id

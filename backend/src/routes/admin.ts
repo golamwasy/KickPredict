@@ -11,7 +11,7 @@ router.use(authenticate, requireAdmin);
 router.get('/summary', async (req: AuthRequest, res: Response) => {
   try {
     const totalUsers = await prisma.user.count();
-    const totalPredictions = await prisma.prediction.count();
+    const totalPredictions = await prisma.prediction.count({ where: { skipped: false } });
     const recentSyncLogs = await prisma.apiSyncLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10

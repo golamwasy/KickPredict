@@ -29,14 +29,14 @@ export default function Dashboard() {
   );
 
   const totalPoints = predictions.reduce((acc, p) => acc + (p.points?.totalPoints || 0), 0);
-  const finished = predictions.filter(p => p.match.status === 'FINISHED');
+  const finished = predictions.filter(p => p.match.status === 'FINISHED' && !p.skipped);
   const sorted = [...predictions].sort((a, b) => {
     return new Date(b.match.kickoffTime).getTime() - new Date(a.match.kickoffTime).getTime();
   });
 
   const stats = [
     { label: 'Total Points', value: totalPoints, accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
-    { label: 'Predictions', value: predictions.length, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
+    { label: 'Predictions', value: predictions.filter(p => !p.skipped).length, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
     { label: 'Finished', value: finished.length, accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
   ];
 
