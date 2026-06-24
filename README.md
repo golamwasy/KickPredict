@@ -11,7 +11,7 @@ This project is structured as a **monorepo** containing both the frontend client
 ```
 KickPredict/
 ├── backend/          # Express API server with TypeScript, Prisma ORM, and Cron Jobs
-├── frontend/         # Next.js web application built with TypeScript and CSS Modules
+├── frontend/         # Next.js web application built with TypeScript and CSS Module
 ├── docker-compose.yml# Docker configuration for local PostgreSQL database
 └── README.md         # Project documentation (this file)
 ```
