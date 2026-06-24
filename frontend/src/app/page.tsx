@@ -1,15 +1,27 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
 export default function Home() {
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('token'));
-  }, []);
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+      setIsRedirecting(true);
+      router.push('/matches');
+    }
+  }, [router]);
+
+  if (isRedirecting) {
+    return null;
+  }
 
   return (
     <div className="container" style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "4rem" }}>
