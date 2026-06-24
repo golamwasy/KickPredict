@@ -47,12 +47,13 @@ export const calculatePointsForMatch = async (matchId: string) => {
       if (prediction.team1Goals !== null && prediction.team2Goals !== null) {
         if (prediction.team1Goals === match.team1Goals && prediction.team2Goals === match.team2Goals) {
           pointsExactScore = 5;
-        }
-        if (prediction.team1Goals === match.team1Goals) {
-          pointsTeam1Goals = 1;
-        }
-        if (prediction.team2Goals === match.team2Goals) {
-          pointsTeam2Goals = 1;
+        } else {
+          if (prediction.team1Goals === match.team1Goals) {
+            pointsTeam1Goals = 1;
+          }
+          if (prediction.team2Goals === match.team2Goals) {
+            pointsTeam2Goals = 1;
+          }
         }
       }
       
