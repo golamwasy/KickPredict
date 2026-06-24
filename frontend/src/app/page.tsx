@@ -1,7 +1,16 @@
+'use client';
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('token'));
+  }, []);
+
   return (
     <div className="container" style={{ textAlign: "center", paddingTop: "3rem", paddingBottom: "4rem" }}>
 
@@ -14,7 +23,7 @@ export default function Home() {
         The ultimate FIFA World Cup 2026 prediction platform. Guess exact scores, climb the global leaderboard, and prove you know the beautiful game.
       </p>
       <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "6rem", animation: "floatIn 0.6s ease 0.3s both" }}>
-        <Link href="/signup" className="btn-primary" style={{ width: "auto", padding: "1rem 2.5rem", fontSize: "1rem" }}>
+        <Link href={isLoggedIn ? "/matches" : "/signup"} className="btn-primary" style={{ width: "auto", padding: "1rem 2.5rem", fontSize: "1rem" }}>
           Start Predicting Free →
         </Link>
         <Link href="/matches" style={{ display: "inline-flex", alignItems: "center", padding: "1rem 2.5rem", fontFamily: "Outfit, sans-serif", fontWeight: 700, fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.06em", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "#fff", transition: "all 0.25s" }}>
