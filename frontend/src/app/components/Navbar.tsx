@@ -75,7 +75,7 @@ export default function Navbar() {
         <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
           <Link href="/matches" className={styles.link} onClick={closeMenu}>Matches</Link>
           <Link href="/leaderboard" className={styles.link} onClick={closeMenu}>Leaderboard</Link>
-          <Link href="/dashboard" className={styles.link} onClick={closeMenu}>Dashboard</Link>
+          {isLoggedIn && <Link href="/dashboard" className={styles.link} onClick={closeMenu}>Dashboard</Link>}
           {isAdmin && <Link href="/admin" className={styles.link} onClick={closeMenu}>Admin</Link>}
 
           <div className={styles.auth}>

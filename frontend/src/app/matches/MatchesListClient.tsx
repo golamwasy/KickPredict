@@ -324,7 +324,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                             </span>
                           </div>
                         )}
-                        {activeTab === 'past' && (
+                        {activeTab === 'past' && isLoggedIn && (
                           <div className="action-area">
                             <span className="action-text" style={{ color: '#AAAAAA' }}>
                               View Details →

@@ -33,13 +33,14 @@ KickPredict/
 ### 🔄 ESPN Sync & Automated Match Flow
 Matches are synchronized from the ESPN Scoreboard API every minute via an automated backend cron job. The state machine for a match is structured as follows:
 
-| Match Status | Time Window / Condition | Prediction Status | Scoring State |
+| Match Status | Time Window / Condition | Betting Status | Settlement State |
 | :--- | :--- | :--- | :--- |
 | **`UPCOMING`** | Kickoff is more than 24 hours away. | ❌ Disabled | N/A |
 | **`OPEN`** | Kickoff is within 24 hours. |  Active (Predictable) | N/A |
 | **`LOCKED`** | Kickoff time has passed, but the match is not live yet. | 🔒 Closed | N/A |
 | **`LIVE`** | Match is actively in progress. | 🔒 Closed | N/A |
-| **`FINISHED`** | Match is completed on the ESPN feed. | 🔒 Closed |  Points calculated |
+| **`FINISHED`** | Match is completed on the ESPN feed. | 🔒 Closed | Bets Settled |
+| **`CANCELLED`** | Match postponed or cancelled on ESPN feed. | 🔒 Closed | Bets Voided (Refunded) |
 
 *Note: If the ESPN API is delayed, the backend scheduler runs a fallback mechanism to forcefully lock `OPEN` matches once their scheduled kickoff time is reached.*
 
@@ -47,15 +48,22 @@ Matches are synchronized from the ESPN Scoreboard API every minute via an automa
 - Complete authentication flow: User registration, secure login, and email-based code verification.
 - Initial Admin user seeding script for administration tasks.
 
-### 📊 Prediction & Scoring Logic
-Points are calculated dynamically once a match status transitions to `FINISHED` according to the following scoring rules:
-- **Correct Outcome (Win/Loss/Draw)**: `+3 points`
-- **Exact Score**: `+5 points` (awarded for matching the exact scoreline)
-- **Correct Goals (Home/Away)**: `+1 point` per team for predicting that specific team's exact goal count
+### 💳 Wallet & Betting System
+Instead of a static points system, KickPredict features a virtual economy:
+- **Sign-Up Bonus**: Every verified user starts with a `Wallet` containing **10,000 KickCoins**.
+- **Bet Types**: Users can place varying stakes on multiple bet types per match, including:
+  - Match Winner (1X2)
+  - Exact Score
+  - Over/Under Goals
+  - Both Teams to Score
+  - First to Score
+  - Correct Margin
+  - Double Chance
+- **Dynamic Multipliers**: Payout odds are dynamically calculated server-side based on the official pre-tournament FIFA World Rankings (team strengths) and applied with a built-in house edge.
 
-### 🏆 Global Leaderboard
-- Interactive global leaderboard listing users ranked by their total accumulated points.
-- Real-time updates with performance metrics and accuracy tracking.
+### 🏆 Global Leaderboard & Dashboard
+- **Personal Dashboard**: Track your total bets, total won, hit rate, and complete betting history.
+- **Global Leaderboard**: Interactive leaderboard ranking users globally by their total KickCoin balance and betting accuracy.
 
 ### 🌐 Timezone Consistency
 - All dates and kickoff times are saved in **UTC** within the PostgreSQL database.
