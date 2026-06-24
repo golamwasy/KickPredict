@@ -42,7 +42,7 @@ export default function Rules() {
             <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(255,0,102,0.15)", border: "1px solid rgba(255,0,102,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", flexShrink: 0 }}>⚽</div>
             <div>
               <h2 style={{ fontSize: "1.3rem", color: "#1A1A1A", marginBottom: "0.2rem", fontWeight: 800 }}>Correct Goals — <span style={{ color: "var(--fifa-red)" }}>1 Point Each</span></h2>
-              <p style={{ fontSize: "0.95rem", color: "#555555", fontWeight: 500 }}>Earn 1 point per team whose goals you predict correctly</p>
+              <p style={{ fontSize: "0.95rem", color: "#555555", fontWeight: 500 }}>Earn 1 point per team whose goals you predict correctly (only awarded if not an Exact Score prediction)</p>
             </div>
           </div>
           <div style={{ background: "rgba(0,0,0,0.04)", borderRadius: "10px", padding: "1rem 1.25rem", fontSize: "0.95rem", color: "#444444", border: "1px solid rgba(0,0,0,0.05)" }}>
@@ -64,8 +64,8 @@ export default function Rules() {
         {/* Card 5 - Max Points */}
         <div className="card" style={{ textAlign: "center", background: "rgba(255, 255, 255, 0.95)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)", animation: "floatIn 0.6s ease 0.5s both", padding: "2.5rem" }}>
           <p style={{ color: "#777777", marginBottom: "0.5rem", fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 800 }}>Maximum points per match</p>
-          <div style={{ fontSize: "5rem", fontWeight: 900, color: "var(--fifa-green)", fontFamily: "Outfit, sans-serif", textShadow: "0 8px 24px rgba(0,230,118,0.25)" }}>10</div>
-          <p style={{ color: "#444444", fontSize: "1.05rem", fontWeight: 600 }}>3 (result) + 5 (exact score) + 1 + 1 (goals)</p>
+          <div style={{ fontSize: "5rem", fontWeight: 900, color: "var(--fifa-green)", fontFamily: "Outfit, sans-serif", textShadow: "0 8px 24px rgba(0,230,118,0.25)" }}>8</div>
+          <p style={{ color: "#444444", fontSize: "1.05rem", fontWeight: 600 }}>3 (result) + 5 (exact score)</p>
         </div>
       </div>
       <style>{"@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }"}</style>
