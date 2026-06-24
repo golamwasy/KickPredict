@@ -96,20 +96,6 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               const flag1Url = getFlagImgUrl(match.team1?.code);
               const flag2Url = getFlagImgUrl(match.team2?.code);
 
-              const getPredictionText = () => {
-                if (!isLoggedIn) return null;
-                // Show the MATCH_WINNER bet for live scoreboard display
-                const bet = userPredictions.find((b: any) => b.matchId === match.id && b.betType === 'MATCH_WINNER');
-                if (!bet) return null;
-                const outcome = (bet.predictedData as any)?.outcome;
-                if (outcome === 'HOME') return `${match.team1?.name || 'Home'} Win`;
-                if (outcome === 'AWAY') return `${match.team2?.name || 'Away'} Win`;
-                if (outcome === 'DRAW') return 'Draw';
-                return null;
-              };
-
-              const predText = getPredictionText();
-
               return (
                 <div key={match.id} style={{ marginBottom: '1.25rem' }}>
                   {/* TV Scoreboard Pill Graphic as the Card */}
@@ -131,11 +117,6 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
                     {/* Score Capsule & Prediction Wrapper */}
                     <div className="score-capsule-wrapper">
-                      {predText && (
-                        <div className="live-prediction-top-tab">
-                          PREDICTED
-                        </div>
-                      )}
 
                       <div className="live-score-capsule">
                         <span className="live-score-text">{match.team1Goals ?? 0}</span>
@@ -151,12 +132,6 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                         
                         <span className="live-score-text">{match.team2Goals ?? 0}</span>
                       </div>
-
-                      {predText && (
-                        <div className="live-prediction-tab">
-                          {predText}
-                        </div>
-                      )}
                     </div>
 
                     {/* Team 2 Name & Flag */}
