@@ -7,12 +7,12 @@ const CODE_MAP = {
   HAI: 'HT', CUW: 'CW',
 
   // Europe
-  FRA: 'FR', GER: 'DE', ENG: 'GB', ESP: 'ES', POR: 'PT',
+  FRA: 'FR', GER: 'DE', ENG: 'gb-eng', ESP: 'ES', POR: 'PT',
   ITA: 'IT', NED: 'NL', BEL: 'BE', CRO: 'HR', SRB: 'RS',
   SUI: 'CH', DEN: 'DK', POL: 'PL', AUT: 'AT', HUN: 'HU',
   CZE: 'CZ', SVK: 'SK', GRE: 'GR', TUR: 'TR', UKR: 'UA',
   SWE: 'SE', NOR: 'NO', FIN: 'FI', ROM: 'RO', SLO: 'SI',
-  BIH: 'BA', ISL: 'IS', IRL: 'IE', SCO: 'GB', WAL: 'GB',
+  BIH: 'BA', ISL: 'IS', IRL: 'IE', SCO: 'gb-sct', WAL: 'gb-wls',
 
   // Africa
   ALG: 'DZ', MAR: 'MA', SEN: 'SN', NGA: 'NG', GHA: 'GH',
@@ -33,6 +33,16 @@ const CODE_MAP = {
 export function getFlag(code: string): string {
   const iso2 = CODE_MAP[code?.toUpperCase() as keyof typeof CODE_MAP];
   if (!iso2) return '🏳️';
+
+  if (iso2.includes('-') || iso2.length > 2) {
+    const cleanCode = iso2.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return [
+      String.fromCodePoint(0x1F3F4),
+      ...cleanCode.split('').map((c: string) => String.fromCodePoint(0xE0000 + c.charCodeAt(0))),
+      String.fromCodePoint(0xE007F)
+    ].join('');
+  }
+
   return iso2
     .toUpperCase()
     .split('')
