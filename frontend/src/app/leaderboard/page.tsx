@@ -29,7 +29,7 @@ export default async function LeaderboardPage() {
           <span>Rank</span>
           <span>Player</span>
           <span style={{ textAlign: "center" }}>Points</span>
-          <span className="lb-col-hide" style={{ textAlign: "center" }}>Predicted (Finished)</span>
+          <span className="lb-col-hide" style={{ textAlign: "center", whiteSpace: "nowrap" }}>Predicted (Done)</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Corrected</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Exact Scores</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Accuracy</span>
@@ -43,8 +43,8 @@ export default async function LeaderboardPage() {
             return (
               <div key={user.id} className={`lb-row ${colorClass}`} style={{ animation: `floatIn 0.5s ease ${i * 0.05}s both` }}>
                 <div>
-                  <div className={"rank-badge rank-" + (i < 3 ? (i+1) : "other")}>
-                    {i < 3 ? ["🥇","🥈","🥉"][i] : "#" + user.rank}
+                  <div className={"rank-badge rank-" + (i < 3 ? (i + 1) : "other")}>
+                    {i < 3 ? ["🥇", "🥈", "🥉"][i] : "#" + user.rank}
                   </div>
                 </div>
                 <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>{user.username}</div>

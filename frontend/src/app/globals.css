@@ -362,7 +362,7 @@ button {
 /* === LEADERBOARD === */
 .lb-row {
   display: grid;
-  grid-template-columns: 64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+  grid-template-columns: 64px 2fr 1.1fr 1.8fr 1.1fr 1.3fr 1fr;
   align-items: center;
   padding: 1.25rem;
   border: 3px solid var(--fifa-black);
@@ -446,7 +446,7 @@ button {
 
 .lb-header {
   display: grid;
-  grid-template-columns: 64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+  grid-template-columns: 64px 2fr 1.1fr 1.8fr 1.1fr 1.3fr 1fr;
 }
 
 @media (max-width:768px) {
@@ -456,7 +456,7 @@ button {
 
   .lb-row,
   .lb-header {
-    grid-template-columns: 64px 2fr 1.2fr 1fr 1fr 1.3fr 1fr;
+    grid-template-columns: 64px 2fr 1.1fr 1.8fr 1.1fr 1.3fr 1fr;
     min-width: 800px;
   }
 
