@@ -13,6 +13,7 @@ router.get('/', async (req: Request, res: Response) => {
         COALESCE(p_summary."correctResults", 0)::int as "correctResults",
         COALESCE(p_summary."exactScores", 0)::int as "exactScores",
         COALESCE(pred_summary."totalPredictions", 0)::int as "totalPredictions",
+        COALESCE(pred_summary."resolvedPredictions", 0)::int as "resolvedPredictions",
         CASE
           WHEN COALESCE(pred_summary."resolvedPredictions", 0) > 0
           THEN ROUND((COALESCE(p_summary."correctResults", 0)::float / COALESCE(pred_summary."resolvedPredictions", 0)::float) * 100)::int

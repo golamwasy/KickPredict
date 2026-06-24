@@ -29,7 +29,7 @@ export default async function LeaderboardPage() {
           <span>Rank</span>
           <span>Player</span>
           <span style={{ textAlign: "center" }}>Points</span>
-          <span className="lb-col-hide" style={{ textAlign: "center" }}>Predicted</span>
+          <span className="lb-col-hide" style={{ textAlign: "center" }}>Predicted (Finished)</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Corrected</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Exact Scores</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Accuracy</span>
@@ -49,7 +49,7 @@ export default async function LeaderboardPage() {
                 </div>
                 <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>{user.username}</div>
                 <div style={{ fontWeight: 900, fontSize: "1.2rem", fontFamily: "Outfit, sans-serif", textAlign: "center" }}>{user.totalPoints} <span style={{ fontSize: "0.7rem", fontWeight: 600 }}>pts</span></div>
-                <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.totalPredictions}</div>
+                <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.totalPredictions} ({user.resolvedPredictions})</div>
                 <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.correctResults}</div>
                 <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.exactScores}</div>
                 <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.accuracy}%</div>
