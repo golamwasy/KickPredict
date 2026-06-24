@@ -96,8 +96,29 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               const flag1Url = getFlagImgUrl(match.team1?.code);
               const flag2Url = getFlagImgUrl(match.team2?.code);
 
+              const getPredictionText = () => {
+                if (!isLoggedIn) return null;
+                const pred = userPredictions.find((p: any) => p.matchId === match.id);
+                if (!pred || pred.skipped) return null;
+                if (pred.team1Goals !== null && pred.team2Goals !== null) {
+                  return `${pred.team1Goals}\u00a0\u00a0\u00a0\u00a0–\u00a0\u00a0\u00a0\u00a0${pred.team2Goals}`;
+                }
+                if (pred.result === 'TEAM1') {
+                  return `${match.team1?.name || 'TBD'} Win`;
+                }
+                if (pred.result === 'TEAM2') {
+                  return `${match.team2?.name || 'TBD'} Win`;
+                }
+                if (pred.result === 'DRAW') {
+                  return 'Draw';
+                }
+                return null;
+              };
+
+              const predText = getPredictionText();
+
               return (
-                <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
+                <div key={match.id} style={{ marginBottom: '1.25rem' }}>
                   {/* TV Scoreboard Pill Graphic as the Card */}
                   <div className="scoreboard-pill-card">
                     {/* Team 1 Name & Flag */}
@@ -115,20 +136,34 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       </span>
                     </div>
 
-                    {/* Score Capsule */}
-                    <div className="live-score-capsule">
-                      <span className="live-score-text">{match.team1Goals ?? 0}</span>
-                      
-                      {/* FIFA 26 Logo Badge */}
-                      <div className="fifa-logo-badge">
-                        <img 
-                          src="/fifa-logo-2026.png" 
-                          alt="FIFA 2026" 
-                          className="fifa-logo-img"
-                        />
+                    {/* Score Capsule & Prediction Wrapper */}
+                    <div className="score-capsule-wrapper">
+                      {predText && (
+                        <div className="live-prediction-top-tab">
+                          PREDICTED
+                        </div>
+                      )}
+
+                      <div className="live-score-capsule">
+                        <span className="live-score-text">{match.team1Goals ?? 0}</span>
+                        
+                        {/* FIFA 26 Logo Badge */}
+                        <div className="fifa-logo-badge">
+                          <img 
+                            src="/fifa-logo-2026.png" 
+                            alt="FIFA 2026" 
+                            className="fifa-logo-img"
+                          />
+                        </div>
+                        
+                        <span className="live-score-text">{match.team2Goals ?? 0}</span>
                       </div>
-                      
-                      <span className="live-score-text">{match.team2Goals ?? 0}</span>
+
+                      {predText && (
+                        <div className="live-prediction-tab">
+                          {predText}
+                        </div>
+                      )}
                     </div>
 
                     {/* Team 2 Name & Flag */}
@@ -146,7 +181,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>

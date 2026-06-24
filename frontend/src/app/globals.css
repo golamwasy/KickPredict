@@ -841,12 +841,17 @@ button {
   box-shadow: 0 15px 35px rgba(59, 246, 228, 0.25), 0 0 20px rgba(255, 13, 30, 0.15);
 }
 
-/* Score Capsule inside pill */
-.live-score-capsule {
+/* Center Score Capsule Wrapper */
+.score-capsule-wrapper {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* Score Capsule inside pill */
+.live-score-capsule {
   height: 84px;
   background: #3bf6e4; /* Neon Cyan */
   color: #0d0d0d;
@@ -856,9 +861,84 @@ button {
   justify-content: center;
   gap: 1.5rem;
   padding: 0 2.2rem;
-  z-index: 10;
+  z-index: 11;
   box-shadow: 0 8px 24px rgba(59, 246, 228, 0.4);
   border: 4px solid #000000;
+  position: relative;
+}
+
+/* Live Prediction Top Tab over Score Capsule */
+.live-prediction-top-tab {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #b288fd; /* Pastel purple background */
+  color: #000000; /* Black text for high contrast */
+  border-radius: 16px 16px 0 0;
+  padding: 0.35rem 1.8rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: 0 -6px 15px rgba(178, 136, 253, 0.35);
+  margin-bottom: -4px; /* merge overlapping borders */
+  border: 4px solid #000000;
+  border-bottom: none;
+  z-index: 9;
+  min-width: 140px;
+  white-space: nowrap;
+  animation: slideUpAbsolute 0.3s ease-out forwards;
+}
+
+@keyframes slideUpAbsolute {
+  from {
+    transform: translateX(-50%) translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Live Prediction Tab under Score Capsule */
+.live-prediction-tab {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  background: #b288fd; /* Pastel purple background */
+  color: #000000; /* Black text for high contrast */
+  border-radius: 0 0 16px 16px;
+  padding: 0.35rem 1.8rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: 0 6px 15px rgba(178, 136, 253, 0.35);
+  margin-top: -4px; /* merge overlapping borders */
+  border: 4px solid #000000;
+  border-top: none;
+  z-index: 9;
+  min-width: 140px;
+  white-space: nowrap;
+  animation: slideDownAbsolute 0.3s ease-out forwards;
+}
+
+@keyframes slideDownAbsolute {
+  from {
+    transform: translateX(-50%) translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
 }
 
 .live-score-text {
@@ -892,6 +972,7 @@ button {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: scale(1.45);
 }
 
 /* Scoreboard Team Container & Text Styles */
@@ -947,6 +1028,37 @@ button {
     border: 2px solid transparent;
     background: linear-gradient(#000000, #000000) padding-box,
                 linear-gradient(to right, #3bf6e4 0%, #7000ff 25%, #ff0d1e 50%, #ffe600 70%, #3bff37 85%, #7000ff 100%) border-box;
+  }
+  .live-prediction-top-tab {
+    padding: 0.2rem 1.2rem;
+    font-size: 0.6rem;
+    border: 3px solid #000000;
+    border-bottom: none;
+    margin-bottom: -3px;
+    border-radius: 12px 12px 0 0;
+    min-width: 100px;
+    transform: translateX(-50%) translateY(9px);
+    animation: slideUpAbsoluteMobile 0.3s ease-out forwards;
+  }
+  @keyframes slideUpAbsoluteMobile {
+    from {
+      transform: translateX(-50%) translateY(9px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .live-prediction-tab {
+    padding: 0.2rem 1.2rem;
+    font-size: 0.6rem;
+    border: 3px solid #000000;
+    border-top: none;
+    margin-top: -3px;
+    border-radius: 0 0 12px 12px;
+    min-width: 100px;
   }
   .live-score-capsule {
     height: 64px;
