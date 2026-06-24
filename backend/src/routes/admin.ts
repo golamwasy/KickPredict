@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticate, requireAdmin, AuthRequest } from '../middlewares/auth';
 import prisma from '../prisma';
+import { settleBetsForMatch } from '../services/settlement';
 
 const router = Router();
 
@@ -11,7 +12,8 @@ router.use(authenticate, requireAdmin);
 router.get('/summary', async (req: AuthRequest, res: Response) => {
   try {
     const totalUsers = await prisma.user.count();
-    const totalPredictions = await prisma.prediction.count({ where: { skipped: false } });
+    const totalBets = await prisma.bet.count();
+    const pendingBets = await prisma.bet.count({ where: { status: 'PENDING' } });
     const recentSyncLogs = await prisma.apiSyncLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10
@@ -19,7 +21,8 @@ router.get('/summary', async (req: AuthRequest, res: Response) => {
 
     res.json({
       totalUsers,
-      totalPredictions,
+      totalBets,
+      pendingBets,
       recentSyncLogs
     });
   } catch (error) {
@@ -38,7 +41,8 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
         fullName: true,
         isActive: true,
         role: true,
-        createdAt: true
+        createdAt: true,
+        wallet: { select: { balance: true } },
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -72,22 +76,28 @@ router.put('/users/:id/toggle-status', async (req: AuthRequest, res: Response) =
   }
 });
 
-// Trigger point recalculation
-import { calculatePointsForMatch } from '../services/scoring';
-router.post('/recalculate-points', async (req: AuthRequest, res: Response) => {
+// Manually trigger bet settlement for all finished matches
+router.post('/settle-bets', async (req: AuthRequest, res: Response) => {
   try {
     const finishedMatches = await prisma.match.findMany({
       where: { status: 'FINISHED' }
     });
 
+    const results: { matchId: string; status: string }[] = [];
+
     for (const match of finishedMatches) {
-      await calculatePointsForMatch(match.id);
+      try {
+        await settleBetsForMatch(match.id);
+        results.push({ matchId: match.id, status: 'settled' });
+      } catch (err: any) {
+        results.push({ matchId: match.id, status: `error: ${err.message}` });
+      }
     }
 
-    res.json({ message: `Recalculated points for ${finishedMatches.length} matches` });
+    res.json({ message: `Settlement attempted for ${finishedMatches.length} matches`, results });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to recalculate points' });
+    res.status(500).json({ error: 'Failed to settle bets' });
   }
 });
 

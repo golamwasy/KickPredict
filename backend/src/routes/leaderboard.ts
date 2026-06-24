@@ -5,44 +5,39 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
+    // Leaderboard: rank by KickCoin wallet balance (highest first)
     const leaderboard: any[] = await prisma.$queryRaw`
       SELECT
         u.id,
         u.username,
-        COALESCE(p_summary."totalPoints", 0)::int as "totalPoints",
-        COALESCE(p_summary."correctResults", 0)::int as "correctResults",
-        COALESCE(p_summary."exactScores", 0)::int as "exactScores",
-        COALESCE(pred_summary."totalPredictions", 0)::int as "totalPredictions",
-        COALESCE(pred_summary."resolvedPredictions", 0)::int as "resolvedPredictions",
+        COALESCE(w.balance, 0)::int                                        AS "kickCoins",
+        COALESCE(bet_summary."totalBets", 0)::int                          AS "totalBets",
+        COALESCE(bet_summary."wonBets", 0)::int                            AS "wonBets",
+        COALESCE(bet_summary."lostBets", 0)::int                           AS "lostBets",
         CASE
-          WHEN COALESCE(pred_summary."resolvedPredictions", 0) > 0
-          THEN ROUND((COALESCE(p_summary."correctResults", 0)::float / COALESCE(pred_summary."resolvedPredictions", 0)::float) * 100)::int
+          WHEN COALESCE(bet_summary."settledBets", 0) > 0
+          THEN ROUND(
+            (COALESCE(bet_summary."wonBets", 0)::float /
+             COALESCE(bet_summary."settledBets", 0)::float) * 100
+          )::int
           ELSE 0
-        END as "accuracy"
+        END AS "accuracy"
       FROM "User" u
+      LEFT JOIN "Wallet" w ON w."userId" = u.id
       LEFT JOIN (
         SELECT
-          "userId",
-          SUM("totalPoints") as "totalPoints",
-          SUM(CASE WHEN "pointsResult" > 0 THEN 1 ELSE 0 END) as "correctResults",
-          SUM(CASE WHEN "pointsExactScore" > 0 THEN 1 ELSE 0 END) as "exactScores"
-        FROM "Point"
-        GROUP BY "userId"
-      ) p_summary ON u.id = p_summary."userId"
-      LEFT JOIN (
-        SELECT
-          pred."userId",
-          COUNT(CASE WHEN pred.skipped = false THEN 1 END) as "totalPredictions",
-          COUNT(CASE WHEN m.status = 'FINISHED' AND pred.skipped = false THEN 1 END) as "resolvedPredictions"
-        FROM "Prediction" pred
-        LEFT JOIN "Match" m ON pred."matchId" = m.id
-        GROUP BY pred."userId"
-      ) pred_summary ON u.id = pred_summary."userId"
+          b."userId",
+          COUNT(*)::int                                             AS "totalBets",
+          SUM(CASE WHEN b.status = 'WON'  THEN 1 ELSE 0 END)::int AS "wonBets",
+          SUM(CASE WHEN b.status = 'LOST' THEN 1 ELSE 0 END)::int AS "lostBets",
+          SUM(CASE WHEN b.status IN ('WON','LOST') THEN 1 ELSE 0 END)::int AS "settledBets"
+        FROM "Bet" b
+        GROUP BY b."userId"
+      ) bet_summary ON u.id = bet_summary."userId"
       WHERE u.role::text != 'ADMIN'
-      ORDER BY "totalPoints" DESC, "exactScores" DESC, "correctResults" DESC, "accuracy" DESC;
+      ORDER BY "kickCoins" DESC, "wonBets" DESC, "accuracy" DESC;
     `;
 
-    // Add rank
     const rankedLeaderboard = leaderboard.map((user, index) => ({
       ...user,
       rank: index + 1,

@@ -1,5 +1,5 @@
 import prisma from '../prisma';
-import { calculatePointsForMatch } from './scoring';
+import { settleBetsForMatch } from './settlement';
 
 const ESPN_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100';
 
@@ -41,21 +41,17 @@ export const syncESPNData = async () => {
       // If the match is already finished in the DB, we can skip processing it completely
       const existingMatch = matchCache.get(apiFixtureId);
       if (existingMatch && existingMatch.status === 'FINISHED') {
-        // Self-healing: Check if there are active predictions that still do not have points
-        const hasUncalculatedPoints = await prisma.prediction.findFirst({
-          where: {
-            matchId: existingMatch.id,
-            skipped: false,
-            points: null,
-          },
+        // Self-healing: Check if there are unsettled bets for this finished match
+        const hasUnsettledBets = await prisma.bet.findFirst({
+          where: { matchId: existingMatch.id, status: 'PENDING' },
         });
 
-        if (hasUncalculatedPoints) {
-          console.log(`[Sync] Self-healing: Match ${existingMatch.id} is FINISHED but has predictions without points. Retrying scoring...`);
+        if (hasUnsettledBets) {
+          console.log(`[Sync] Self-healing: Match ${existingMatch.id} is FINISHED but has unsettled bets. Retrying settlement...`);
           try {
-            await calculatePointsForMatch(existingMatch.id);
-          } catch (scoringError) {
-            console.error(`[Sync Error] Self-healing points recalculation failed for match ${existingMatch.id}:`, scoringError);
+            await settleBetsForMatch(existingMatch.id);
+          } catch (settlementError) {
+            console.error(`[Sync Error] Self-healing settlement failed for match ${existingMatch.id}:`, settlementError);
           }
         }
         continue;
@@ -140,14 +136,13 @@ export const syncESPNData = async () => {
           }
         });
 
-        // If match just finished, trigger scoring calculation
+        // If match just finished, trigger bet settlement
         if (matchStatus === 'FINISHED' && existingMatch?.status !== 'FINISHED') {
           try {
-            await calculatePointsForMatch(updatedMatch.id);
-          } catch (scoringError) {
-            console.error(`[Sync Error] Points calculation failed for match ${updatedMatch.id}:`, scoringError);
-            // We intentionally do not throw the error here, allowing the match to remain FINISHED in the DB.
-            // The self-healing logic above will automatically retry point calculation on the next sync tick.
+            await settleBetsForMatch(updatedMatch.id);
+          } catch (settlementError) {
+            console.error(`[Sync Error] Bet settlement failed for match ${updatedMatch.id}:`, settlementError);
+            // Intentionally not re-throwing: self-healing above will retry on next sync tick
           }
         }
       }

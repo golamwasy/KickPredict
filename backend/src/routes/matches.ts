@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../prisma';
 import { syncESPNData } from '../services/espnSync';
+import { getMultiplier } from '../services/multiplier';
+import { BetType } from '@prisma/client';
 
 const router = Router();
 
@@ -65,23 +67,59 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
-    // Aggregate predictions anonymously
-    const totalPredictions = await prisma.prediction.count({ where: { matchId: id, skipped: false } });
-    const team1Wins = await prisma.prediction.count({ where: { matchId: id, result: 'TEAM1' } });
-    const draws = await prisma.prediction.count({ where: { matchId: id, result: 'DRAW' } });
-    const team2Wins = await prisma.prediction.count({ where: { matchId: id, result: 'TEAM2' } });
+    // Aggregate MATCH_WINNER bets for the community stats bar chart
+    const totalBets = await prisma.bet.count({
+      where: { matchId: id, betType: 'MATCH_WINNER' },
+    });
+    const homeWinBets = await prisma.bet.count({
+      where: { matchId: id, betType: 'MATCH_WINNER', predictedData: { path: ['outcome'], equals: 'HOME' } },
+    });
+    const drawBets = await prisma.bet.count({
+      where: { matchId: id, betType: 'MATCH_WINNER', predictedData: { path: ['outcome'], equals: 'DRAW' } },
+    });
+    const awayWinBets = await prisma.bet.count({
+      where: { matchId: id, betType: 'MATCH_WINNER', predictedData: { path: ['outcome'], equals: 'AWAY' } },
+    });
 
     res.json({
       ...match,
       stats: {
-        totalPredictions,
-        team1WinPercentage: totalPredictions ? Math.round((team1Wins / totalPredictions) * 100) : 0,
-        drawPercentage: totalPredictions ? Math.round((draws / totalPredictions) * 100) : 0,
-        team2WinPercentage: totalPredictions ? Math.round((team2Wins / totalPredictions) * 100) : 0,
+        totalPredictions: totalBets,
+        team1WinPercentage: totalBets ? Math.round((homeWinBets / totalBets) * 100) : 0,
+        drawPercentage: totalBets ? Math.round((drawBets / totalBets) * 100) : 0,
+        team2WinPercentage: totalBets ? Math.round((awayWinBets / totalBets) * 100) : 0,
       }
     });
+
   } catch (error) {
     console.error('Error fetching matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get odds for a specific match
+router.post('/:id/odds', async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { betType, predictedData } = req.body;
+
+    const match = await prisma.match.findUnique({
+      where: { id },
+      include: { team1: true, team2: true },
+    });
+
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+    if (!betType || !predictedData) return res.status(400).json({ error: 'betType and predictedData required' });
+
+    const multiplier = getMultiplier(betType as BetType, {
+      predictedData,
+      team1Code: match.team1.code,
+      team2Code: match.team2.code
+    });
+
+    res.json({ multiplier });
+  } catch (error) {
+    console.error('Error fetching odds:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

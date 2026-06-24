@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import matchRoutes from './routes/matches';
-import predictionRoutes from './routes/predictions';
+import betRoutes from './routes/bets';
 import leaderboardRoutes from './routes/leaderboard';
 import adminRoutes from './routes/admin';
 import { startCronJobs } from './services/cron';
@@ -23,7 +23,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/matches', matchRoutes);
-app.use('/api/predictions', predictionRoutes);
+app.use('/api', betRoutes); // covers /api/bets and /api/wallet
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 

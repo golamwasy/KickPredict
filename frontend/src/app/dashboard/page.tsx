@@ -4,20 +4,43 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '../utils/api';
 
+const BET_TYPE_LABELS: Record<string, string> = {
+  MATCH_WINNER: '🏆 Match Winner',
+  EXACT_SCORE: '🎯 Exact Score',
+  OVER_UNDER_GOALS: '📊 Over / Under',
+  BOTH_TEAMS_TO_SCORE: '⚽ Both Teams Score',
+  CORRECT_MARGIN: '📏 Goal Margin',
+  FIRST_TO_SCORE: '⚡ First to Score',
+  DOUBLE_CHANCE: '🛡️ Double Chance',
+};
+
+const BET_STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
+  PENDING: { color: '#E67E22', bg: 'rgba(230,126,34,0.15)', label: '⏳ Pending' },
+  WON: { color: '#27AE60', bg: 'rgba(39,174,96,0.15)', label: '🏆 Won' },
+  LOST: { color: '#E74C3C', bg: 'rgba(231,76,60,0.15)', label: '❌ Lost' },
+  VOID: { color: '#95A5A6', bg: 'rgba(149,165,166,0.15)', label: '↩️ Refunded' },
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [predictions, setPredictions] = useState<any[]>([]);
+  const [bets, setBets] = useState<any[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
     setUser(JSON.parse(localStorage.getItem('user') || '{}'));
-    fetch(`${API_BASE_URL}/api/predictions/me`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setPredictions(data); setLoading(false); })
-      .catch(() => setLoading(false));
+
+    Promise.all([
+      fetch(`${API_BASE_URL}/api/bets/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/wallet/me`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+    ]).then(([betsData, walletData]) => {
+      if (Array.isArray(betsData)) setBets(betsData);
+      if (walletData?.balance !== undefined) setWalletBalance(walletData.balance);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [router]);
 
   if (loading) return (
@@ -28,16 +51,21 @@ export default function Dashboard() {
     </div>
   );
 
-  const totalPoints = predictions.reduce((acc, p) => acc + (p.points?.totalPoints || 0), 0);
-  const finished = predictions.filter(p => p.match.status === 'FINISHED' && !p.skipped);
-  const sorted = [...predictions].sort((a, b) => {
-    return new Date(b.match.kickoffTime).getTime() - new Date(a.match.kickoffTime).getTime();
-  });
+  const totalBets = bets.length;
+  const wonBets = bets.filter(b => b.status === 'WON');
+  const lostBets = bets.filter(b => b.status === 'LOST');
+  const pendingBets = bets.filter(b => b.status === 'PENDING');
+  const totalWon = wonBets.reduce((acc, b) => acc + b.potentialPayout, 0);
+  const totalStaked = bets.reduce((acc, b) => acc + b.stake, 0);
+  const settledBets = wonBets.length + lostBets.length;
+  const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
+
+  const sorted = [...bets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const stats = [
-    { label: 'Total Points', value: totalPoints, accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
-    { label: 'Predictions', value: predictions.filter(p => !p.skipped).length, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
-    { label: 'Finished', value: finished.length, accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
+    { label: '🪙 Balance', value: walletBalance !== null ? walletBalance.toLocaleString() + ' KC' : '—', accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
+    { label: '🎯 Total Bets', value: totalBets, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
+    { label: '🏆 Win Rate', value: accuracy + '%', accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
   ];
 
   return (
@@ -49,100 +77,77 @@ export default function Dashboard() {
         </h1>
       </div>
 
+      {/* Stats */}
       <div className="stats-grid">
         {stats.map((stat, i) => (
           <div key={stat.label} className={`card ${stat.accent}`} style={{ textAlign: 'center', animation: `floatIn 0.5s ease ${0.1 + i * 0.05}s both` }}>
             <p style={{ color: '#000000', fontSize: '0.78rem', fontFamily: 'Outfit, sans-serif', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>{stat.label}</p>
-            <div style={{ fontSize: '3rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif', color: stat.color, lineHeight: 1 }}>{stat.value}</div>
+            <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif', color: stat.color, lineHeight: 1 }}>{stat.value}</div>
           </div>
         ))}
       </div>
 
-      <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', animation: 'floatIn 0.5s ease 0.25s both' }}>Prediction History</h2>
+      {/* Quick summary row */}
+      {totalBets > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '2.5rem' }}>
+          {[
+            { label: 'Pending', v: pendingBets.length, color: '#E67E22' },
+            { label: 'Won', v: wonBets.length, color: '#27AE60' },
+            { label: 'Lost', v: lostBets.length, color: '#E74C3C' },
+            { label: 'Total Staked', v: totalStaked.toLocaleString() + ' KC', color: 'var(--fifa-black)' },
+            { label: 'Total Won', v: totalWon.toLocaleString() + ' KC', color: '#27AE60' },
+          ].map(s => (
+            <div key={s.label} className="card" style={{ padding: '1rem', textAlign: 'center', marginBottom: 0, boxShadow: '4px 4px 0px var(--fifa-black)', border: '2px solid var(--fifa-black)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{s.label}</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: s.color }}>{s.v}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {predictions.length === 0 ? (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.5rem', animation: 'floatIn 0.5s ease 0.25s both' }}>Bet History</h2>
+      </div>
+
+      {bets.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem', animation: 'floatIn 0.5s ease 0.3s both' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚽</div>
-          <p style={{ color: '#555555', marginBottom: '1.5rem' }}>You have not made any predictions yet.</p>
+          <p style={{ color: '#555555', marginBottom: '1.5rem' }}>You haven't placed any bets yet.</p>
           <Link href="/matches" className="btn-primary" style={{ width: 'auto', display: 'inline-flex', padding: '0.75rem 2rem' }}>Browse Matches</Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {sorted.map((pred, i) => (
-            <div key={pred.id} className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.05}s both` }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--fifa-orange)', marginBottom: '0.25rem', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>
-                  {new Date(pred.match.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
-                </div>
-                <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', marginBottom: '0.4rem' }}>
-                  {pred.match.team1?.name} <span style={{ color: '#555555' }}>vs</span> {pred.match.team2?.name}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#555555' }}>
-                  {pred.skipped ? (
-                    <>Your Prediction: <strong style={{ color: '#888888' }}>Opted Out</strong></>
-                  ) : (
-                    <>
-                      Your Prediction: <strong style={{ color: 'var(--fifa-purple)' }}>
-                        {pred.team1Goals !== null && pred.team2Goals !== null ? `${pred.team1Goals} - ${pred.team2Goals} ` : ''}
-                      </strong>
-                      {' '}({pred.result === 'TEAM1' ? `${pred.match.team1?.name} Win` : pred.result === 'TEAM2' ? `${pred.match.team2?.name} Win` : 'Draw'})
-                    </>
-                  )}
-                </div>
-                {pred.match.status === 'FINISHED' && (
-                  <div style={{ fontSize: '0.85rem', color: '#555555', marginTop: '0.25rem' }}>
-                    Actual: <strong style={{ color: 'var(--fifa-black)' }}>{pred.match.team1Goals} - {pred.match.team2Goals}</strong>
-                    {' '}({pred.match.team1Goals > pred.match.team2Goals ? `${pred.match.team1?.name} Win` : pred.match.team1Goals < pred.match.team2Goals ? `${pred.match.team2?.name} Win` : 'Draw'})
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          {sorted.map((bet, i) => {
+            const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
+            return (
+              <Link key={bet.id} href={`/matches/${bet.matchId}`} style={{ textDecoration: 'none' }}>
+                <div className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.04}s both`, cursor: 'pointer', transition: 'border-color 0.2s' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--fifa-orange)', marginBottom: '0.2rem', letterSpacing: '0.05em' }}>
+                      {new Date(bet.match?.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.3rem', color: 'var(--fifa-black)' }}>
+                      {bet.match?.team1?.name} <span style={{ color: '#888888' }}>vs</span> {bet.match?.team2?.name}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#555555' }}>
+                      {BET_TYPE_LABELS[bet.betType] || bet.betType}
+                    </div>
                   </div>
-                )}
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                {pred.skipped ? (
-                  <span style={{
-                    fontFamily: 'Outfit, sans-serif',
-                    fontWeight: 900,
-                    fontSize: '0.85rem',
-                    color: '#888888',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}>
-                    Opted Out
-                  </span>
-                ) : (
-                  <>
-                    {pred.match.status === 'OPEN' && (
-                      <Link
-                        href={`/matches/${pred.match.id}`}
-                        className="badge badge-open"
-                        style={{
-                          display: 'inline-flex',
-                          textDecoration: 'none',
-                          textAlign: 'center'
-                        }}
-                      >
-                        OPEN
-                      </Link>
-                    )}
-                    {(pred.match.status === 'LIVE' || pred.match.status === 'LOCKED') && (
-                      <span style={{
-                        fontFamily: 'Outfit, sans-serif',
-                        fontWeight: 900,
-                        fontSize: '0.85rem',
-                        color: 'var(--fifa-orange)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
-                  }}>
-                        In Progress
-                      </span>
-                    )}
-                    {pred.match.status === 'FINISHED' && (
-                      <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.1rem', color: 'var(--fifa-green)' }}>+{pred.points?.totalPoints || 0} pts</div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <span style={{ padding: '0.25rem 0.7rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, background: s.bg, color: s.color, border: `1px solid ${s.color}` }}>
+                      {s.label}
+                    </span>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555555', marginTop: '0.4rem' }}>
+                      {bet.stake.toLocaleString()} KC @ {bet.multiplier}×
+                    </div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: bet.status === 'WON' ? '#27AE60' : bet.status === 'LOST' ? '#E74C3C' : '#888888', marginTop: '0.15rem' }}>
+                      → {bet.potentialPayout.toLocaleString()} KC
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
       <style>{`@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`}</style>

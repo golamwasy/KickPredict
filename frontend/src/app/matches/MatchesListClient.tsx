@@ -21,14 +21,14 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
     }
     setIsLoggedIn(true);
 
-    fetch(`${API_BASE_URL}/api/predictions/me`, {
+    fetch(`${API_BASE_URL}/api/bets/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           setUserPredictions(data);
-          const ids = data.map((p: any) => p.matchId);
+          const ids = data.map((b: any) => b.matchId);
           setPredictedMatchIds(new Set(ids));
         }
       })
@@ -98,20 +98,13 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
               const getPredictionText = () => {
                 if (!isLoggedIn) return null;
-                const pred = userPredictions.find((p: any) => p.matchId === match.id);
-                if (!pred || pred.skipped) return null;
-                if (pred.team1Goals !== null && pred.team2Goals !== null) {
-                  return `${pred.team1Goals}\u00a0\u00a0\u00a0\u00a0–\u00a0\u00a0\u00a0\u00a0${pred.team2Goals}`;
-                }
-                if (pred.result === 'TEAM1') {
-                  return `${match.team1?.name || 'TBD'} Win`;
-                }
-                if (pred.result === 'TEAM2') {
-                  return `${match.team2?.name || 'TBD'} Win`;
-                }
-                if (pred.result === 'DRAW') {
-                  return 'Draw';
-                }
+                // Show the MATCH_WINNER bet for live scoreboard display
+                const bet = userPredictions.find((b: any) => b.matchId === match.id && b.betType === 'MATCH_WINNER');
+                if (!bet) return null;
+                const outcome = (bet.predictedData as any)?.outcome;
+                if (outcome === 'HOME') return `${match.team1?.name || 'Home'} Win`;
+                if (outcome === 'AWAY') return `${match.team2?.name || 'Away'} Win`;
+                if (outcome === 'DRAW') return 'Draw';
                 return null;
               };
 
@@ -288,7 +281,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                             {activeTab === 'open' && (
                               predictedMatchIds.has(match.id) ? (
-                                <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ PREDICTED</span>
+                                <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ BET PLACED</span>
                               ) : (
                                 <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
                               )
@@ -327,7 +320,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                         {activeTab === 'open' && (
                           <div className="action-area">
                             <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
-                              {predictedMatchIds.has(match.id) ? 'Update Prediction →' : 'Predict Now →'}
+                              {predictedMatchIds.has(match.id) ? 'View / Add Bets →' : 'Bet Now →'}
                             </span>
                           </div>
                         )}

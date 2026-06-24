@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import prisma from '../prisma';
 import { sendVerificationEmail } from '../services/email';
+import { createWalletForUser } from '../services/wallet';
 
 const router = Router();
 
@@ -114,7 +115,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
 
     // Create the permanent User with collision handling
     try {
-      await prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           fullName: pending.fullName,
           email: pending.email,
@@ -122,6 +123,9 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
           passwordHash: pending.passwordHash,
         },
       });
+
+      // Create wallet with 10,000 KickCoins signup bonus
+      await createWalletForUser(user.id);
     } catch (e: any) {
       if (e.code === 'P2002') {
         return res.status(400).json({ error: 'Username or email has already been registered and verified by someone else' });

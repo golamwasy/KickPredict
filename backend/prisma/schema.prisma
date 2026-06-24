@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id             String                   @id @default(uuid())
-  fullName       String                   @unique
-  email          String                   @unique
-  username       String                   @unique
+  id             String               @id @default(uuid())
+  fullName       String               @unique
+  email          String               @unique
+  username       String               @unique
   passwordHash   String
-  isActive       Boolean                  @default(true)
-  role           Role                     @default(USER)
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  predictions    Prediction[]
-  points         Point[]
+  isActive       Boolean              @default(true)
+  role           Role                 @default(USER)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  wallet         Wallet?
+  bets           Bet[]
   passwordTokens PasswordResetToken[]
 }
 
@@ -47,27 +47,26 @@ model PasswordResetToken {
 }
 
 model Team {
-  id        String  @id @default(uuid())
-  name      String  @unique
-  code      String  @unique
-  flagUrl   String?
+  id           String  @id @default(uuid())
+  name         String  @unique
+  code         String  @unique
+  flagUrl      String?
   team1Matches Match[] @relation("Team1")
   team2Matches Match[] @relation("Team2")
 }
 
 model Match {
-  id          String       @id @default(uuid())
-  team1Id     String
-  team1       Team         @relation("Team1", fields: [team1Id], references: [id])
-  team2Id     String
-  team2       Team         @relation("Team2", fields: [team2Id], references: [id])
-  kickoffTime DateTime
-  status      MatchStatus  @default(UPCOMING)
-  team1Goals  Int?
-  team2Goals  Int?
+  id           String      @id @default(uuid())
+  team1Id      String
+  team1        Team        @relation("Team1", fields: [team1Id], references: [id])
+  team2Id      String
+  team2        Team        @relation("Team2", fields: [team2Id], references: [id])
+  kickoffTime  DateTime
+  status       MatchStatus @default(UPCOMING)
+  team1Goals   Int?
+  team2Goals   Int?
   apiFixtureId Int?        @unique
-  predictions Prediction[]
-  points      Point[]
+  bets         Bet[]
 }
 
 enum MatchStatus {
@@ -78,42 +77,76 @@ enum MatchStatus {
   FINISHED
 }
 
-model Prediction {
-  id        String       @id @default(uuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  matchId   String
-  match     Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  team1Goals Int?
-  team2Goals Int?
-  result    MatchResult?
-  skipped   Boolean      @default(false)
-  points    Point?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+// ─── Wallet & Ledger ──────────────────────────────────────────────────────────
 
-  @@unique([userId, matchId])
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Int           @default(10000) // KickCoins, stored as integer
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
 }
 
-enum MatchResult {
-  TEAM1
-  DRAW
-  TEAM2
+model Transaction {
+  id           String          @id @default(uuid())
+  walletId     String
+  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type         TransactionType
+  amount       Int             // positive = credit, negative = debit
+  balanceAfter Int             // snapshot for auditability
+  betId        String?
+  bet          Bet?            @relation(fields: [betId], references: [id])
+  note         String?         // optional human-readable label
+  createdAt    DateTime        @default(now())
 }
 
-model Point {
-  id               String     @id @default(uuid())
-  userId           String
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  matchId          String
-  match            Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  predictionId     String     @unique
-  prediction       Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
-  pointsResult     Int        @default(0)
-  pointsExactScore Int        @default(0)
-  pointsTeam1Goals Int        @default(0)
-  pointsTeam2Goals Int        @default(0)
-  totalPoints      Int        @default(0)
+enum TransactionType {
+  SIGNUP_BONUS
+  BET_PLACED
+  BET_WON
+  BET_LOST
+  BET_REFUNDED
+  ADMIN_ADJUST
+}
+
+// ─── Betting ──────────────────────────────────────────────────────────────────
+
+model Bet {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId         String
+  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  betType         BetType
+  stake           Int         // KickCoins wagered
+  multiplier      Float       // locked at placement time
+  potentialPayout Int         // stake * multiplier, precomputed
+  predictedData   Json        // shape depends on betType (see settlement.ts)
+  status          BetStatus   @default(PENDING)
+  settledAt       DateTime?
+  createdAt       DateTime    @default(now())
+  transactions    Transaction[]
+
+  @@unique([userId, matchId, betType]) // one bet per type per match per user
+}
+
+enum BetType {
+  MATCH_WINNER          // 1X2: { outcome: "HOME"|"DRAW"|"AWAY" }
+  EXACT_SCORE           // { homeScore: 2, awayScore: 1 }
+  OVER_UNDER_GOALS      // { line: 2.5, side: "OVER"|"UNDER" }
+  BOTH_TEAMS_TO_SCORE   // { answer: true|false }
+  CORRECT_MARGIN        // { marginSide: "HOME"|"AWAY"|"DRAW", margin: 2 }
+  FIRST_TO_SCORE        // { team: "HOME"|"AWAY"|"NONE" }
+  DOUBLE_CHANCE         // { outcomes: ["HOME","DRAW"] }
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  VOID // match postponed/cancelled → refund stake
 }
 
 model ApiSyncLog {

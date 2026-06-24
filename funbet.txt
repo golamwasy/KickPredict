@@ -1,0 +1,354 @@
+================================================================
+PROJECT UPGRADE PLAN: Score Prediction Game -> Engagement-Driven Platform
+================================================================
+Prepared: June 2026
+Goal: Turn an existing "guess the winner / guess the score" site into a
+more fun, game-like product with signup credit, multipliers, and varied
+bet types, while keeping the stack (Next.js + Express + Prisma/Postgres +
+Docker + ESPN cron sync).
+
+This is virtual/play-money credit for engagement, not real-money gambling.
+That distinction matters legally (gambling licensing in Finland/EU is
+heavily regulated) and shapes some of the technical decisions below.
+Keep all language in the product as "credits" or "points," never "cash
+out," "withdraw," or "deposit," unless you have specifically decided to
+pursue a licensed real-money product (out of scope here).
+
+----------------------------------------------------------------
+1. CURRENT STATE (as I understand it)
+----------------------------------------------------------------
+- TypeScript monorepo
+- Next.js (React) frontend, CSS Modules, custom premium design
+- Node.js/Express backend
+- PostgreSQL + Prisma ORM
+- Local DB via Docker Compose
+- ESPN Scoreboard API (unofficial) pulled via node-cron for live
+  matches/scores, feeding prediction state
+- Core loop today: user predicts winner + exact score -> gets points
+  based on accuracy
+
+----------------------------------------------------------------
+2. WHAT'S CHANGING (scope of this upgrade)
+----------------------------------------------------------------
+A. New and existing user gets bonus: 10,000 credit balance
+B. Multiple bet/prediction types, not just "winner + exact score"
+C. Multipliers that scale payout based on risk/difficulty
+D. A real internal currency/ledger system (you don't have one yet --
+   today you have "points," which implies a scoring system, not an
+   account balance with a transaction history)
+E. Free API recommendation + integration plan for any new data needs
+
+----------------------------------------------------------------
+3. DATA MODEL CHANGES (Prisma schema additions)
+----------------------------------------------------------------
+You'll need to evolve from "prediction -> points" into "wallet ->
+wager -> settlement." Suggested new/changed models:
+
+model Wallet {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  balance       Int      @default(10000)   // store as integer (cents-like
+                                            // unit) to avoid float errors
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
+  type          TransactionType   // SIGNUP_BONUS, BET_PLACED, BET_WON,
+                                   // BET_LOST, BET_REFUNDED, ADMIN_ADJUST
+  amount        Int      // positive or negative
+  balanceAfter  Int      // snapshot for auditability
+  betId         String?
+  bet           Bet?     @relation(fields: [betId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+enum TransactionType {
+  SIGNUP_BONUS
+  BET_PLACED
+  BET_WON
+  BET_LOST
+  BET_REFUNDED
+  ADMIN_ADJUST
+}
+
+model Bet {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  matchId       String
+  match         Match      @relation(fields: [matchId], references: [id])
+  betType       BetType
+  stake         Int        // credits wagered
+  multiplier    Float      // locked in at placement time
+  potentialPayout Int      // stake * multiplier, precomputed
+  predictedData Json       // shape depends on betType, see section 4
+  status        BetStatus  @default(PENDING)
+  settledAt     DateTime?
+  createdAt     DateTime   @default(now())
+}
+
+enum BetType {
+  MATCH_WINNER          // 1X2: home / draw / away
+  EXACT_SCORE           // your original mechanic
+  OVER_UNDER_GOALS      // total goals over/under a line, e.g. 2.5
+  BOTH_TEAMS_TO_SCORE   // yes/no
+  CORRECT_MARGIN        // win by exact goal difference, not exact score
+  FIRST_TO_SCORE        // which team scores first
+  DOUBLE_CHANCE         // e.g. "home win OR draw"
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  VOID            // match postponed/cancelled -> refund stake
+}
+
+Why an integer balance, not Decimal/float: Decimal works too, but
+plain integers (treat 1 credit = smallest unit) avoids any floating
+point rounding bugs in payout math. Keep "10000" meaning "10,000.00
+credits" if you want decimals, by storing everything *100 internally
+(like Stripe does with cents), or just don't support fractional
+credits at all -- simpler, and fine for a points-style product.
+
+----------------------------------------------------------------
+4. BET TYPES -- WHAT TO ADD AND WHY
+----------------------------------------------------------------
+Keep EXACT_SCORE (your existing mechanic, hardest to hit, should
+carry the highest multiplier). Add a few orthogonal, easy-to-reason-
+about types so users have meaningfully different risk profiles:
+
+1. MATCH_WINNER (1X2) -- lowest difficulty, lowest multiplier
+   predictedData: { "outcome": "HOME" | "DRAW" | "AWAY" }
+
+2. DOUBLE_CHANCE -- even lower risk than 1X2, e.g. "home or draw"
+   predictedData: { "outcomes": ["HOME","DRAW"] }
+
+3. OVER_UNDER_GOALS -- needs a settled total-goals line
+   predictedData: { "line": 2.5, "side": "OVER" | "UNDER" }
+
+4. BOTH_TEAMS_TO_SCORE -- binary, easy to settle
+   predictedData: { "answer": true | false }
+
+5. CORRECT_MARGIN -- predict goal difference without nailing exact
+   score (e.g. "home by 2"), a nice middle-difficulty tier between
+   MATCH_WINNER and EXACT_SCORE
+   predictedData: { "marginSide": "HOME"|"AWAY"|"DRAW", "margin": 2 }
+
+6. EXACT_SCORE -- your original, highest multiplier
+   predictedData: { "homeScore": 2, "awayScore": 1 }
+
+7. FIRST_TO_SCORE -- which team scores first, or "no goals"
+   predictedData: { "team": "HOME"|"AWAY"|"NONE" }
+
+Settlement logic for each type lives in one function per type, e.g.
+`settleMatchWinner(bet, finalScore)`, `settleExactScore(...)`, so your
+cron-triggered settlement job can dispatch on `bet.betType`.
+
+----------------------------------------------------------------
+5. MULTIPLIERS -- HOW TO CALCULATE THEM (this is the core design work)
+----------------------------------------------------------------
+Two honest approaches. Pick one based on how much you want to deal
+with real odds data:
+
+APPROACH A -- Fixed multiplier table per bet type (simplest, no
+external data needed, recommended for v1)
+Hand-pick multipliers that roughly reflect difficulty:
+  MATCH_WINNER (favorite)      x1.3 - x1.8
+  MATCH_WINNER (underdog)      x2.5 - x4.0
+  DOUBLE_CHANCE                x1.2 - x1.5
+  OVER_UNDER_GOALS             x1.8 - x2.0
+  BOTH_TEAMS_TO_SCORE          x1.7 - x1.9
+  CORRECT_MARGIN               x3.0 - x6.0 (varies by margin size)
+  EXACT_SCORE                  x6.0 - x20.0 (rarer scores = higher)
+  FIRST_TO_SCORE               x2.0 - x2.5
+
+You don't need a sportsbook to know favorite vs underdog -- you can
+derive a crude version yourself from team form using data you already
+have (ESPN gives standings/records), e.g.:
+  - Compare each team's win rate over last N games
+  - Or just use ESPN's own win-probability field if present on the
+    scoreboard/summary endpoint (it sometimes is, for major US sports)
+
+APPROACH B -- Real bookmaker-implied multipliers (more realistic,
+needs an odds API)
+Pull real moneyline/spread odds, convert to implied probability, and
+set your multiplier as roughly the inverse of that probability minus
+your house margin. E.g. if the market gives the home team a 60%
+implied win probability, payout multiplier ~= 1 / 0.60 * 0.92 (8%
+house edge) = ~1.53x.
+This is genuinely more fun because multipliers move with real-world
+signal, but it adds an external dependency, rate limits, and matching
+logic between ESPN's match IDs and the odds provider's match IDs
+(this is the most annoying part in practice -- different providers
+ID the same match differently, so you fuzzy-match on team names + kickoff time).
+
+Recommendation for you specifically: start with Approach A behind a
+config table (a `MultiplierRule` model or even a static JSON config),
+ship it, and only move to Approach B if user feedback says multipliers
+feel arbitrary. It's a much smaller build and avoids a second flaky
+external dependency.
+
+If you do want Approach B, multiplier calc happens at bet *placement*
+time (lock it into the Bet row, don't make it float with the market
+afterward -- that's how every odds product handles it, the price you
+see when you bet is the price you get).
+
+----------------------------------------------------------------
+6. SIGNUP BONUS IMPLEMENTATION
+----------------------------------------------------------------
+- On user creation (wherever your registration completes), in the
+  same DB transaction:
+  1. Create the Wallet row with balance: 10000
+  2. Create a Transaction row: type SIGNUP_BONUS, amount +10000,
+     balanceAfter 10000
+- Wrap both in `prisma.$transaction([...])` so you never get a user
+  with no wallet, or a wallet with no audit trail.
+- Add a unique constraint (userId unique on Wallet) so this can't be
+  triggered twice per user even if the signup endpoint is called
+  again (idempotency).
+- Consider basic abuse prevention even for a points system: rate-limit
+  signups per IP/device, since "free 10,000 credits" is exactly the
+  kind of thing that invites disposable-account farming, especially
+  if you ever add any leaderboard or reward system on top.
+
+----------------------------------------------------------------
+7. BETTING FLOW (API + logic)
+----------------------------------------------------------------
+POST /api/bets
+  body: { matchId, betType, predictedData, stake }
+  server-side:
+    1. Validate match is still open for betting (not started / within
+       your cutoff window -- you already track match state via cron)
+    2. Validate stake > 0 and stake <= wallet.balance
+    3. Compute multiplier (Approach A lookup, or Approach B live calc)
+    4. In one DB transaction:
+       a. Decrement wallet.balance by stake
+       b. Insert Transaction (BET_PLACED, amount: -stake)
+       c. Insert Bet (status: PENDING, multiplier locked, potentialPayout)
+    5. Return the bet with locked multiplier to the frontend
+
+Settlement (triggered from your existing node-cron job, right after
+you detect a match has gone FINAL via ESPN):
+  1. Fetch all PENDING bets for that matchId
+  2. For each bet, dispatch to the settlement function for its betType
+  3. If WON: credit wallet by potentialPayout, insert Transaction
+     (BET_WON), update bet.status = WON
+  4. If LOST: insert Transaction (BET_LOST, amount 0 -- stake was
+     already deducted at placement, nothing more happens), status = LOST
+  5. If match was postponed/cancelled: refund stake in full
+     (BET_REFUNDED), status = VOID
+  6. Wrap each bet's settlement in its own transaction so one bad
+     record doesn't roll back the whole batch
+
+----------------------------------------------------------------
+8. FREE API RECOMMENDATION
+----------------------------------------------------------------
+Important honesty note: a lot of "Best Free Sports API 2026" articles
+online right now are vendor content marketing themselves (several
+literally hand out self-awarded "Best Free Tier 2026" badges), so
+treat any single ranking with some skepticism. Here's a grounded take:
+
+WHAT YOU ALREADY HAVE:
+ESPN's scoreboard endpoint is unofficial (not documented, no SLA,
+could change/break without notice) but it's free, has no key, and is
+widely used by hobby projects for scores/fixtures/standings. Fine to
+keep for live scores given it's already working for you. Just keep
+your current defensive handling (retries, fallback states) since it's
+not guaranteed long-term.
+
+DO YOU NEED A SECOND, ODDS-SPECIFIC API?
+Only if you go with Approach B above (real-odds-based multipliers).
+If you stay on Approach A (fixed multiplier table), you can skip this
+entirely and avoid a second integration. If you do want one:
+
+  Recommended: The Odds API (the-odds-api.com)
+  - Free tier: 500 credits/month, no credit card required
+  - Covers 70+ sports, 40+ bookmakers (DraftKings, FanDuel, BetMGM,
+    Pinnacle, Betfair, etc.)
+  - Markets: moneyline (h2h), spreads, totals, and player props for
+    some sports
+  - Clean, well-documented REST API, credit cost = sport keys x regions
+    queried per call, so query narrowly (one sport, one region) to
+    stretch your 500 credits
+  - Limitation: no team/player stats, so it's purely a pricing
+    overlay on top of your existing ESPN match data -- you still need
+    to match games between the two providers by team name + kickoff
+    time (no shared ID)
+
+  Alternative if you want broader bookmaker coverage on a free tier:
+  SportsGameOdds (sportsgameodds.com) -- free tier with around
+  80+ bookmakers including Pinnacle, billed by "objects" (each event =
+  1 object regardless of how many bookmakers price it), which can
+  stretch further than per-call credit systems if you're pulling one
+  match with many books at once.
+
+  I'd start with The Odds API specifically because of documentation
+  quality and a free tier that's been stable for years, which matters
+  more than raw bookmaker count for a v1.
+
+----------------------------------------------------------------
+9. ODDS API INTEGRATION SKETCH (only needed if doing Approach B)
+----------------------------------------------------------------
+- New env var: ODDS_API_KEY
+- New cron job (separate from your ESPN sync, different cadence --
+  odds change less often than live scores, poll every 15-30 min
+  pre-match, not every few seconds):
+    1. GET https://api.the-odds-api.com/v4/sports/{sport_key}/odds
+       ?regions=eu&markets=h2h,totals&apiKey=...
+    2. For each returned event, match to your existing Match row by
+       (homeTeam, awayTeam, commence_time within a few minutes)
+    3. Store the relevant implied odds on the Match row (or a new
+       MatchOdds table) as the "market snapshot" you'll use to compute
+       multipliers when a user places a bet
+    4. Convert American/decimal odds to implied probability:
+       decimal odds -> probability = 1 / decimal_odds
+       Then your payout multiplier = (1 / probability) * (1 - house_edge)
+- Cache aggressively. With 500 free credits/month, you cannot poll
+  odds per-request in real time -- pull on a schedule and serve from
+  your own DB.
+
+----------------------------------------------------------------
+10. ROUGH BUILD ORDER (suggested milestones)
+----------------------------------------------------------------
+1. Prisma schema migration: Wallet, Transaction, Bet, enums
+2. Signup bonus wiring + idempotency
+3. Bet placement endpoint, supporting just MATCH_WINNER + EXACT_SCORE
+   first (your existing logic mapped onto the new model)
+4. Settlement job for those two types, hooked into your existing
+   ESPN cron
+5. Frontend: wallet balance display, bet placement UI with stake
+   input and live "potential payout" preview (stake x multiplier)
+6. Add remaining bet types one at a time (DOUBLE_CHANCE and
+   BOTH_TEAMS_TO_SCORE are easiest to settle, do those next)
+7. Add CORRECT_MARGIN and FIRST_TO_SCORE
+8. (Optional, later) Swap fixed multiplier table for live-odds-based
+   multipliers via The Odds API, behind a feature flag, so you can
+   compare engagement before/after
+
+----------------------------------------------------------------
+11. THINGS TO KEEP IN MIND
+----------------------------------------------------------------
+- This is a points/engagement product, not a real-money gambling
+  product. Keep wording, UI, and any future "rewards" framed that way
+  to avoid wandering into gambling-license territory (relevant in
+  Finland under Veikkaus's monopoly framework and EU gambling rules
+  generally) unless you deliberately decide to pursue that path with
+  proper legal advice.
+- Lock multipliers at bet placement time, never recompute retroactively.
+- Use DB transactions for every balance-changing operation -- this is
+  the #1 source of bugs in any wallet-style feature (double credit,
+  lost debits, race conditions on concurrent bets).
+- Treat the ESPN endpoint as unofficial/best-effort; build settlement
+  so a missed or delayed score update doesn't corrupt wallet state
+  (e.g. a "PENDING -> stuck" bet is recoverable, a wrongly-settled one
+  is much harder to undo cleanly).
+================================================================
+END OF PLAN
+================================================================
