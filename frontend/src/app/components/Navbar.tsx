@@ -77,7 +77,7 @@ export default function Navbar() {
           <Link href="/leaderboard" className={styles.link} onClick={closeMenu}>Leaderboard</Link>
           <Link href="/dashboard" className={styles.link} onClick={closeMenu}>Dashboard</Link>
           {isAdmin && <Link href="/admin" className={styles.link} onClick={closeMenu}>Admin</Link>}
-          <Link href="/wallet" className={styles.link} onClick={closeMenu}>Wallet</Link>
+
           <div className={styles.auth}>
             {isLoggedIn ? (
               <>
@@ -88,23 +88,23 @@ export default function Navbar() {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.35rem 0.75rem',
-                      background: 'linear-gradient(135deg, #6300E4 0%, #9B40FF 100%)',
-                      borderRadius: '20px',
-                      border: '1.5px solid rgba(255,255,255,0.2)',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.82rem',
-                      letterSpacing: '0.02em',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      background: 'var(--fifa-lime)',
+                      borderRadius: '0px',
+                      border: '3px solid #000000',
+                      color: '#000000',
+                      fontWeight: 900,
+                      fontSize: '0.9rem',
+                      letterSpacing: '0.05em',
                       textDecoration: 'none',
                       transition: 'transform 0.15s, box-shadow 0.15s',
-                      boxShadow: '0 2px 12px rgba(99,0,228,0.4)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,1)',
                       whiteSpace: 'nowrap',
+                      textTransform: 'uppercase'
                     }}
                   >
-                    <span style={{ fontSize: '1rem' }}>🪙</span>
-                    {kickCoins.toLocaleString()} KC
+                    Balance: {kickCoins.toLocaleString()} KC
                   </Link>
                 )}
                 <button onClick={handleLogout} className={styles.logoutBtn}>Log Out</button>

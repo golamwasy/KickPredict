@@ -57,10 +57,12 @@ export const syncESPNData = async () => {
         continue;
       }
 
-      let matchStatus: 'UPCOMING' | 'OPEN' | 'LOCKED' | 'LIVE' | 'FINISHED' = 'UPCOMING';
+      let matchStatus: 'UPCOMING' | 'OPEN' | 'LOCKED' | 'LIVE' | 'FINISHED' | 'CANCELLED' = 'UPCOMING';
       
       if (statusType === 'STATUS_FULL_TIME') {
         matchStatus = 'FINISHED';
+      } else if (statusType === 'STATUS_CANCELED' || statusType === 'STATUS_POSTPONED') {
+        matchStatus = 'CANCELLED';
       } else if (statusType === 'STATUS_IN_PROGRESS' || statusType === 'STATUS_HALFTIME') {
         matchStatus = 'LIVE';
       } else {
@@ -136,8 +138,8 @@ export const syncESPNData = async () => {
           }
         });
 
-        // If match just finished, trigger bet settlement
-        if (matchStatus === 'FINISHED' && existingMatch?.status !== 'FINISHED') {
+        // If match just finished or was cancelled, trigger bet settlement
+        if ((matchStatus === 'FINISHED' || matchStatus === 'CANCELLED') && existingMatch?.status !== matchStatus) {
           try {
             await settleBetsForMatch(updatedMatch.id);
           } catch (settlementError) {

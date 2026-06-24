@@ -51,21 +51,22 @@ export default function Dashboard() {
     </div>
   );
 
-  const totalBets = bets.length;
-  const wonBets = bets.filter(b => b.status === 'WON');
-  const lostBets = bets.filter(b => b.status === 'LOST');
-  const pendingBets = bets.filter(b => b.status === 'PENDING');
+  const validBets = bets.filter(b => b.status !== 'VOID');
+  const totalBets = validBets.length;
+  const wonBets = validBets.filter(b => b.status === 'WON');
+  const lostBets = validBets.filter(b => b.status === 'LOST');
+  const pendingBets = validBets.filter(b => b.status === 'PENDING');
   const totalWon = wonBets.reduce((acc, b) => acc + b.potentialPayout, 0);
-  const totalStaked = bets.reduce((acc, b) => acc + b.stake, 0);
+  const totalStaked = validBets.reduce((acc, b) => acc + b.stake, 0);
   const settledBets = wonBets.length + lostBets.length;
   const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
 
   const sorted = [...bets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const stats = [
-    { label: '🪙 Balance', value: walletBalance !== null ? walletBalance.toLocaleString() + ' KC' : '—', accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
-    { label: '🎯 Total Bets', value: totalBets, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
-    { label: '🏆 Win Rate', value: accuracy + '%', accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
+    { label: 'Total Won', value: totalWon.toLocaleString() + ' KC', accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
+    { label: 'Total Bets', value: totalBets, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
+    { label: 'Win Rate', value: accuracy + '%', accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
   ];
 
   return (
@@ -81,8 +82,8 @@ export default function Dashboard() {
       <div className="stats-grid">
         {stats.map((stat, i) => (
           <div key={stat.label} className={`card ${stat.accent}`} style={{ textAlign: 'center', animation: `floatIn 0.5s ease ${0.1 + i * 0.05}s both` }}>
-            <p style={{ color: '#000000', fontSize: '0.78rem', fontFamily: 'Outfit, sans-serif', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>{stat.label}</p>
-            <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif', color: stat.color, lineHeight: 1 }}>{stat.value}</div>
+            <p style={{ color: stat.accent === 'stat-accent-purple' ? '#FFFFFF' : '#000000', fontSize: '0.78rem', fontFamily: 'Outfit, sans-serif', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>{stat.label}</p>
+            <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'Outfit, sans-serif', color: stat.accent === 'stat-accent-purple' ? '#FFFFFF' : stat.color, lineHeight: 1 }}>{stat.value}</div>
           </div>
         ))}
       </div>
@@ -95,7 +96,6 @@ export default function Dashboard() {
             { label: 'Won', v: wonBets.length, color: '#27AE60' },
             { label: 'Lost', v: lostBets.length, color: '#E74C3C' },
             { label: 'Total Staked', v: totalStaked.toLocaleString() + ' KC', color: 'var(--fifa-black)' },
-            { label: 'Total Won', v: totalWon.toLocaleString() + ' KC', color: '#27AE60' },
           ].map(s => (
             <div key={s.label} className="card" style={{ padding: '1rem', textAlign: 'center', marginBottom: 0, boxShadow: '4px 4px 0px var(--fifa-black)', border: '2px solid var(--fifa-black)' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{s.label}</div>
@@ -121,7 +121,7 @@ export default function Dashboard() {
             const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
             return (
               <Link key={bet.id} href={`/matches/${bet.matchId}`} style={{ textDecoration: 'none' }}>
-                <div className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.04}s both`, cursor: 'pointer', transition: 'border-color 0.2s' }}>
+                <div className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.04}s both`, cursor: 'pointer', transition: 'border-color 0.2s', padding: '1rem 1.25rem', marginBottom: 0 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--fifa-orange)', marginBottom: '0.2rem', letterSpacing: '0.05em' }}>
                       {new Date(bet.match?.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}

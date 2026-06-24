@@ -41,8 +41,9 @@ const settleOverUnder = (
   predictedData: Record<string, any>,
   team1Goals: number,
   team2Goals: number
-): 'WON' | 'LOST' => {
+): 'WON' | 'LOST' | 'VOID' => {
   const total = team1Goals + team2Goals;
+  if (total === predictedData.line) return 'VOID'; // Push condition for exact integer lines
   if (predictedData.side === 'OVER') return total > predictedData.line ? 'WON' : 'LOST';
   return total < predictedData.line ? 'WON' : 'LOST';
 };
@@ -119,8 +120,14 @@ const settleSingleBet = (
  */
 export const settleBetsForMatch = async (matchId: string): Promise<void> => {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
-  if (!match || match.status !== 'FINISHED' || match.team1Goals === null || match.team2Goals === null) {
-    throw new Error(`Match ${matchId} is not in a settleable state`);
+  if (!match) {
+    throw new Error(`Match ${matchId} not found`);
+  }
+  if (match.status !== 'FINISHED' && match.status !== 'CANCELLED') {
+    throw new Error(`Match ${matchId} is not in a settleable state (${match.status})`);
+  }
+  if (match.status === 'FINISHED' && (match.team1Goals === null || match.team2Goals === null)) {
+    throw new Error(`Match ${matchId} is FINISHED but missing score data`);
   }
 
   const pendingBets = await prisma.bet.findMany({
@@ -136,58 +143,68 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
 
   for (const bet of pendingBets) {
     try {
-      const outcome = settleSingleBet(
-        bet.betType,
-        bet.predictedData as Record<string, any>,
-        match.team1Goals,
-        match.team2Goals
-      );
-
-      if (outcome === 'WON') {
-        await creditWallet(
-          bet.userId,
-          bet.potentialPayout,
-          TransactionType.BET_WON,
-          bet.id,
-          `Won: ${bet.betType} on match ${matchId}`
+      let outcome: 'WON' | 'LOST' | 'VOID';
+      
+      if (match.status === 'CANCELLED') {
+        outcome = 'VOID';
+      } else {
+        outcome = settleSingleBet(
+          bet.betType,
+          bet.predictedData as Record<string, any>,
+          match.team1Goals!,
+          match.team2Goals!
         );
-        await prisma.bet.update({
-          where: { id: bet.id },
-          data: { status: BetStatus.WON, settledAt: new Date() },
-        });
-      } else if (outcome === 'LOST') {
-        // Stake was already deducted at placement — nothing to charge
-        await prisma.bet.update({
-          where: { id: bet.id },
-          data: { status: BetStatus.LOST, settledAt: new Date() },
-        });
-        // Record BET_LOST transaction with 0 amount for auditability
-        const wallet = await prisma.wallet.findUnique({ where: { userId: bet.userId } });
-        if (wallet) {
-          await prisma.transaction.create({
-            data: {
-              walletId: wallet.id,
-              type: TransactionType.BET_LOST,
-              amount: 0,
-              balanceAfter: wallet.balance,
-              betId: bet.id,
-            },
+      }
+
+      await prisma.$transaction(async (tx) => {
+        if (outcome === 'WON') {
+          await creditWallet(
+            bet.userId,
+            bet.potentialPayout,
+            TransactionType.BET_WON,
+            bet.id,
+            `Won: ${bet.betType} on match ${matchId}`,
+            tx
+          );
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: BetStatus.WON, settledAt: new Date() },
+          });
+        } else if (outcome === 'LOST') {
+          // Stake was already deducted at placement — nothing to charge
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: BetStatus.LOST, settledAt: new Date() },
+          });
+          // Record BET_LOST transaction with 0 amount for auditability
+          const wallet = await tx.wallet.findUnique({ where: { userId: bet.userId } });
+          if (wallet) {
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                type: TransactionType.BET_LOST,
+                amount: 0,
+                balanceAfter: wallet.balance,
+                betId: bet.id,
+              },
+            });
+          }
+        } else {
+          // VOID — refund stake
+          await creditWallet(
+            bet.userId,
+            bet.stake,
+            TransactionType.BET_REFUNDED,
+            bet.id,
+            `Refund: ${bet.betType} on match ${matchId} (no data)`,
+            tx
+          );
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: BetStatus.VOID, settledAt: new Date() },
           });
         }
-      } else {
-        // VOID — refund stake
-        await creditWallet(
-          bet.userId,
-          bet.stake,
-          TransactionType.BET_REFUNDED,
-          bet.id,
-          `Refund: ${bet.betType} on match ${matchId} (no data)`
-        );
-        await prisma.bet.update({
-          where: { id: bet.id },
-          data: { status: BetStatus.VOID, settledAt: new Date() },
-        });
-      }
+      });
 
       console.log(`[Settlement] Bet ${bet.id} (${bet.betType}) → ${outcome}`);
     } catch (err) {

@@ -75,6 +75,7 @@ enum MatchStatus {
   LOCKED
   LIVE
   FINISHED
+  CANCELLED
 }
 
 // ─── Wallet & Ledger ──────────────────────────────────────────────────────────

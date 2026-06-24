@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
         <div className="lb-header" style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)", color: "#555555", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           <span>Rank</span>
           <span>Player</span>
-          <span style={{ textAlign: "center" }}>🪙 KickCoins</span>
+          <span style={{ textAlign: "center" }}>KickCoins</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Total Bets</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Won</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Accuracy</span>

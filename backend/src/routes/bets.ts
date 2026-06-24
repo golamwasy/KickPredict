@@ -81,21 +81,32 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     });
     const potentialPayout = Math.round(stakeNum * multiplier);
 
-    // 7. Create bet (debitWallet will do the atomic deduct + transaction record)
-    const bet = await prisma.bet.create({
-      data: {
-        userId,
-        matchId,
-        betType: betType as BetType,
-        stake: stakeNum,
-        multiplier,
-        potentialPayout,
-        predictedData,
-      },
-    });
-
-    // 8. Debit wallet now that we have the betId
-    const newBalance = await debitWallet(userId, stakeNum, bet.id);
+    // 7. Create bet and debit wallet atomically (rolls back bet if wallet debit fails)
+    let bet, newBalance;
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const createdBet = await tx.bet.create({
+          data: {
+            userId,
+            matchId,
+            betType: betType as BetType,
+            stake: stakeNum,
+            multiplier,
+            potentialPayout,
+            predictedData,
+          },
+        });
+        const updatedBalance = await debitWallet(userId, stakeNum, createdBet.id, tx);
+        return { bet: createdBet, newBalance: updatedBalance };
+      });
+      bet = result.bet;
+      newBalance = result.newBalance;
+    } catch (e: any) {
+      if (e.message === 'Insufficient KickCoins balance') {
+        return res.status(400).json({ error: e.message });
+      }
+      throw e;
+    }
 
     res.status(201).json({
       bet,

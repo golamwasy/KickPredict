@@ -820,8 +820,8 @@ button {
 .scoreboard-pill-card {
   position: relative;
   border-radius: 100px;
-  padding: 0 2.5rem;
-  height: 72px;
+  padding: 0 2rem;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -865,7 +865,7 @@ button {
 
 /* Score Capsule inside pill */
 .live-score-capsule {
-  height: 84px;
+  height: 64px;
   background: #3bf6e4; /* Neon Cyan */
   color: #0d0d0d;
   border-radius: 50px;
@@ -955,7 +955,7 @@ button {
 }
 
 .live-score-text {
-  font-size: 2.6rem;
+  font-size: 2rem;
   font-weight: 900;
   color: #000000;
   font-family: 'Outfit', 'Arial Black', sans-serif;
@@ -968,9 +968,9 @@ button {
 .fifa-logo-badge {
   position: relative;
   background: #000000;
-  border-radius: 12px;
-  width: 44px;
-  height: 58px;
+  border-radius: 10px;
+  width: 34px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1017,7 +1017,7 @@ button {
 .scoreboard-team-text {
   font-family: 'Outfit', sans-serif;
   font-weight: 900;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #FFFFFF;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1032,7 +1032,7 @@ button {
 /* Mobile responsive scoreboard overrides */
 @media (max-width: 640px) {
   .scoreboard-pill-card {
-    height: 56px;
+    height: 48px;
     padding: 0 1rem;
     border-radius: 50px;
     margin-bottom: 1.5rem;
@@ -1085,18 +1085,18 @@ button {
     min-width: 100px;
   }
   .live-score-capsule {
-    height: 64px;
-    padding: 0 1.2rem;
+    height: 54px;
+    padding: 0 1rem;
     gap: 0.8rem;
     border-radius: 35px;
     border-width: 3px;
   }
   .live-score-text {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
   .fifa-logo-badge {
-    width: 34px;
-    height: 46px;
+    width: 28px;
+    height: 38px;
     border-radius: 8px;
     padding: 3px;
   }

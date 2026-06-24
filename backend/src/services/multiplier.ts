@@ -20,13 +20,41 @@ import { BetType } from '@prisma/client';
  * Simulated team strengths (1-100) based on approximate historical/expected performance.
  * This is used to calculate dynamic odds since we don't have a live bookmaker API.
  */
+/**
+ * Team strength ratings (0-100 scale) for the FIFA World Cup 2026 (48 teams).
+ *
+ * Derived from the official FIFA/Coca-Cola Men's World Ranking points
+ * published 11 June 2026 (source: inside.fifa.com/fifa-world-ranking/men),
+ * the last official update before the tournament kicked off.
+ *
+ * Conversion method: linear min-max scaling of FIFA ranking points onto a
+ * 60-95 strength range (60 = lowest-ranked qualifier, 95 = highest-ranked
+ * qualifier). This is a simplification -- FIFA points themselves are not
+ * linear in "true" team strength, but it's good enough for a prediction
+ * game's difficulty/multiplier weighting.
+ *
+ * IMPORTANT: FIFA does NOT re-publish official rankings during the
+ * tournament (next official update: 20 July 2026, after the World Cup
+ * ends). "Live ranking" trackers exist but are unofficial projections.
+ * This means these values will become stale as the tournament progresses
+ * and teams get eliminated or in-form -- treat this as a pre-tournament
+ * snapshot, not a live feed. If you want it to stay accurate, you'd need
+ * to either (a) manually refresh from FIFA's official page after each
+ * ranking update, or (b) layer in your own in-tournament form adjustment
+ * (e.g. +/- a few points per team based on recent match results) on top
+ * of this base value, rather than relying on FIFA to update it for you.
+ *
+ * Fallback for any team code not listed below: 70.
+ */
 const TEAM_STRENGTHS: Record<string, number> = {
-  ARG: 95, FRA: 94, BRA: 93, ENG: 92, ESP: 90,
-  POR: 88, GER: 88, NED: 87, ITA: 87, BEL: 85,
-  URU: 84, CRO: 83, COL: 82, MAR: 81, SUI: 80,
-  USA: 78, SEN: 78, MEX: 76, JPN: 76, IRN: 75,
-  KOR: 74, AUS: 73, ECU: 72, CAN: 70, KSA: 68,
-  // Fallback for others is 70
+  ARG: 95, ESP: 95, FRA: 95, ENG: 92, POR: 89, BRA: 89,
+  MAR: 88, NED: 88, BEL: 87, GER: 87, CRO: 86, ITA: 85,
+  COL: 85, MEX: 84, SEN: 84, URU: 83, USA: 83, JPN: 82,
+  SUI: 82, IRN: 80, TUR: 79, ECU: 79, AUT: 79, KOR: 78,
+  AUS: 78, ALG: 77, EGY: 77, CAN: 77, NOR: 76, CIV: 75,
+  PAN: 75, SWE: 74, PAR: 73, SCO: 73, TUN: 72, COD: 72,
+  UZB: 71, QAT: 70, IRQ: 70, ZAF: 69, KSA: 69, JOR: 67,
+  BIH: 66, CPV: 66, GHA: 64, CUW: 61, HAI: 61, NZL: 60
 };
 
 const getStrength = (code?: string) => (code && TEAM_STRENGTHS[code]) ? TEAM_STRENGTHS[code] : 70;
@@ -45,11 +73,11 @@ const calculateProbabilities = (s1: number, s2: number) => {
   const diff = s1 - s2;
   const p1Base = 0.40 + (diff * 0.02); // 40% base win chance for team 1
   const p2Base = 0.40 - (diff * 0.02); // 40% base win chance for team 2
-  
+
   // Cap probabilities between 5% and 85%
   let p1 = Math.max(0.05, Math.min(0.85, p1Base));
   let p2 = Math.max(0.05, Math.min(0.85, p2Base));
-  
+
   // The rest is the draw probability
   let pDraw = 1.0 - p1 - p2;
   if (pDraw < 0.10) {
@@ -58,7 +86,7 @@ const calculateProbabilities = (s1: number, s2: number) => {
     if (p1 > p2) p1 -= steal; else p2 -= steal;
     pDraw = 0.10;
   }
-  
+
   return { p1, p2, pDraw };
 };
 
@@ -125,17 +153,17 @@ export const getMultiplier = (betType: BetType, context: MultiplierContext): num
     case BetType.CORRECT_MARGIN: {
       const margin = predictedData.margin as number;
       if (predictedData.marginSide === 'DRAW') return toOdds(pDraw);
-      
+
       const isFav = (predictedData.marginSide === 'HOME' && p1 > p2) || (predictedData.marginSide === 'AWAY' && p2 > p1);
       const baseProb = predictedData.marginSide === 'HOME' ? p1 : p2;
-      
+
       // Probability decays based on the margin and whether they are the favorite
       let pMargin = baseProb * (isFav ? 0.4 : 0.25);
       if (margin === 1) pMargin *= 1.0;
       else if (margin === 2) pMargin *= 0.5;
       else if (margin === 3) pMargin *= 0.2;
       else pMargin *= 0.05; // 4+
-      
+
       return toOdds(pMargin);
     }
 
@@ -151,22 +179,22 @@ export const getMultiplier = (betType: BetType, context: MultiplierContext): num
       // Basic Poisson-like approximation based on win probabilities
       const h = predictedData.homeScore as number;
       const a = predictedData.awayScore as number;
-      
+
       // Expected goals
       const xG1 = 1.2 + ((p1 - 0.4) * 2);
       const xG2 = 1.2 + ((p2 - 0.4) * 2);
-      
+
       // Extremely simplified poisson for max 3 goals
       const poisson = (lambda: number, k: number) => {
         const cappedK = Math.min(k, 5); // Don't crash math on 10 goals
         return (Math.pow(lambda, cappedK) * Math.exp(-lambda)) / [1, 1, 2, 6, 24, 120][cappedK];
       };
-      
+
       let prob = poisson(xG1, h) * poisson(xG2, a);
       // Reduce probability of crazy scores
       if (h + a > 4) prob *= 0.5;
       if (h + a > 6) prob *= 0.1;
-      
+
       return toOdds(prob);
     }
 

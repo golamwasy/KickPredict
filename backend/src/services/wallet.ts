@@ -1,5 +1,5 @@
 import prisma from '../prisma';
-import { TransactionType } from '@prisma/client';
+import { TransactionType, Prisma } from '@prisma/client';
 
 const SIGNUP_BONUS_AMOUNT = 10000;
 
@@ -36,9 +36,13 @@ export const createWalletForUser = async (userId: string): Promise<void> => {
 export const debitWallet = async (
   userId: string,
   stake: number,
-  betId: string
+  betId: string,
+  txClient?: Prisma.TransactionClient
 ): Promise<number> => {
-  return prisma.$transaction(async (tx) => {
+  const execute = async (tx: Prisma.TransactionClient) => {
+    // Lock the wallet row to prevent concurrent race conditions
+    await tx.$executeRaw`SELECT id FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE`;
+
     const wallet = await tx.wallet.findUnique({ where: { userId } });
     if (!wallet) throw new Error('Wallet not found');
     if (wallet.balance < stake) throw new Error('Insufficient KickCoins balance');
@@ -61,7 +65,9 @@ export const debitWallet = async (
     });
 
     return newBalance;
-  });
+  };
+
+  return txClient ? execute(txClient) : prisma.$transaction(execute);
 };
 
 /**
@@ -72,9 +78,13 @@ export const creditWallet = async (
   amount: number,
   type: TransactionType,
   betId?: string,
-  note?: string
+  note?: string,
+  txClient?: Prisma.TransactionClient
 ): Promise<number> => {
-  return prisma.$transaction(async (tx) => {
+  const execute = async (tx: Prisma.TransactionClient) => {
+    // Lock the wallet row to prevent concurrent race conditions
+    await tx.$executeRaw`SELECT id FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE`;
+
     const wallet = await tx.wallet.findUnique({ where: { userId } });
     if (!wallet) throw new Error('Wallet not found');
 
@@ -97,7 +107,9 @@ export const creditWallet = async (
     });
 
     return newBalance;
-  });
+  };
+
+  return txClient ? execute(txClient) : prisma.$transaction(execute);
 };
 
 /**

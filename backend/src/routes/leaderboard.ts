@@ -32,6 +32,7 @@ router.get('/', async (req: Request, res: Response) => {
           SUM(CASE WHEN b.status = 'LOST' THEN 1 ELSE 0 END)::int AS "lostBets",
           SUM(CASE WHEN b.status IN ('WON','LOST') THEN 1 ELSE 0 END)::int AS "settledBets"
         FROM "Bet" b
+        WHERE b.status != 'VOID'
         GROUP BY b."userId"
       ) bet_summary ON u.id = bet_summary."userId"
       WHERE u.role::text != 'ADMIN'
