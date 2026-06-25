@@ -889,16 +889,11 @@ button {
   border: 3px solid transparent;
   background: linear-gradient(#000000, #000000) padding-box,
               linear-gradient(to right,
-                var(--fifa-cyan) 0%,
-                var(--fifa-cyan) 12%,
-                #1B49FF 12%,
-                #1B49FF 38%,
-                var(--fifa-red) 38%,
-                var(--fifa-red) 62%,
-                var(--fifa-lime) 62%,
-                var(--fifa-lime) 88%,
-                var(--fifa-purple) 88%,
-                var(--fifa-purple) 100%
+                var(--fifa-cyan),
+                #1B49FF,
+                var(--fifa-red),
+                var(--fifa-lime),
+                var(--fifa-purple)
               ) border-box;
 }
 
@@ -1093,16 +1088,11 @@ button {
     border: 2px solid transparent;
     background: linear-gradient(#000000, #000000) padding-box,
                 linear-gradient(to right,
-                  var(--fifa-cyan) 0%,
-                  var(--fifa-cyan) 12%,
-                  #1B49FF 12%,
-                  #1B49FF 38%,
-                  var(--fifa-red) 38%,
-                  var(--fifa-red) 62%,
-                  var(--fifa-lime) 62%,
-                  var(--fifa-lime) 88%,
-                  var(--fifa-purple) 88%,
-                  var(--fifa-purple) 100%
+                  var(--fifa-cyan),
+                  #1B49FF,
+                  var(--fifa-red),
+                  var(--fifa-lime),
+                  var(--fifa-purple)
                 ) border-box;
   }
   .live-prediction-top-tab {
