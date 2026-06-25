@@ -58,6 +58,21 @@ export const syncESPNData = async () => {
         continue;
       }
 
+      // Self-healing: Check if match has first scorer but unsettled FIRST_TO_SCORE bets
+      if (existingMatch && (existingMatch.status === 'LIVE' || existingMatch.status === 'LOCKED') && existingMatch.firstTeamToScoreId) {
+        const hasUnsettledFirstToScore = await prisma.bet.findFirst({
+          where: { matchId: existingMatch.id, status: 'PENDING', betType: 'FIRST_TO_SCORE' }
+        });
+        if (hasUnsettledFirstToScore) {
+          console.log(`[Sync] Self-healing: Match ${existingMatch.id} has first scorer but unsettled bets. Retrying live settlement...`);
+          try {
+            await settleLiveFirstToScoreBets(existingMatch.id);
+          } catch (liveSettleError) {
+            console.error(`[Sync Error] Self-healing live settlement failed for match ${existingMatch.id}:`, liveSettleError);
+          }
+        }
+      }
+
       let matchStatus: MatchStatus = MatchStatus.UPCOMING;
       
       if (statusType === 'STATUS_FULL_TIME') {
@@ -168,7 +183,7 @@ export const syncESPNData = async () => {
             console.error(`[Sync Error] Bet settlement failed for match ${updatedMatch.id}:`, settlementError);
             // Intentionally not re-throwing: self-healing above will retry on next sync tick
           }
-        } else if (matchStatus === 'LIVE' && updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId) {
+        } else if ((matchStatus === 'LIVE' || matchStatus === 'LOCKED') && updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId) {
           // If a goal was just scored during a live match, instantly settle FIRST_TO_SCORE bets
           try {
             await settleLiveFirstToScoreBets(updatedMatch.id);

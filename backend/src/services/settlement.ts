@@ -231,7 +231,7 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
  */
 export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void> => {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
-  if (!match || match.status !== 'LIVE') return;
+  if (!match || (match.status !== 'LIVE' && match.status !== 'LOCKED')) return;
   
   if (!match.firstTeamToScoreId && match.team1Goals === 0 && match.team2Goals === 0) {
     // Cannot settle FIRST_TO_SCORE if no goal has been scored yet and match is not finished
