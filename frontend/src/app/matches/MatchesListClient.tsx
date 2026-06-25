@@ -93,8 +93,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
             {ongoingMatches.map((match: any) => {
-              const flag1Url = getFlagImgUrl(match.team1?.code);
-              const flag2Url = getFlagImgUrl(match.team2?.code);
+
 
               return (
                 <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
@@ -102,11 +101,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                   <div className="scoreboard-pill-card">
                     {/* Team 1 Name & Flag */}
                     <div className="scoreboard-team-wrap">
-                      {flag1Url ? (
-                        <img src={flag1Url} alt={match.team1?.name} className="scoreboard-team-flag-img" />
-                      ) : (
-                        <span className="scoreboard-team-flag">{getFlag(match.team1?.code)}</span>
-                      )}
+                      <span className="scoreboard-team-flag">{getFlag(match.team1?.code)}</span>
                       <span className="scoreboard-team-text hide-mobile">
                         {match.team1?.name || 'TBD'}
                       </span>
@@ -142,11 +137,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       <span className="scoreboard-team-text hide-desktop">
                         {match.team2?.code || 'TBD'}
                       </span>
-                      {flag2Url ? (
-                        <img src={flag2Url} alt={match.team2?.name} className="scoreboard-team-flag-img" />
-                      ) : (
-                        <span className="scoreboard-team-flag">{getFlag(match.team2?.code)}</span>
-                      )}
+                      <span className="scoreboard-team-flag">{getFlag(match.team2?.code)}</span>
                     </div>
                   </div>
                 </Link>

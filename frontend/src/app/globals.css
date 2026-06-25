@@ -1059,14 +1059,11 @@ button {
   padding-left: 110px; /* clear center capsule space */
 }
 
-.scoreboard-team-flag-img {
-  width: 44px;
-  height: 30px;
-  object-fit: cover;
-  border: 2px solid #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+.scoreboard-team-flag {
+  font-size: 2.2rem;
+  line-height: 1;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 .scoreboard-team-text {
@@ -1163,11 +1160,8 @@ button {
     padding-right: 0;
     padding-left: 75px; /* clear center capsule space on mobile */
   }
-  .scoreboard-team-flag-img {
-    width: 32px;
-    height: 22px;
-    border-width: 1.5px;
-    border-radius: 4px;
+  .scoreboard-team-flag {
+    font-size: 1.6rem;
   }
   .scoreboard-team-text {
     font-size: 1.1rem;
