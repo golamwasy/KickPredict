@@ -6,7 +6,18 @@ export const startCronJobs = () => {
   // Run ESPN Sync and fallbacks every 1 minute
   cron.schedule('*/1 * * * *', async () => {
     try {
-      await syncESPNData();
+      // Check current time in Finland (Europe/Helsinki)
+      const finnishHour = parseInt(
+        new Date().toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour12: false, hour: 'numeric' }),
+        10
+      );
+
+      // Skip ESPN API call from 9 AM (9) to 4:59 PM (16)
+      if (finnishHour < 9 || finnishHour >= 17) {
+        await syncESPNData();
+      } else {
+        console.log('[Cron] Skipping ESPN API sync: currently between 9 AM and 5 PM Finnish time.');
+      }
       
       const now = new Date();
 
