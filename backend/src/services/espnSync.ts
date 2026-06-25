@@ -111,12 +111,31 @@ export const syncESPNData = async () => {
         teamCache.set(team2.code, team2);
       }
 
+      let firstTeamToScoreId: string | null = existingMatch?.firstTeamToScoreId || null;
+      if (Array.isArray(event.competitions[0].details)) {
+        const sortedDetails = [...event.competitions[0].details].sort((a: any, b: any) => (a.clock?.value || 0) - (b.clock?.value || 0));
+        const firstGoal = sortedDetails.find((d: any) => d.scoringPlay === true);
+        if (firstGoal?.team?.id) {
+          if (firstGoal.team.id === homeCompetitor.team.id) {
+            firstTeamToScoreId = team1.id;
+          } else if (firstGoal.team.id === awayCompetitor.team.id) {
+            firstTeamToScoreId = team2.id;
+          }
+        }
+      }
+      
+      if (!firstTeamToScoreId && ((team1Goals ?? 0) > 0 || (team2Goals ?? 0) > 0)) {
+        if ((team1Goals ?? 0) > 0 && (team2Goals ?? 0) === 0) firstTeamToScoreId = team1.id;
+        else if ((team2Goals ?? 0) > 0 && (team1Goals ?? 0) === 0) firstTeamToScoreId = team2.id;
+      }
+
       // Diff Check: Only update the database if the status, score, or kickoff time has changed
       const hasChanged =
         !existingMatch ||
         existingMatch.status !== matchStatus ||
         existingMatch.team1Goals !== team1Goals ||
         existingMatch.team2Goals !== team2Goals ||
+        existingMatch.firstTeamToScoreId !== firstTeamToScoreId ||
         existingMatch.kickoffTime.getTime() !== date.getTime();
 
       if (hasChanged) {
@@ -127,6 +146,7 @@ export const syncESPNData = async () => {
             status: matchStatus,
             team1Goals,
             team2Goals,
+            firstTeamToScoreId,
           },
           create: {
             apiFixtureId,
@@ -136,6 +156,7 @@ export const syncESPNData = async () => {
             status: matchStatus,
             team1Goals,
             team2Goals,
+            firstTeamToScoreId,
           }
         });
 

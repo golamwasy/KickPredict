@@ -56,7 +56,7 @@ export default function Dashboard() {
   const wonBets = validBets.filter(b => b.status === 'WON');
   const lostBets = validBets.filter(b => b.status === 'LOST');
   const pendingBets = validBets.filter(b => b.status === 'PENDING');
-  const totalWon = wonBets.reduce((acc, b) => acc + b.potentialPayout, 0);
+  const totalWon = (walletBalance ?? 10000) - 10000;
   const totalStaked = validBets.reduce((acc, b) => acc + b.stake, 0);
   const settledBets = wonBets.length + lostBets.length;
   const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
@@ -140,9 +140,11 @@ export default function Dashboard() {
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555555', marginTop: '0.4rem' }}>
                       {bet.stake.toLocaleString()} KC @ {bet.multiplier}×
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: bet.status === 'WON' ? '#27AE60' : bet.status === 'LOST' ? '#E74C3C' : '#888888', marginTop: '0.15rem' }}>
-                      → {bet.potentialPayout.toLocaleString()} KC
-                    </div>
+                    {(bet.status === 'PENDING' || bet.status === 'WON') && (
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: bet.status === 'WON' ? '#27AE60' : '#888888', marginTop: '0.15rem' }}>
+                        → {bet.potentialPayout.toLocaleString()} KC
+                      </div>
+                    )}
                   </div>
                 </div>
               </Link>

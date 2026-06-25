@@ -26,7 +26,7 @@ export default async function LeaderboardPage() {
           <span>Rank</span>
           <span>Player</span>
           <span style={{ textAlign: "center" }}>KickCoins</span>
-          <span className="lb-col-hide" style={{ textAlign: "center" }}>Total Bets</span>
+          <span className="lb-col-hide" style={{ textAlign: "center" }}>Total Bets (Done)</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Won</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Accuracy</span>
         </div>
@@ -47,7 +47,9 @@ export default async function LeaderboardPage() {
                 <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center" }}>
                   {user.kickCoins.toLocaleString()} <span style={{ fontSize: "0.7rem", fontWeight: 600 }}>KC</span>
                 </div>
-                <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.totalBets}</div>
+                <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>
+                  {user.totalBets} <span style={{ color: 'var(--text-muted)' }}>({user.settledBets || 0})</span>
+                </div>
                 <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center", color: '#27AE60' }}>{user.wonBets}</div>
                 <div className="lb-col-hide" style={{ fontSize: "0.9rem", fontWeight: 700, textAlign: "center" }}>{user.accuracy}%</div>
               </div>

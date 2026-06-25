@@ -66,6 +66,7 @@ model Match {
   status       MatchStatus @default(UPCOMING)
   team1Goals   Int?
   team2Goals   Int?
+  firstTeamToScoreId String?
   apiFixtureId Int?        @unique
   bets         Bet[]
 }

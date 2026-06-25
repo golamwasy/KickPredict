@@ -12,6 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
         u.username,
         COALESCE(w.balance, 0)::int                                        AS "kickCoins",
         COALESCE(bet_summary."totalBets", 0)::int                          AS "totalBets",
+        COALESCE(bet_summary."settledBets", 0)::int                        AS "settledBets",
         COALESCE(bet_summary."wonBets", 0)::int                            AS "wonBets",
         COALESCE(bet_summary."lostBets", 0)::int                           AS "lostBets",
         CASE

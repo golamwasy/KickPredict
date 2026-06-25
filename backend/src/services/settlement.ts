@@ -73,16 +73,20 @@ const settleCorrectMargin = (
 const settleFirstToScore = (
   predictedData: Record<string, any>,
   team1Goals: number,
-  team2Goals: number
+  team2Goals: number,
+  firstTeamToScoreId: string | null,
+  team1Id: string,
+  team2Id: string
 ): 'WON' | 'LOST' | 'VOID' => {
-  // We don't have first-scorer data from ESPN — settle NONE if no goals, otherwise VOID
-  // This is a conservative fallback: refund stake if we can't determine the first scorer
   const noGoals = team1Goals === 0 && team2Goals === 0;
   if (noGoals) {
     return predictedData.team === 'NONE' ? 'WON' : 'LOST';
   }
-  // If goals were scored but we don't know who scored first → VOID (refund)
-  return 'VOID';
+  
+  if (!firstTeamToScoreId) return 'VOID'; 
+
+  const actualFirstScorer = firstTeamToScoreId === team1Id ? 'HOME' : firstTeamToScoreId === team2Id ? 'AWAY' : 'NONE';
+  return predictedData.team === actualFirstScorer ? 'WON' : 'LOST';
 };
 
 // ─── Dispatch + wallet settlement ─────────────────────────────────────────────
@@ -91,7 +95,10 @@ const settleSingleBet = (
   betType: BetType,
   predictedData: Record<string, any>,
   team1Goals: number,
-  team2Goals: number
+  team2Goals: number,
+  firstTeamToScoreId: string | null,
+  team1Id: string,
+  team2Id: string
 ): 'WON' | 'LOST' | 'VOID' => {
   switch (betType) {
     case BetType.MATCH_WINNER:
@@ -107,7 +114,7 @@ const settleSingleBet = (
     case BetType.CORRECT_MARGIN:
       return settleCorrectMargin(predictedData, team1Goals, team2Goals);
     case BetType.FIRST_TO_SCORE:
-      return settleFirstToScore(predictedData, team1Goals, team2Goals);
+      return settleFirstToScore(predictedData, team1Goals, team2Goals, firstTeamToScoreId, team1Id, team2Id);
     default:
       return 'VOID';
   }
@@ -152,7 +159,10 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
           bet.betType,
           bet.predictedData as Record<string, any>,
           match.team1Goals!,
-          match.team2Goals!
+          match.team2Goals!,
+          match.firstTeamToScoreId,
+          match.team1Id,
+          match.team2Id
         );
       }
 
