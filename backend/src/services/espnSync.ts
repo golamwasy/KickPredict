@@ -1,4 +1,5 @@
 import prisma from '../prisma';
+import { MatchStatus } from '@prisma/client';
 import { settleBetsForMatch } from './settlement';
 
 const ESPN_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100';
@@ -36,7 +37,7 @@ export const syncESPNData = async () => {
     for (const event of events) {
       const apiFixtureId = parseInt(event.id);
       const date = new Date(event.date);
-      const statusType = event.status.type.name; // e.g., STATUS_SCHEDULED, STATUS_IN_PROGRESS, STATUS_FULL_TIME
+      const statusType = event.status?.type?.name || 'STATUS_SCHEDULED'; // Robust fallback if ESPN omits status
 
       // If the match is already finished in the DB, we can skip processing it completely
       const existingMatch = matchCache.get(apiFixtureId);
@@ -57,22 +58,22 @@ export const syncESPNData = async () => {
         continue;
       }
 
-      let matchStatus: 'UPCOMING' | 'OPEN' | 'LOCKED' | 'LIVE' | 'FINISHED' | 'CANCELLED' = 'UPCOMING';
+      let matchStatus: MatchStatus = MatchStatus.UPCOMING;
       
       if (statusType === 'STATUS_FULL_TIME') {
-        matchStatus = 'FINISHED';
+        matchStatus = MatchStatus.FINISHED;
       } else if (statusType === 'STATUS_CANCELED' || statusType === 'STATUS_POSTPONED') {
-        matchStatus = 'CANCELLED';
+        matchStatus = MatchStatus.CANCELLED;
       } else if (statusType === 'STATUS_IN_PROGRESS' || statusType === 'STATUS_HALFTIME') {
-        matchStatus = 'LIVE';
+        matchStatus = MatchStatus.LIVE;
       } else {
         // If scheduled, check time to see if it should be OPEN or LOCKED
         const now = new Date();
         const msUntilKickoff = date.getTime() - now.getTime();
         if (msUntilKickoff <= 0) {
-          matchStatus = 'LOCKED';
+          matchStatus = MatchStatus.LOCKED;
         } else if (msUntilKickoff <= 24 * 60 * 60 * 1000) {
-          matchStatus = 'OPEN';
+          matchStatus = MatchStatus.OPEN;
         }
       }
 
@@ -82,8 +83,8 @@ export const syncESPNData = async () => {
 
       if (!homeCompetitor || !awayCompetitor) continue;
 
-      const team1Goals = matchStatus !== 'UPCOMING' && matchStatus !== 'OPEN' ? parseInt(homeCompetitor.score) : null;
-      const team2Goals = matchStatus !== 'UPCOMING' && matchStatus !== 'OPEN' ? parseInt(awayCompetitor.score) : null;
+      const team1Goals = matchStatus !== MatchStatus.UPCOMING && matchStatus !== MatchStatus.OPEN ? parseInt(homeCompetitor.score) : null;
+      const team2Goals = matchStatus !== MatchStatus.UPCOMING && matchStatus !== MatchStatus.OPEN ? parseInt(awayCompetitor.score) : null;
 
       // Upsert Teams ONLY if they do not exist in the cache
       let team1 = teamCache.get(homeCompetitor.team.abbreviation);
