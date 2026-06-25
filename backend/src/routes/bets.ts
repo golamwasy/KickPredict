@@ -138,7 +138,7 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
     const bet = await prisma.bet.findUnique({
       where: { id: betId },
       include: { match: { include: { team1: true, team2: true } } },
-    }) as any;
+    });
 
     if (!bet || bet.userId !== userId) {
       return res.status(404).json({ error: 'Bet not found' });

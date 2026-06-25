@@ -476,7 +476,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555555', marginTop: '0.2rem' }}>
                                 {predictedDataSummary(bet.betType, bet.predictedData, match.team1?.name, match.team2?.name)}
                               </div>
-                              <div style={{ fontSize: '0.7rem', color: '#888888', marginTop: '0.35rem', fontStyle: 'italic', lineHeight: '1.2' }}>
+                              <div style={{ fontSize: '0.7rem', color: '#888888', marginTop: '0.35rem', fontStyle: 'italic', lineHeight: '1.2', wordBreak: 'break-word' }}>
                                 {winningConditionText(bet.betType, bet.predictedData, match.team1?.name, match.team2?.name)}
                               </div>
                             </div>

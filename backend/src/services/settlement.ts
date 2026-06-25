@@ -167,6 +167,18 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
       }
 
       await prisma.$transaction(async (tx) => {
+        const newStatus = outcome === 'WON' ? BetStatus.WON : outcome === 'LOST' ? BetStatus.LOST : BetStatus.VOID;
+        
+        // Atomic update to prevent double-settling race conditions
+        const updateResult = await tx.bet.updateMany({
+          where: { id: bet.id, status: BetStatus.PENDING },
+          data: { status: newStatus, settledAt: new Date() },
+        });
+
+        if (updateResult.count === 0) {
+          throw new Error(`Bet ${bet.id} was already settled by another process.`);
+        }
+
         if (outcome === 'WON') {
           await creditWallet(
             bet.userId,
@@ -176,16 +188,7 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
             `Won: ${bet.betType} on match ${matchId}`,
             tx
           );
-          await tx.bet.update({
-            where: { id: bet.id },
-            data: { status: BetStatus.WON, settledAt: new Date() },
-          });
         } else if (outcome === 'LOST') {
-          // Stake was already deducted at placement — nothing to charge
-          await tx.bet.update({
-            where: { id: bet.id },
-            data: { status: BetStatus.LOST, settledAt: new Date() },
-          });
           // Record BET_LOST transaction with 0 amount for auditability
           const wallet = await tx.wallet.findUnique({ where: { userId: bet.userId } });
           if (wallet) {
@@ -209,10 +212,6 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
             `Refund: ${bet.betType} on match ${matchId} (no data)`,
             tx
           );
-          await tx.bet.update({
-            where: { id: bet.id },
-            data: { status: BetStatus.VOID, settledAt: new Date() },
-          });
         }
       });
 
@@ -263,6 +262,18 @@ export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void>
       if (outcome === 'VOID') continue;
 
       await prisma.$transaction(async (tx) => {
+        const newStatus = outcome === 'WON' ? BetStatus.WON : outcome === 'LOST' ? BetStatus.LOST : BetStatus.VOID;
+        
+        // Atomic update to prevent double-settling race conditions
+        const updateResult = await tx.bet.updateMany({
+          where: { id: bet.id, status: BetStatus.PENDING },
+          data: { status: newStatus, settledAt: new Date() },
+        });
+
+        if (updateResult.count === 0) {
+          throw new Error(`Bet ${bet.id} was already settled by another process.`);
+        }
+
         if (outcome === 'WON') {
           await creditWallet(
             bet.userId,
@@ -272,15 +283,7 @@ export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void>
             `Won: ${bet.betType} on match ${matchId}`,
             tx
           );
-          await tx.bet.update({
-            where: { id: bet.id },
-            data: { status: BetStatus.WON, settledAt: new Date() },
-          });
         } else if (outcome === 'LOST') {
-          await tx.bet.update({
-            where: { id: bet.id },
-            data: { status: BetStatus.LOST, settledAt: new Date() },
-          });
           const wallet = await tx.wallet.findUnique({ where: { userId: bet.userId } });
           if (wallet) {
             await tx.transaction.create({
