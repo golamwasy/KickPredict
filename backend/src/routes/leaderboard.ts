@@ -40,7 +40,7 @@ router.get('/', async (req: Request, res: Response) => {
       WHERE u.role::text != 'ADMIN' 
         AND u."isActive" = true
         AND COALESCE(bet_summary."totalBets", 0) > 0
-      ORDER BY "kickCoins" DESC, "wonBets" DESC, "accuracy" DESC;
+      ORDER BY (COALESCE(w.balance, 0) - COALESCE(w.loan, 0)) DESC, "wonBets" DESC, "accuracy" DESC;
     `;
 
     const rankedLeaderboard = leaderboard.map((user, index) => ({

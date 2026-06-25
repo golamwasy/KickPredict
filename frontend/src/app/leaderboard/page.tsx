@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "../utils/api";
 import BetPrompt from "./BetPrompt";
+import LeaderboardAuthGuard from "./LeaderboardAuthGuard";
 
 async function getLeaderboard() {
   try {
@@ -13,7 +14,8 @@ export default async function LeaderboardPage() {
   const leaderboard = await getLeaderboard();
 
   return (
-    <div className="container">
+    <LeaderboardAuthGuard>
+      <div className="container">
       <div style={{ textAlign: 'center', marginBottom: '3rem', animation: 'floatIn 0.6s ease both' }}>
         <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🪙</div>
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--gold)", textShadow: "0 0 30px rgba(255,214,0,0.3)", marginBottom: "0.75rem" }}>Global Leaderboard</h1>
@@ -49,7 +51,7 @@ export default async function LeaderboardPage() {
                 <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>
                   {user.username}
                   {user.loan > 0 && (
-                    <span style={{ color: '#ff4d4d', fontSize: '0.8rem', marginLeft: '8px', textTransform: 'lowercase' }}>
+                    <span style={{ color: '#ff0000', fontSize: '0.8rem', marginLeft: '8px', textTransform: 'lowercase' }}>
                       ({user.loan.toLocaleString()} KC loan)
                     </span>
                   )}
@@ -68,6 +70,7 @@ export default async function LeaderboardPage() {
         )}
       </div>
       <style>{"@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }"}</style>
-    </div>
+      </div>
+    </LeaderboardAuthGuard>
   );
 }
