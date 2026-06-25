@@ -124,4 +124,22 @@ router.post('/settle-bets', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Get a specific user's bet history
+router.get('/users/:id/bets', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const bets = await prisma.bet.findMany({
+      where: { userId: id },
+      include: {
+        match: { include: { team1: true, team2: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(bets);
+  } catch (error) {
+    console.error('[Admin User Bets Error]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
