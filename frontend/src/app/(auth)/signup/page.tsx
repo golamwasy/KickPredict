@@ -115,14 +115,14 @@ export default function Signup() {
 
       {showTerms && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.95)', zIndex: 9999, display: 'flex',
           alignItems: 'center', justifyContent: 'center', padding: '1rem',
           backdropFilter: 'blur(10px)'
         }}>
           <div style={{
             backgroundColor: '#111111', borderRadius: '12px', border: '1px solid #333',
-            width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+            width: '100%', maxWidth: '800px', maxHeight: '85dvh', display: 'flex', flexDirection: 'column',
             boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
           }}>
             <div style={{ padding: '1.5rem', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

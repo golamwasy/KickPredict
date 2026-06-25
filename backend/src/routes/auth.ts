@@ -137,7 +137,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
     // Clean up pending registration
     await prisma.pendingRegistration.delete({ where: { email: normalizedEmail } });
 
-    res.json({ message: 'Email verified successfully! You can now log in.' });
+    res.json({ message: 'Email verified! Your account is now pending manual approval by the administrator.' });
   } catch (error) {
     console.error('[Verification Error]', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -168,7 +168,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
 
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-    if (!user.isActive) return res.status(403).json({ error: 'Your account has been disabled by an administrator' });
+    if (!user.isActive) return res.status(403).json({ error: 'Your account is pending manual approval or has been disabled.' });
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
