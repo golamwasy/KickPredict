@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { authenticate, requireAdmin, AuthRequest } from '../middlewares/auth';
 import prisma from '../prisma';
 import { settleBetsForMatch } from '../services/settlement';
+import { sendAccountActivatedEmail } from '../services/email';
 
 const router = Router();
 
@@ -70,6 +71,14 @@ router.put('/users/:id/toggle-status', async (req: AuthRequest, res: Response) =
       where: { id },
       data: { isActive: !user.isActive }
     });
+
+    // Send email if account was manually activated
+    if (!user.isActive && updatedUser.isActive) {
+      // Background process, no need to await
+      sendAccountActivatedEmail(updatedUser.email).catch(err => {
+        console.error('[Admin] Failed to send activation email:', err);
+      });
+    }
 
     res.json(updatedUser);
   } catch (error) {
