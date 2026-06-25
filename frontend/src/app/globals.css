@@ -1155,3 +1155,50 @@ button {
   }
 }
 .text-right { text-align: right; }
+
+/* === BET TABS MOBILE GRID === */
+.bet-tabs-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-top: 0.5rem;
+}
+
+.bet-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 30px;
+  border: 3px solid var(--fifa-black);
+  font-weight: 900;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+}
+
+@media (max-width: 640px) {
+  .bet-tabs-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .bet-tab-btn {
+    width: 100%;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    justify-content: center;
+  }
+  .bet-tab-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bet-tab-btn:last-child {
+    grid-column: span 2;
+  }
+}

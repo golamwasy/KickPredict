@@ -517,7 +517,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                 )}
 
                 {/* Bet Type Tabs */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', paddingTop: '0.5rem' }}>
+                <div className="bet-tabs-container">
                   {BET_TABS.map(tab => {
                     const alreadyBet = existingBets.some(b => b.betType === tab.type);
                     const isLocked = alreadyBet && match?.status !== 'OPEN';
@@ -525,21 +525,13 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                     return (
                       <button
                         key={tab.type}
+                        className="bet-tab-btn"
                         onClick={() => handleTabChange(tab.type)}
                         disabled={isLocked}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.6rem 1.25rem',
-                          borderRadius: '30px',
-                          border: '3px solid var(--fifa-black)',
                           background: isActive ? 'var(--fifa-purple)' : '#FFFFFF',
                           color: isLocked ? 'rgba(0,0,0,0.4)' : isActive ? '#FFFFFF' : 'var(--fifa-black)',
-                          fontWeight: 900,
-                          fontSize: '0.85rem',
                           cursor: isLocked ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.15s ease',
                           opacity: isLocked ? 0.7 : 1,
                           boxShadow: isActive ? 'none' : '4px 4px 0px var(--fifa-black)',
                           transform: isActive ? 'translate(4px, 4px)' : 'none',
