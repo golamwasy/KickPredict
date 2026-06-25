@@ -50,15 +50,30 @@ export default function AdminDashboard() {
     }
   };
 
-  const recalculatePoints = async () => {
+  const handleBalanceChange = async (userId: string, currentBalance: number) => {
+    const newBalanceStr = prompt(`Enter new balance (Current: ${currentBalance}):`, currentBalance.toString());
+    if (newBalanceStr === null) return;
+    
+    const newBalance = parseInt(newBalanceStr, 10);
+    if (isNaN(newBalance) || newBalance < 0) {
+      alert('Invalid balance amount');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/recalculate-points`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/balance`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ balance: newBalance })
       });
-      const data = await res.json();
-      alert(data.message || 'Success');
+      if (!res.ok) throw new Error('Failed to update balance');
+      
+      const updatedWallet = await res.json();
+      setUsers(users.map(u => u.id === userId ? { ...u, wallet: { balance: updatedWallet.balance } } : u));
     } catch (err: any) {
       alert(err.message);
     }
@@ -71,35 +86,24 @@ export default function AdminDashboard() {
     <div>
       <h1 style={{ marginBottom: '2rem' }}>Admin Dashboard</h1>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <h3>Total Users</h3>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>{summary?.totalUsers}</div>
-        </div>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <h3>Total Predictions</h3>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{summary?.totalPredictions}</div>
-        </div>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <h3>Actions</h3>
-          <button onClick={recalculatePoints} className="btn-primary" style={{ marginTop: '1rem' }}>Recalculate All Points</button>
-        </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        <div className="card">
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+        <div className="card" style={{ overflow: 'hidden' }}>
           <h2 style={{ marginBottom: '1.5rem' }}>User Management</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ padding: '0.5rem' }}>Username</th>
                 <th style={{ padding: '0.5rem' }}>Role</th>
                 <th style={{ padding: '0.5rem' }}>Status</th>
+                <th style={{ padding: '0.5rem' }}>Balance</th>
                 <th style={{ padding: '0.5rem' }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.filter(u => u.role !== 'ADMIN').map(u => (
                 <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '0.5rem' }}>{u.username}</td>
                   <td style={{ padding: '0.5rem' }}>{u.role}</td>
@@ -108,17 +112,26 @@ export default function AdminDashboard() {
                       {u.isActive ? 'Active' : 'Disabled'}
                     </span>
                   </td>
+                  <td style={{ padding: '0.5rem', fontWeight: 'bold', color: 'var(--fifa-lime)', whiteSpace: 'nowrap' }}>
+                    {u.wallet?.balance || 0}
+                    <button 
+                      onClick={() => handleBalanceChange(u.id, u.wallet?.balance || 0)} 
+                      style={{ marginLeft: '10px', background: '#333', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}
+                      title="Adjust Balance"
+                    >
+                      ✎ Edit
+                    </button>
+                  </td>
                   <td style={{ padding: '0.5rem' }}>
-                    {u.role !== 'ADMIN' && (
-                      <button onClick={() => toggleUserStatus(u.id)} style={{ color: u.isActive ? 'var(--danger-color)' : 'var(--success-color)', textDecoration: 'underline' }}>
-                        {u.isActive ? 'Disable' : 'Enable'}
-                      </button>
-                    )}
+                    <button onClick={() => toggleUserStatus(u.id)} style={{ color: u.isActive ? 'var(--danger-color)' : 'var(--success-color)', textDecoration: 'underline' }}>
+                      {u.isActive ? 'Disable' : 'Enable'}
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="card">

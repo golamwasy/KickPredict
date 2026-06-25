@@ -76,6 +76,28 @@ router.put('/users/:id/toggle-status', async (req: AuthRequest, res: Response) =
   }
 });
 
+// Update user balance
+router.put('/users/:id/balance', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { balance } = req.body;
+    
+    if (typeof balance !== 'number' || balance < 0) {
+      return res.status(400).json({ error: 'Invalid balance amount' });
+    }
+
+    const wallet = await prisma.wallet.update({
+      where: { userId: id },
+      data: { balance }
+    });
+
+    res.json(wallet);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update balance' });
+  }
+});
+
 // Manually trigger bet settlement for all finished matches
 router.post('/settle-bets', async (req: AuthRequest, res: Response) => {
   try {

@@ -34,7 +34,11 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(data.user));
       window.dispatchEvent(new Event('storage')); // Force global state sync
 
-      router.push('/dashboard');
+      if (data.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
