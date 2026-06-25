@@ -56,7 +56,7 @@ export default function Dashboard() {
   const wonBets = validBets.filter(b => b.status === 'WON');
   const lostBets = validBets.filter(b => b.status === 'LOST');
   const pendingBets = validBets.filter(b => b.status === 'PENDING');
-  const totalWon = (walletBalance ?? 10000) - 10000;
+  const totalWon = wonBets.reduce((acc, b) => acc + (b.potentialPayout - b.stake), 0);
   const totalStaked = validBets.reduce((acc, b) => acc + b.stake, 0);
   const settledBets = wonBets.length + lostBets.length;
   const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
