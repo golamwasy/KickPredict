@@ -439,7 +439,11 @@ button {
   background: #FF8C00;
 }
 
-.loan-text {
+.lb-row span.loan-text,
+.lb-row-default span.loan-text,
+.lb-row-0 span.loan-text,
+.lb-row-1 span.loan-text,
+.lb-row-2 span.loan-text {
   color: #ff0000 !important;
 }
 
