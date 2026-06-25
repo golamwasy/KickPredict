@@ -15,6 +15,7 @@ router.get('/summary', async (req: AuthRequest, res: Response) => {
     const totalBets = await prisma.bet.count();
     const pendingBets = await prisma.bet.count({ where: { status: 'PENDING' } });
     const recentSyncLogs = await prisma.apiSyncLog.findMany({
+      where: { status: 'ERROR' },
       orderBy: { createdAt: 'desc' },
       take: 10
     });

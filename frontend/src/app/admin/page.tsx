@@ -135,17 +135,23 @@ export default function AdminDashboard() {
         </div>
 
         <div className="card">
-          <h2 style={{ marginBottom: '1.5rem' }}>Recent API Sync Logs (ESPN)</h2>
+          <h2 style={{ marginBottom: '1.5rem', color: 'var(--danger-color)' }}>Recent API Sync Errors (ESPN)</h2>
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {summary?.recentSyncLogs.map((log: any) => (
-              <div key={log.id} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span className={`badge ${log.status === 'SUCCESS' ? 'badge-open' : 'badge-locked'}`}>{log.status}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleString()}</span>
-                </div>
-                <p>{log.message}</p>
+            {summary?.recentSyncLogs?.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                ✅ No sync errors logged. Background APIs are running smoothly!
               </div>
-            ))}
+            ) : (
+              summary?.recentSyncLogs.map((log: any) => (
+                <div key={log.id} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span className="badge badge-locked">{log.status}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p style={{ color: '#ff6b6b' }}>{log.message}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
