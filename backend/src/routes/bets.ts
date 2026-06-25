@@ -1,9 +1,9 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthRequest } from '../middlewares/auth';
 import prisma from '../prisma';
-import { BetType } from '@prisma/client';
+import { BetType, TransactionType } from '@prisma/client';
 import { getMultiplier, validatePredictedData } from '../services/multiplier';
-import { debitWallet, getWalletData } from '../services/wallet';
+import { debitWallet, creditWallet, getWalletData } from '../services/wallet';
 
 const router = Router();
 
@@ -116,6 +116,100 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     });
   } catch (err: any) {
     console.error('[Place Bet Error]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/bets/:id — update a pending bet
+router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const betId = req.params.id as string;
+    const { predictedData, stake } = req.body;
+
+    if (!predictedData || stake === undefined) {
+      return res.status(400).json({ error: 'predictedData and stake are required' });
+    }
+    const stakeNum = Number(stake);
+    if (!Number.isInteger(stakeNum) || stakeNum <= 0) {
+      return res.status(400).json({ error: 'stake must be a positive integer' });
+    }
+
+    const bet = await prisma.bet.findUnique({
+      where: { id: betId },
+      include: { match: { include: { team1: true, team2: true } } },
+    }) as any;
+
+    if (!bet || bet.userId !== userId) {
+      return res.status(404).json({ error: 'Bet not found' });
+    }
+
+    if (bet.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Only PENDING bets can be updated' });
+    }
+
+    if (bet.match.status !== 'OPEN') {
+      return res.status(400).json({ error: 'Bets can only be updated while the match is OPEN' });
+    }
+
+    const validationError = validatePredictedData(bet.betType, predictedData);
+    if (validationError) return res.status(400).json({ error: validationError });
+
+    const multiplier = getMultiplier(bet.betType, {
+      predictedData,
+      team1Code: bet.match.team1.code,
+      team2Code: bet.match.team2.code
+    });
+    const potentialPayout = Math.round(stakeNum * multiplier);
+
+    const stakeDifference = stakeNum - bet.stake;
+
+    let updatedBet;
+    let newBalance = 0;
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // Handle wallet difference
+        if (stakeDifference > 0) {
+          newBalance = await debitWallet(userId, stakeDifference, bet.id, tx, 'Stake increased on bet update');
+        } else if (stakeDifference < 0) {
+          newBalance = await creditWallet(userId, Math.abs(stakeDifference), TransactionType.BET_REFUNDED, bet.id, 'Stake decreased on bet update', tx);
+        } else {
+          // fetch current balance if unchanged
+          const wallet = await tx.wallet.findUnique({ where: { userId } });
+          newBalance = wallet?.balance || 0;
+        }
+
+        updatedBet = await tx.bet.update({
+          where: { id: bet.id },
+          data: {
+            stake: stakeNum,
+            multiplier,
+            potentialPayout,
+            predictedData,
+          },
+        });
+
+        return { bet: updatedBet, newBalance };
+      });
+      
+      updatedBet = result.bet;
+      newBalance = result.newBalance;
+    } catch (e: any) {
+      if (e.message === 'Insufficient KickCoins balance') {
+        return res.status(400).json({ error: e.message });
+      }
+      throw e;
+    }
+
+    res.json({
+      bet: updatedBet,
+      newBalance,
+      multiplier,
+      potentialPayout,
+    });
+  } catch (err: any) {
+    console.error('[Update Bet Error]', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -37,7 +37,8 @@ export const debitWallet = async (
   userId: string,
   stake: number,
   betId: string,
-  txClient?: Prisma.TransactionClient
+  txClient?: Prisma.TransactionClient,
+  note?: string
 ): Promise<number> => {
   const execute = async (tx: Prisma.TransactionClient) => {
     // Lock the wallet row to prevent concurrent race conditions
@@ -61,6 +62,7 @@ export const debitWallet = async (
         amount: -stake,
         balanceAfter: newBalance,
         betId,
+        note: note || null,
       },
     });
 

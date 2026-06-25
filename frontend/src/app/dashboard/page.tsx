@@ -57,6 +57,7 @@ export default function Dashboard() {
   const lostBets = validBets.filter(b => b.status === 'LOST');
   const pendingBets = validBets.filter(b => b.status === 'PENDING');
   const totalWon = wonBets.reduce((acc, b) => acc + (b.potentialPayout - b.stake), 0);
+  const totalLostAmount = lostBets.reduce((acc, b) => acc + b.stake, 0);
   const totalStaked = validBets.reduce((acc, b) => acc + b.stake, 0);
   const settledBets = wonBets.length + lostBets.length;
   const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
@@ -65,7 +66,7 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'Total Won', value: totalWon.toLocaleString() + ' KC', accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
-    { label: 'Total Bets', value: totalBets, accent: 'stat-accent-green', color: 'var(--fifa-green)' },
+    { label: 'Total Lost', value: totalLostAmount.toLocaleString() + ' KC', accent: 'stat-accent-green', color: 'var(--fifa-green)' },
     { label: 'Win Rate', value: accuracy + '%', accent: 'stat-accent-gold', color: 'var(--fifa-orange)' },
   ];
 

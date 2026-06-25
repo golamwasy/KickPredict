@@ -5,22 +5,22 @@ import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '../utils/api';
 
 const TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  SIGNUP_BONUS:  { label: 'Welcome Bonus',   color: '#6300E4', icon: '🎁' },
-  BET_PLACED:    { label: 'Bet Placed',       color: '#E67E22', icon: '🎯' },
-  BET_WON:       { label: 'Bet Won',          color: '#27AE60', icon: '🏆' },
-  BET_LOST:      { label: 'Bet Lost',         color: '#E74C3C', icon: '❌' },
-  BET_REFUNDED:  { label: 'Bet Refunded',     color: '#3498DB', icon: '↩️' },
-  ADMIN_ADJUST:  { label: 'Admin Adjustment', color: '#95A5A6', icon: '⚙️' },
+  SIGNUP_BONUS: { label: 'Welcome Bonus', color: '#6300E4', icon: '🎁' },
+  BET_PLACED: { label: 'Bet Placed', color: '#E67E22', icon: '🎯' },
+  BET_WON: { label: 'Bet Won', color: '#27AE60', icon: '🏆' },
+  BET_LOST: { label: 'Bet Lost', color: '#E74C3C', icon: '❌' },
+  BET_REFUNDED: { label: 'Bet Refunded', color: '#3498DB', icon: '↩️' },
+  ADMIN_ADJUST: { label: 'Admin Adjustment', color: '#95A5A6', icon: '⚙️' },
 };
 
 const BET_TYPE_LABELS: Record<string, string> = {
-  MATCH_WINNER:        'Match Winner',
-  EXACT_SCORE:         'Exact Score',
-  OVER_UNDER_GOALS:    'Over/Under Goals',
+  MATCH_WINNER: 'Match Winner',
+  EXACT_SCORE: 'Exact Score',
+  OVER_UNDER_GOALS: 'Over/Under Goals',
   BOTH_TEAMS_TO_SCORE: 'Both Teams to Score',
-  CORRECT_MARGIN:      'Correct Margin',
-  FIRST_TO_SCORE:      'First to Score',
-  DOUBLE_CHANCE:       'Double Chance',
+  CORRECT_MARGIN: 'Correct Margin',
+  FIRST_TO_SCORE: 'First to Score',
+  DOUBLE_CHANCE: 'Double Chance',
 };
 
 export default function WalletPage() {
@@ -72,7 +72,6 @@ export default function WalletPage() {
           border: '4px solid var(--fifa-black)',
           boxShadow: '8px 8px 0px var(--fifa-black)',
         }}>
-          <div style={{ fontSize: '4rem', marginBottom: '1rem', filter: 'drop-shadow(4px 4px 0px #000)' }}>🪙</div>
           <div style={{ fontSize: '1rem', fontWeight: 900, color: '#FFFFFF', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.5rem', textShadow: '2px 2px 0px var(--fifa-black)' }}>
             Your KickCoin Balance
           </div>
@@ -100,7 +99,7 @@ export default function WalletPage() {
                 const meta = TYPE_LABELS[tx.type] || { label: tx.type, color: 'var(--fifa-black)', icon: '•' };
                 const isPositive = tx.amount > 0;
                 const match = tx.bet?.match;
-                
+
                 // Flat colors for specific transaction types
                 let txColor = 'var(--fifa-black)';
                 if (tx.amount > 0) txColor = '#27AE60';
@@ -158,6 +157,11 @@ export default function WalletPage() {
                       {match && (
                         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#333333', marginTop: '0.4rem' }}>
                           {match.team1?.name} vs {match.team2?.name}
+                        </div>
+                      )}
+                      {tx.note && (
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0056b3', marginTop: '0.2rem' }}>
+                          {tx.note}
                         </div>
                       )}
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#666666', marginTop: '0.2rem', textTransform: 'uppercase' }}>

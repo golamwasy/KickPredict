@@ -42,7 +42,7 @@ const BET_STATUS_STYLE: Record<string, { color: string; bg: string; label: strin
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatKC = (n: number) => n.toLocaleString() + ' 🪙';
+const formatKC = (n: number) => n.toLocaleString();
 
 function buildPredictedData(type: BetType, form: Record<string, any>) {
   switch (type) {
@@ -314,10 +314,27 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
 
   const handleTabChange = (type: BetType) => {
     setActiveBetType(type);
-    setBetForm({});
     setBetError('');
     setBetSuccess('');
   };
+
+  useEffect(() => {
+    const existingBet = existingBets.find(b => b.betType === activeBetType);
+    if (existingBet && match?.status === 'OPEN') {
+      const data = existingBet.predictedData;
+      if (activeBetType === 'MATCH_WINNER') setBetForm({ outcome: data.outcome });
+      else if (activeBetType === 'DOUBLE_CHANCE') setBetForm({ outcomes: data.outcomes });
+      else if (activeBetType === 'EXACT_SCORE') setBetForm({ homeScore: data.homeScore, awayScore: data.awayScore });
+      else if (activeBetType === 'OVER_UNDER_GOALS') setBetForm({ side: data.side });
+      else if (activeBetType === 'BOTH_TEAMS_TO_SCORE') setBetForm({ answer: data.answer ? 'true' : 'false' });
+      else if (activeBetType === 'CORRECT_MARGIN') setBetForm({ marginSide: data.marginSide, margin: data.margin });
+      else if (activeBetType === 'FIRST_TO_SCORE') setBetForm({ team: data.team });
+      setStake(existingBet.stake);
+    } else {
+      setBetForm({});
+      setStake('');
+    }
+  }, [activeBetType, existingBets, match?.status]);
 
   const submitBet = async () => {
     setBetError('');
@@ -330,8 +347,12 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bets`, {
-        method: 'POST',
+      const existingBet = existingBets.find(b => b.betType === activeBetType);
+      const method = existingBet ? 'PUT' : 'POST';
+      const url = existingBet ? `${API_BASE_URL}/api/bets/${existingBet.id}` : `${API_BASE_URL}/api/bets`;
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           matchId: id,
@@ -343,7 +364,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to place bet');
 
-      setBetSuccess(`Bet placed! Potential payout: ${formatKC(data.potentialPayout)}`);
+      setBetSuccess(existingBet ? `Bet updated! Potential payout: ${formatKC(data.potentialPayout)}` : `Bet placed! Potential payout: ${formatKC(data.potentialPayout)}`);
       setWalletBalance(data.newBalance);
       setStake('');
       setBetForm({});
@@ -476,12 +497,13 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', paddingTop: '0.5rem' }}>
                   {BET_TABS.map(tab => {
                     const alreadyBet = existingBets.some(b => b.betType === tab.type);
+                    const isLocked = alreadyBet && match?.status !== 'OPEN';
                     const isActive = activeBetType === tab.type;
                     return (
                       <button
                         key={tab.type}
                         onClick={() => handleTabChange(tab.type)}
-                        disabled={alreadyBet}
+                        disabled={isLocked}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -490,16 +512,16 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                           borderRadius: '30px',
                           border: '3px solid var(--fifa-black)',
                           background: isActive ? 'var(--fifa-purple)' : '#FFFFFF',
-                          color: alreadyBet ? 'rgba(0,0,0,0.4)' : isActive ? '#FFFFFF' : 'var(--fifa-black)',
+                          color: isLocked ? 'rgba(0,0,0,0.4)' : isActive ? '#FFFFFF' : 'var(--fifa-black)',
                           fontWeight: 900,
                           fontSize: '0.85rem',
-                          cursor: alreadyBet ? 'not-allowed' : 'pointer',
+                          cursor: isLocked ? 'not-allowed' : 'pointer',
                           transition: 'all 0.15s ease',
-                          opacity: alreadyBet ? 0.7 : 1,
+                          opacity: isLocked ? 0.7 : 1,
                           boxShadow: isActive ? 'none' : '4px 4px 0px var(--fifa-black)',
                           transform: isActive ? 'translate(4px, 4px)' : 'none',
                         }}
-                        title={alreadyBet ? 'Already bet on this type' : tab.multiplierHint}
+                        title={isLocked ? 'Already bet on this type and match is locked' : tab.multiplierHint}
                       >
                         <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span> <span>{tab.label} {alreadyBet ? '✓' : ''}</span>
                       </button>
@@ -579,7 +601,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                     <div>
                       <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--fifa-black)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Potential Payout</div>
                       <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--fifa-black)' }}>
-                        {potentialPayout?.toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>KC 🪙</span>
+                        {potentialPayout?.toLocaleString()} <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>KC</span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -598,7 +620,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                   disabled={submitting || !multiplier || !stake || Number(stake) <= 0}
                   style={{ opacity: (!multiplier || !stake || Number(stake) <= 0) ? 0.5 : 1 }}
                 >
-                  {submitting ? 'Placing Bet...' : (stake && multiplier) ? `Bet ${Number(stake).toLocaleString()} KC @ ${multiplier}×` : 'Bet'}
+                  {submitting ? 'Processing...' : existingBets.some(b => b.betType === activeBetType) ? `Update Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×` : `Place Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×`}
                 </button>
               </div>
             )}
