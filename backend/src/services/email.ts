@@ -190,10 +190,10 @@ export const sendAccountActivatedEmail = async (to: string) => {
         html,
       });
 
-      console.log(\`[Email] Activation email sent to \${to}\`);
+      console.log(`[Email] Activation email sent to ${to}`);
       
       if (info.messageId && nodemailer.getTestMessageUrl(info)) {
-        console.log(\`[Email] 📧 Preview mock email here: \${nodemailer.getTestMessageUrl(info)}\`);
+        console.log(`[Email] 📧 Preview mock email here: ${nodemailer.getTestMessageUrl(info)}`);
       }
     } else {
       console.warn('[Email Warning] Email service not initialized. Cannot send activation email.');
