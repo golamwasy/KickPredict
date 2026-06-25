@@ -51,7 +51,7 @@ export default async function LeaderboardPage() {
                 <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>
                   {user.username}
                   {user.loan > 0 && (
-                    <span style={{ color: '#ff0000', fontSize: '0.8rem', marginLeft: '8px', textTransform: 'lowercase' }}>
+                    <span className="loan-text" style={{ fontSize: '0.8rem', marginLeft: '8px', textTransform: 'lowercase' }}>
                       ({user.loan.toLocaleString()} KC loan)
                     </span>
                   )}

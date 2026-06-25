@@ -439,6 +439,10 @@ button {
   background: #FF8C00;
 }
 
+.loan-text {
+  color: #ff0000 !important;
+}
+
 /* === ALERT BANNERS === */
 .alert-error {
   padding: 1rem;
