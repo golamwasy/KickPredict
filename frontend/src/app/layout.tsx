@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter, Outfit } from "next/font/google"
 import "./globals.css"
 import Navbar from "./components/Navbar"
+import TermsEnforcer from "./components/TermsEnforcer"
 
 const inter = Outfit({ subsets: ["latin"], variable: "--font-inter", weight: ["400","600","700","800","900"] })
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", weight: ["400","600","700","800","900"] })
@@ -15,10 +16,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={outfit.className} suppressHydrationWarning>
-        <Navbar />
-        <main className="main-content">
-          {children}
-        </main>
+        <TermsEnforcer>
+          <Navbar />
+          <main className="main-content">
+            {children}
+          </main>
+        </TermsEnforcer>
       </body>
     </html>
   )

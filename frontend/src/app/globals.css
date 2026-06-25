@@ -128,7 +128,6 @@ button {
 /* === LAYOUT === */
 .main-content {
   position: relative;
-  z-index: 1;
   min-height: calc(100vh - 72px);
   padding: 3rem 1.5rem 5rem;
 }

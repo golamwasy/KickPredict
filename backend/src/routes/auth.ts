@@ -121,6 +121,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
           email: pending.email,
           username: pending.username,
           passwordHash: pending.passwordHash,
+          hasAcceptedTerms: true,
         },
       });
 
@@ -186,6 +187,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        hasAcceptedTerms: user.hasAcceptedTerms,
       },
     });
   } catch (error) {
@@ -200,9 +202,22 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
-      select: { id: true, fullName: true, username: true, email: true, role: true }
+      select: { id: true, fullName: true, username: true, email: true, role: true, hasAcceptedTerms: true }
     });
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Accept Terms & Conditions
+router.post('/accept-terms', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { hasAcceptedTerms: true }
+    });
+    res.json({ message: 'Terms accepted', user: { hasAcceptedTerms: user.hasAcceptedTerms } });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }

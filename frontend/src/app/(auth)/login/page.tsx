@@ -32,6 +32,7 @@ export default function Login() {
       // Store token securely (using localStorage for simplicity here, secure cookies preferred for production)
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('storage')); // Force global state sync
 
       router.push('/dashboard');
     } catch (err: any) {
