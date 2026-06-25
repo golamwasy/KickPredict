@@ -77,7 +77,7 @@ export default function AdminBetHistory() {
             onChange={(e) => setSelectedUserId(e.target.value)}
           >
             <option value="">-- Choose a user --</option>
-            {users.map(u => (
+            {users.filter(u => u.role !== 'ADMIN').map(u => (
               <option key={u.id} value={u.id}>
                 {u.username} {u.fullName ? `(${u.fullName})` : ''} - {u.email}
               </option>
@@ -105,21 +105,26 @@ export default function AdminBetHistory() {
             const isMatchOpen = bet.match.status === 'OPEN';
             
             return (
-              <div key={bet.id} className="card" style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <span className={`badge ${
-                    bet.status === 'WON' ? 'badge-open' : 
-                    bet.status === 'LOST' ? 'badge-live' : 
-                    bet.status === 'PENDING' ? 'badge-upcoming' : 'badge-finished'
-                  }`}>
-                    {bet.status}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-                    {new Date(bet.createdAt).toLocaleString()}
+              <div key={bet.id} className="card" style={{ padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span className={`badge ${
+                      bet.status === 'WON' ? 'badge-open' : 
+                      bet.status === 'LOST' ? 'badge-live' : 
+                      bet.status === 'PENDING' ? 'badge-upcoming' : 'badge-finished'
+                    }`}>
+                      {bet.status}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 700 }}>
+                      {new Date(bet.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 900 }}>
+                    ID: {bet.id}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: '#F8F9FA', padding: '1rem', border: '2px solid #000' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', background: '#F8F9FA', padding: '0.5rem', border: '2px solid #000' }}>
                   <div style={{ textAlign: 'center', flex: 1 }}>
                     <div style={{ fontSize: '2rem' }}>{getFlag(bet.match.team1?.code)}</div>
                     <div style={{ fontWeight: 900, color: '#000' }}>{bet.match.team1?.code}</div>
@@ -133,7 +138,7 @@ export default function AdminBetHistory() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border-color)', paddingTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border-color)', paddingTop: '0.5rem' }}>
                   <div>
                     <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 900, color: 'var(--text-muted)' }}>Bet Type</div>
                     <div style={{ fontWeight: 900, color: '#000' }}>{bet.betType}</div>
@@ -148,9 +153,27 @@ export default function AdminBetHistory() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1rem', background: '#EAEAEA', padding: '0.75rem', borderRadius: '4px', fontSize: '0.9rem', color: '#000' }}>
+                <div style={{ marginTop: '0.5rem', background: '#EAEAEA', padding: '0.5rem', borderRadius: '4px', fontSize: '0.9rem', color: '#000' }}>
                   <strong>Prediction: </strong> 
-                  {JSON.stringify(bet.predictedData)}
+                  {(() => {
+                    const data = bet.predictedData as any;
+                    const getTeamName = (side: string) => {
+                      if (side === 'HOME') return bet.match.team1?.name || bet.match.team1?.code;
+                      if (side === 'AWAY') return bet.match.team2?.name || bet.match.team2?.code;
+                      return side;
+                    };
+                    
+                    let parts = [];
+                    if (data.outcome) parts.push(`Outcome: ${getTeamName(data.outcome)}`);
+                    if (data.outcomes) parts.push(`Outcome: ${data.outcomes.map((o: string) => getTeamName(o)).join(' or ')}`);
+                    if (data.team) parts.push(`Team: ${getTeamName(data.team)}`);
+                    if (data.homeScore !== undefined) parts.push(`Score: ${bet.match.team1?.code} ${data.homeScore} - ${data.awayScore} ${bet.match.team2?.code}`);
+                    if (data.side && data.line) parts.push(`${data.side} ${data.line} Goals`);
+                    if (data.answer !== undefined) parts.push(data.answer ? 'Yes' : 'No');
+                    if (data.marginSide) parts.push(`Margin: ${getTeamName(data.marginSide)} by ${data.margin}`);
+
+                    return parts.join(' | ') || JSON.stringify(data);
+                  })()}
                 </div>
               </div>
             );
