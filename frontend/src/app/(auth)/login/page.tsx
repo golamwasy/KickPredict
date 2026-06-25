@@ -10,6 +10,7 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +40,8 @@ export default function Login() {
       } else {
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,18 @@ export default function Login() {
           </div>
           <div className="input-group">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+            <div className="password-field">
+              <input id="password" type={showPassword ? 'text' : 'password'} required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           
           <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '1.25rem' }}>
@@ -73,7 +85,7 @@ export default function Login() {
         </form>
 
         <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
-          Don't have an account? <Link href="/signup" style={{ color: 'var(--fifa-red)', fontWeight: 700, textDecoration: 'underline' }}>Sign Up</Link>
+          Don&apos;t have an account? <Link href="/signup" style={{ color: 'var(--fifa-red)', fontWeight: 700, textDecoration: 'underline' }}>Sign Up</Link>
         </p>
       </div>
       <style>{`@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`}</style>

@@ -24,13 +24,13 @@ interface BetTab {
 }
 
 const BET_TABS: BetTab[] = [
-  { type: 'MATCH_WINNER', label: 'Match Winner', icon: '🏆', multiplierHint: '×1.8 – ×2.8' },
-  { type: 'EXACT_SCORE', label: 'Exact Score', icon: '🎯', multiplierHint: '×8 – ×25' },
-  { type: 'DOUBLE_CHANCE', label: 'Double Chance', icon: '🛡️', multiplierHint: '×1.3' },
-  { type: 'OVER_UNDER_GOALS', label: 'Over / Under', icon: '📊', multiplierHint: '×1.9' },
-  { type: 'BOTH_TEAMS_TO_SCORE', label: 'Both Teams Score', icon: '⚽', multiplierHint: '×1.75 – ×1.85' },
-  { type: 'CORRECT_MARGIN', label: 'Goal Margin', icon: '📏', multiplierHint: '×2.8 – ×10' },
-  { type: 'FIRST_TO_SCORE', label: 'First to Score', icon: '⚡', multiplierHint: '×2.2 – ×5' },
+  { type: 'MATCH_WINNER', label: 'Match Winner', icon: '🏆', multiplierHint: 'Dynamic' },
+  { type: 'EXACT_SCORE', label: 'Exact Score', icon: '🎯', multiplierHint: 'High risk' },
+  { type: 'DOUBLE_CHANCE', label: 'Double Chance', icon: '🛡️', multiplierHint: 'Lower risk' },
+  { type: 'OVER_UNDER_GOALS', label: 'Over / Under', icon: '📊', multiplierHint: 'Dynamic' },
+  { type: 'BOTH_TEAMS_TO_SCORE', label: 'Both Teams Score', icon: '⚽', multiplierHint: 'Dynamic' },
+  { type: 'CORRECT_MARGIN', label: 'Goal Margin', icon: '📏', multiplierHint: 'Medium/high risk' },
+  { type: 'FIRST_TO_SCORE', label: 'First to Score', icon: '⚡', multiplierHint: 'Dynamic' },
 ];
 
 const BET_STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {

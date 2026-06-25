@@ -1,26 +1,6 @@
 import { BetType } from '@prisma/client';
 
 /**
- * Fixed multiplier table (Approach A).
- *
- * Multipliers are locked at bet-placement time and never changed retroactively.
- * Values are intentionally conservative to keep the game balanced across a season.
- *
- * predictedData shapes:
- *   MATCH_WINNER:        { outcome: "HOME"|"DRAW"|"AWAY" }
- *   EXACT_SCORE:         { homeScore: number, awayScore: number }
- *   OVER_UNDER_GOALS:    { line: 2.5, side: "OVER"|"UNDER" }
- *   BOTH_TEAMS_TO_SCORE: { answer: boolean }
- *   CORRECT_MARGIN:      { marginSide: "HOME"|"AWAY"|"DRAW", margin: number }
- *   FIRST_TO_SCORE:      { team: "HOME"|"AWAY"|"NONE" }
- *   DOUBLE_CHANCE:       { outcomes: ["HOME","DRAW"] | ["HOME","AWAY"] | ["DRAW","AWAY"] }
- */
-
-/**
- * Simulated team strengths (1-100) based on approximate historical/expected performance.
- * This is used to calculate dynamic odds since we don't have a live bookmaker API.
- */
-/**
  * Team strength ratings (0-100 scale) for the FIFA World Cup 2026 (48 teams).
  *
  * Derived from the official FIFA/Coca-Cola Men's World Ranking points
@@ -59,48 +39,149 @@ const TEAM_STRENGTHS: Record<string, number> = {
 
 const getStrength = (code?: string) => (code && TEAM_STRENGTHS[code]) ? TEAM_STRENGTHS[code] : 70;
 
+const HOUSE_EDGE = 0.08;
+const MIN_MULTIPLIER = 1.01;
+const STANDARD_MARKET_CAP = 25;
+const HARD_MARKET_CAP = 100;
+const POISSON_MAX_GOALS = 10;
+
 interface MultiplierContext {
   predictedData: Record<string, any>;
   team1Code?: string;
   team2Code?: string;
 }
 
-/**
- * Helper to calculate win probabilities using a simple strength difference formula.
- */
-const calculateProbabilities = (s1: number, s2: number) => {
-  // A strength difference of 10 points is roughly a 20% shift in win probability
-  const diff = s1 - s2;
-  const p1Base = 0.40 + (diff * 0.02); // 40% base win chance for team 1
-  const p2Base = 0.40 - (diff * 0.02); // 40% base win chance for team 2
+interface MatchOutcomeProbabilities {
+  team1WinProb: number;
+  drawProb: number;
+  team2WinProb: number;
+}
 
-  // Cap probabilities between 5% and 85%
-  let p1 = Math.max(0.05, Math.min(0.85, p1Base));
-  let p2 = Math.max(0.05, Math.min(0.85, p2Base));
+interface TeamExpectedGoals {
+  team1ExpectedGoals: number;
+  team2ExpectedGoals: number;
+}
 
-  // The rest is the draw probability
-  let pDraw = 1.0 - p1 - p2;
-  if (pDraw < 0.10) {
-    // If draw is too low, steal from the favorite
-    const steal = 0.10 - pDraw;
-    if (p1 > p2) p1 -= steal; else p2 -= steal;
-    pDraw = 0.10;
-  }
-
-  return { p1, p2, pDraw };
+export const winProbability = (team1Strength: number, team2Strength: number, k = 15): number => {
+  return 1 / (1 + Math.pow(10, (team2Strength - team1Strength) / k));
 };
 
-/**
- * Calculate odds from probability with a house edge (vig).
- * e.g., a 50% probability (0.50) without vig is 2.0x.
- * With a ~10% vig, we multiply the prob by 1.10.
- * 0.50 * 1.10 = 0.55. 1 / 0.55 = 1.81x.
- */
-const toOdds = (prob: number) => {
-  const vig = 1.05; // 5% house edge for better user payouts
-  const odds = 1 / (prob * vig);
-  // Cap min at 1.1 and max at 25.0
-  return Math.max(1.1, Math.min(25.0, Math.round(odds * 100) / 100));
+export const matchOutcomeProbabilities = (
+  team1Strength: number,
+  team2Strength: number,
+  baseDrawRate = 0.26
+): MatchOutcomeProbabilities => {
+  const rawTeam1WinProb = winProbability(team1Strength, team2Strength);
+  const strengthGap = Math.abs(team1Strength - team2Strength);
+  const drawProb = baseDrawRate * Math.max(0, 1 - strengthGap / 40);
+  const remaining = 1 - drawProb;
+
+  return {
+    team1WinProb: rawTeam1WinProb * remaining,
+    drawProb,
+    team2WinProb: (1 - rawTeam1WinProb) * remaining,
+  };
+};
+
+export const expectedTotalGoals = (team1Strength: number, team2Strength: number): number => {
+  const avgStrength = (team1Strength + team2Strength) / 2;
+  return 2.0 + (avgStrength - 70) / 100;
+};
+
+const factorial = (n: number): number => {
+  let result = 1;
+  for (let i = 2; i <= n; i += 1) result *= i;
+  return result;
+};
+
+export const poissonProbability = (lambda: number, goals: number): number => {
+  if (goals < 0 || !Number.isInteger(goals)) return 0;
+  return (Math.pow(lambda, goals) * Math.exp(-lambda)) / factorial(goals);
+};
+
+const teamExpectedGoals = (team1Strength: number, team2Strength: number): TeamExpectedGoals => {
+  const total = expectedTotalGoals(team1Strength, team2Strength);
+  const strengthSum = team1Strength + team2Strength;
+
+  return {
+    team1ExpectedGoals: total * (team1Strength / strengthSum),
+    team2ExpectedGoals: total * (team2Strength / strengthSum),
+  };
+};
+
+export const probabilityToMultiplier = (
+  probability: number,
+  cap = STANDARD_MARKET_CAP,
+  houseEdge = HOUSE_EDGE
+): number => {
+  if (probability <= 0) return cap;
+  const multiplier = (1 / probability) * (1 - houseEdge);
+  const rounded = Math.round(multiplier * 100) / 100;
+  return Math.max(MIN_MULTIPLIER, Math.min(cap, rounded));
+};
+
+const overUnderProbability = (expectedGoals: number, line: number, side: 'OVER' | 'UNDER'): number => {
+  let underProbability = 0;
+  for (let goals = 0; goals <= Math.floor(line); goals += 1) {
+    underProbability += poissonProbability(expectedGoals, goals);
+  }
+
+  return side === 'UNDER' ? underProbability : 1 - underProbability;
+};
+
+const bttsYesProbability = (team1ExpectedGoals: number, team2ExpectedGoals: number): number => {
+  const team1ScoresProb = 1 - poissonProbability(team1ExpectedGoals, 0);
+  const team2ScoresProb = 1 - poissonProbability(team2ExpectedGoals, 0);
+  return team1ScoresProb * team2ScoresProb;
+};
+
+const correctMarginProbability = (
+  team1ExpectedGoals: number,
+  team2ExpectedGoals: number,
+  marginSide: 'HOME' | 'AWAY' | 'DRAW',
+  margin: number
+): number => {
+  let probability = 0;
+
+  for (let team1Goals = 0; team1Goals <= POISSON_MAX_GOALS; team1Goals += 1) {
+    for (let team2Goals = 0; team2Goals <= POISSON_MAX_GOALS; team2Goals += 1) {
+      const diff = team1Goals - team2Goals;
+      const matches =
+        marginSide === 'HOME' ? diff === margin :
+          marginSide === 'AWAY' ? diff === -margin :
+            diff === 0;
+
+      if (matches) {
+        probability += poissonProbability(team1ExpectedGoals, team1Goals) *
+          poissonProbability(team2ExpectedGoals, team2Goals);
+      }
+    }
+  }
+
+  return probability;
+};
+
+const exactScoreProbability = (
+  team1ExpectedGoals: number,
+  team2ExpectedGoals: number,
+  team1Goals: number,
+  team2Goals: number
+): number => {
+  return poissonProbability(team1ExpectedGoals, team1Goals) *
+    poissonProbability(team2ExpectedGoals, team2Goals);
+};
+
+const firstToScoreProbabilities = (team1ExpectedGoals: number, team2ExpectedGoals: number) => {
+  const noGoalsProb = poissonProbability(team1ExpectedGoals, 0) *
+    poissonProbability(team2ExpectedGoals, 0);
+  const remaining = 1 - noGoalsProb;
+  const team1Share = team1ExpectedGoals / (team1ExpectedGoals + team2ExpectedGoals);
+
+  return {
+    team1FirstProb: team1Share * remaining,
+    team2FirstProb: (1 - team1Share) * remaining,
+    noGoalsProb,
+  };
 };
 
 /**
@@ -110,92 +191,69 @@ const toOdds = (prob: number) => {
 export const getMultiplier = (betType: BetType, context: MultiplierContext): number => {
   const { predictedData, team1Code, team2Code } = context;
 
-  const s1 = getStrength(team1Code);
-  const s2 = getStrength(team2Code);
-  const { p1, p2, pDraw } = calculateProbabilities(s1, s2);
+  const team1Strength = getStrength(team1Code);
+  const team2Strength = getStrength(team2Code);
+  const { team1WinProb, team2WinProb, drawProb } = matchOutcomeProbabilities(team1Strength, team2Strength);
+  const { team1ExpectedGoals, team2ExpectedGoals } = teamExpectedGoals(team1Strength, team2Strength);
 
   switch (betType) {
     case BetType.MATCH_WINNER: {
-      if (predictedData.outcome === 'HOME') return toOdds(p1);
-      if (predictedData.outcome === 'AWAY') return toOdds(p2);
-      return toOdds(pDraw);
+      if (predictedData.outcome === 'HOME') return probabilityToMultiplier(team1WinProb);
+      if (predictedData.outcome === 'AWAY') return probabilityToMultiplier(team2WinProb);
+      return probabilityToMultiplier(drawProb);
     }
 
     case BetType.DOUBLE_CHANCE: {
       const o = predictedData.outcomes as string[];
       let p = 0;
-      if (o.includes('HOME')) p += p1;
-      if (o.includes('AWAY')) p += p2;
-      if (o.includes('DRAW')) p += pDraw;
-      return toOdds(Math.min(0.95, p));
+      if (o.includes('HOME')) p += team1WinProb;
+      if (o.includes('AWAY')) p += team2WinProb;
+      if (o.includes('DRAW')) p += drawProb;
+      return probabilityToMultiplier(p);
     }
 
     case BetType.OVER_UNDER_GOALS: {
-      // Very simple: higher strength teams = slightly more goals? 
-      // Let's just keep this relatively static but varied by combined strength
-      const totalStrength = s1 + s2;
-      // High strength teams might play tighter or score more. Let's say high strength = slight over.
-      const pOver = 0.45 + ((totalStrength - 140) * 0.002);
-      const cappedPOver = Math.max(0.2, Math.min(0.8, pOver));
-      if (predictedData.side === 'OVER') return toOdds(cappedPOver);
-      return toOdds(1 - cappedPOver);
+      const probability = overUnderProbability(
+        expectedTotalGoals(team1Strength, team2Strength),
+        predictedData.line as number,
+        predictedData.side as 'OVER' | 'UNDER'
+      );
+      return probabilityToMultiplier(probability);
     }
 
     case BetType.BOTH_TEAMS_TO_SCORE: {
-      // If teams are evenly matched, BTTS is higher.
-      const diff = Math.abs(s1 - s2);
-      const pBtts = 0.55 - (diff * 0.005);
-      const cappedPBtts = Math.max(0.2, Math.min(0.8, pBtts));
-      if (predictedData.answer === true) return toOdds(cappedPBtts);
-      return toOdds(1 - cappedPBtts);
+      const yesProbability = bttsYesProbability(team1ExpectedGoals, team2ExpectedGoals);
+      return probabilityToMultiplier(predictedData.answer === true ? yesProbability : 1 - yesProbability);
     }
 
     case BetType.CORRECT_MARGIN: {
-      const margin = predictedData.margin as number;
-      if (predictedData.marginSide === 'DRAW') return toOdds(pDraw);
-
-      const isFav = (predictedData.marginSide === 'HOME' && p1 > p2) || (predictedData.marginSide === 'AWAY' && p2 > p1);
-      const baseProb = predictedData.marginSide === 'HOME' ? p1 : p2;
-
-      // Probability decays based on the margin and whether they are the favorite
-      let pMargin = baseProb * (isFav ? 0.4 : 0.25);
-      if (margin === 1) pMargin *= 1.0;
-      else if (margin === 2) pMargin *= 0.5;
-      else if (margin === 3) pMargin *= 0.2;
-      else pMargin *= 0.05; // 4+
-
-      return toOdds(pMargin);
+      const probability = correctMarginProbability(
+        team1ExpectedGoals,
+        team2ExpectedGoals,
+        predictedData.marginSide as 'HOME' | 'AWAY' | 'DRAW',
+        predictedData.margin as number
+      );
+      return probabilityToMultiplier(probability, HARD_MARKET_CAP);
     }
 
     case BetType.FIRST_TO_SCORE: {
-      if (predictedData.team === 'NONE') return toOdds(0.08); // 8% chance of 0-0
-      // Redistribute the 92% chance based on win probability ratio
-      const ratio = p1 / (p1 + p2);
-      if (predictedData.team === 'HOME') return toOdds(0.92 * ratio);
-      return toOdds(0.92 * (1 - ratio)); // AWAY
+      const { team1FirstProb, team2FirstProb, noGoalsProb } = firstToScoreProbabilities(
+        team1ExpectedGoals,
+        team2ExpectedGoals
+      );
+      if (predictedData.team === 'NONE') return probabilityToMultiplier(noGoalsProb);
+      if (predictedData.team === 'HOME') return probabilityToMultiplier(team1FirstProb);
+      return probabilityToMultiplier(team2FirstProb);
     }
 
     case BetType.EXACT_SCORE: {
-      // Basic Poisson-like approximation based on win probabilities
-      const h = predictedData.homeScore as number;
-      const a = predictedData.awayScore as number;
-
-      // Expected goals
-      const xG1 = 1.2 + ((p1 - 0.4) * 2);
-      const xG2 = 1.2 + ((p2 - 0.4) * 2);
-
-      // Extremely simplified poisson for max 3 goals
-      const poisson = (lambda: number, k: number) => {
-        const cappedK = Math.min(k, 5); // Don't crash math on 10 goals
-        return (Math.pow(lambda, cappedK) * Math.exp(-lambda)) / [1, 1, 2, 6, 24, 120][cappedK];
-      };
-
-      let prob = poisson(xG1, h) * poisson(xG2, a);
-      // Reduce probability of crazy scores
-      if (h + a > 4) prob *= 0.5;
-      if (h + a > 6) prob *= 0.1;
-
-      return toOdds(prob);
+      const probability = exactScoreProbability(
+        team1ExpectedGoals,
+        team2ExpectedGoals,
+        predictedData.homeScore as number,
+        predictedData.awayScore as number
+      );
+      return probabilityToMultiplier(probability, HARD_MARKET_CAP);
     }
 
     default:

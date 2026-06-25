@@ -259,6 +259,37 @@ button {
   box-shadow: 6px 6px 0px var(--fifa-cyan);
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 3.5rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid var(--fifa-black);
+  background: var(--fifa-white);
+  color: var(--fifa-black);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.12);
+}
+
+.password-toggle:focus-visible {
+  outline: 3px solid var(--fifa-cyan);
+  outline-offset: 2px;
+}
+
 /* === FIFA-STYLE BUTTON === */
 .btn-primary {
   display: inline-flex;
