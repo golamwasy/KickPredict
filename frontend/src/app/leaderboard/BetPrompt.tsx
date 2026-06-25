@@ -1,0 +1,30 @@
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+export default function BetPrompt({ leaderboard }: { leaderboard: any[] }) {
+  const [showPrompt, setShowPrompt] = useState(false);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const inLeaderboard = leaderboard.some(u => u.username === user.username);
+        if (!inLeaderboard) {
+          setShowPrompt(true);
+        }
+      } catch (e) {}
+    }
+  }, [leaderboard]);
+
+  if (!showPrompt) return null;
+
+  return (
+    <div className="card" style={{ textAlign: 'center', marginBottom: '2rem', borderColor: 'var(--fifa-lime)', animation: 'floatIn 0.5s ease both' }}>
+      <h2 style={{ fontSize: '1.2rem', color: 'var(--fifa-lime)', marginBottom: '0.5rem' }}>Want to see your name here?</h2>
+      <p style={{ color: '#ccc', marginBottom: '1rem' }}>Place your first bet to get added to the global leaderboard!</p>
+      <Link href="/matches" className="btn-primary" style={{ display: 'inline-block' }}>Place a Bet</Link>
+    </div>
+  );
+}

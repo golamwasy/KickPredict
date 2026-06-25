@@ -36,7 +36,9 @@ router.get('/', async (req: Request, res: Response) => {
         WHERE b.status != 'VOID'
         GROUP BY b."userId"
       ) bet_summary ON u.id = bet_summary."userId"
-      WHERE u.role::text != 'ADMIN'
+      WHERE u.role::text != 'ADMIN' 
+        AND u."isActive" = true
+        AND COALESCE(bet_summary."totalBets", 0) > 0
       ORDER BY "kickCoins" DESC, "wonBets" DESC, "accuracy" DESC;
     `;
 

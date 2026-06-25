@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../utils/api";
+import BetPrompt from "./BetPrompt";
 
 async function getLeaderboard() {
   try {
@@ -20,6 +21,8 @@ export default async function LeaderboardPage() {
           Ranked by KickCoin wallet balance — predict, win, rise.
         </p>
       </div>
+
+      <BetPrompt leaderboard={leaderboard} />
 
       <div className="card" style={{ padding: 0, overflowX: "auto", borderColor: "rgba(255,214,0,0.15)", boxShadow: "0 0 40px rgba(255,214,0,0.05)", animation: "floatIn 0.6s ease 0.1s both" }}>
         <div className="lb-header" style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)", color: "#555555", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
