@@ -225,3 +225,79 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
 
   console.log(`[Settlement] Completed settlement for match ${matchId}`);
 };
+
+/**
+ * Settles PENDING FIRST_TO_SCORE bets instantly while the match is LIVE.
+ * This is triggered if a goal has been scored so users receive winnings mid-match.
+ */
+export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void> => {
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match || match.status !== 'LIVE') return;
+  
+  if (!match.firstTeamToScoreId && match.team1Goals === 0 && match.team2Goals === 0) {
+    // Cannot settle FIRST_TO_SCORE if no goal has been scored yet and match is not finished
+    return;
+  }
+
+  const pendingBets = await prisma.bet.findMany({
+    where: { matchId, status: BetStatus.PENDING, betType: BetType.FIRST_TO_SCORE },
+  });
+
+  if (pendingBets.length === 0) return;
+
+  console.log(`[Settlement] Live settling ${pendingBets.length} FIRST_TO_SCORE bets for match ${matchId}`);
+
+  for (const bet of pendingBets) {
+    try {
+      const outcome = settleSingleBet(
+        bet.betType,
+        bet.predictedData as Record<string, any>,
+        match.team1Goals || 0,
+        match.team2Goals || 0,
+        match.firstTeamToScoreId,
+        match.team1Id,
+        match.team2Id
+      );
+
+      // If VOID (meaning firstTeamToScoreId was somehow missing despite a goal), wait until match finishes
+      if (outcome === 'VOID') continue;
+
+      await prisma.$transaction(async (tx) => {
+        if (outcome === 'WON') {
+          await creditWallet(
+            bet.userId,
+            bet.potentialPayout,
+            TransactionType.BET_WON,
+            bet.id,
+            `Won: ${bet.betType} on match ${matchId}`,
+            tx
+          );
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: BetStatus.WON, settledAt: new Date() },
+          });
+        } else if (outcome === 'LOST') {
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: BetStatus.LOST, settledAt: new Date() },
+          });
+          const wallet = await tx.wallet.findUnique({ where: { userId: bet.userId } });
+          if (wallet) {
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                type: TransactionType.BET_LOST,
+                amount: 0,
+                balanceAfter: wallet.balance,
+                betId: bet.id,
+              },
+            });
+          }
+        }
+      });
+      console.log(`[Settlement] Live bet ${bet.id} (${bet.betType}) → ${outcome}`);
+    } catch (err) {
+      console.error(`[Settlement Error] Failed to live settle bet ${bet.id}:`, err);
+    }
+  }
+};

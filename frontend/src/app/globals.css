@@ -788,6 +788,34 @@ button {
   }
 }
 
+/* === MATCH DETAILS BET LIST ITEM (RESPONSIVE) === */
+.bet-list-item {
+  padding: 0.75rem 1rem;
+  background: #F8F9FA;
+  border: 2px solid var(--fifa-black);
+  box-shadow: 3px 3px 0px var(--fifa-black);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .bet-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .bet-list-item > div:last-child {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
 /* === DASHBOARD STATS GRID (MOBILE HORIZONTAL LAYOUT) === */
 .stats-grid {
   display: grid;
@@ -1126,3 +1154,4 @@ button {
     display: none !important;
   }
 }
+.text-right { text-align: right; }

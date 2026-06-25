@@ -1,6 +1,6 @@
 import prisma from '../prisma';
 import { MatchStatus } from '@prisma/client';
-import { settleBetsForMatch } from './settlement';
+import { settleBetsForMatch, settleLiveFirstToScoreBets } from './settlement';
 
 const ESPN_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100';
 
@@ -167,6 +167,13 @@ export const syncESPNData = async () => {
           } catch (settlementError) {
             console.error(`[Sync Error] Bet settlement failed for match ${updatedMatch.id}:`, settlementError);
             // Intentionally not re-throwing: self-healing above will retry on next sync tick
+          }
+        } else if (matchStatus === 'LIVE' && updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId) {
+          // If a goal was just scored during a live match, instantly settle FIRST_TO_SCORE bets
+          try {
+            await settleLiveFirstToScoreBets(updatedMatch.id);
+          } catch (liveSettleError) {
+            console.error(`[Sync Error] Live bet settlement failed for match ${updatedMatch.id}:`, liveSettleError);
           }
         }
       }

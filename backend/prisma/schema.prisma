@@ -8,24 +8,19 @@ datasource db {
 }
 
 model User {
-  id             String               @id @default(uuid())
-  fullName       String               @unique
-  email          String               @unique
-  username       String               @unique
-  passwordHash   String
-  isActive       Boolean              @default(false)
-  hasAcceptedTerms Boolean          @default(false)
-  role           Role                 @default(USER)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  wallet         Wallet?
-  bets           Bet[]
-  passwordTokens PasswordResetToken[]
-}
-
-enum Role {
-  USER
-  ADMIN
+  id               String               @id @default(uuid())
+  fullName         String               @unique
+  email            String               @unique
+  username         String               @unique
+  passwordHash     String
+  isActive         Boolean              @default(false)
+  role             Role                 @default(USER)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  hasAcceptedTerms Boolean              @default(false)
+  bets             Bet[]
+  passwordTokens   PasswordResetToken[]
+  wallet           Wallet?
 }
 
 model PendingRegistration {
@@ -42,9 +37,9 @@ model PendingRegistration {
 model PasswordResetToken {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String
   expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Team {
@@ -57,18 +52,73 @@ model Team {
 }
 
 model Match {
-  id           String      @id @default(uuid())
-  team1Id      String
-  team1        Team        @relation("Team1", fields: [team1Id], references: [id])
-  team2Id      String
-  team2        Team        @relation("Team2", fields: [team2Id], references: [id])
-  kickoffTime  DateTime
-  status       MatchStatus @default(UPCOMING)
-  team1Goals   Int?
-  team2Goals   Int?
+  id                 String      @id @default(uuid())
+  team1Id            String
+  team2Id            String
+  kickoffTime        DateTime
+  status             MatchStatus @default(UPCOMING)
+  team1Goals         Int?
+  team2Goals         Int?
+  apiFixtureId       Int?        @unique
   firstTeamToScoreId String?
-  apiFixtureId Int?        @unique
-  bets         Bet[]
+  bets               Bet[]
+  team1              Team        @relation("Team1", fields: [team1Id], references: [id])
+  team2              Team        @relation("Team2", fields: [team2Id], references: [id])
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  balance      Int           @default(10000)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  walletId     String
+  type         TransactionType
+  amount       Int
+  balanceAfter Int
+  betId        String?
+  note         String?
+  createdAt    DateTime        @default(now())
+  bet          Bet?            @relation(fields: [betId], references: [id])
+  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model Bet {
+  id              String        @id @default(uuid())
+  userId          String
+  matchId         String
+  betType         BetType
+  stake           Int
+  multiplier      Float
+  potentialPayout Int
+  predictedData   Json
+  status          BetStatus     @default(PENDING)
+  settledAt       DateTime?
+  createdAt       DateTime      @default(now())
+  match           Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+
+  @@unique([userId, matchId, betType])
+}
+
+model ApiSyncLog {
+  id        String   @id @default(uuid())
+  endpoint  String
+  status    String
+  message   String?
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum MatchStatus {
@@ -80,31 +130,6 @@ enum MatchStatus {
   CANCELLED
 }
 
-// ─── Wallet & Ledger ──────────────────────────────────────────────────────────
-
-model Wallet {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance      Int           @default(10000) // KickCoins, stored as integer
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
-}
-
-model Transaction {
-  id           String          @id @default(uuid())
-  walletId     String
-  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  type         TransactionType
-  amount       Int             // positive = credit, negative = debit
-  balanceAfter Int             // snapshot for auditability
-  betId        String?
-  bet          Bet?            @relation(fields: [betId], references: [id])
-  note         String?         // optional human-readable label
-  createdAt    DateTime        @default(now())
-}
-
 enum TransactionType {
   SIGNUP_BONUS
   BET_PLACED
@@ -114,48 +139,19 @@ enum TransactionType {
   ADMIN_ADJUST
 }
 
-// ─── Betting ──────────────────────────────────────────────────────────────────
-
-model Bet {
-  id              String      @id @default(uuid())
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  matchId         String
-  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  betType         BetType
-  stake           Int         // KickCoins wagered
-  multiplier      Float       // locked at placement time
-  potentialPayout Int         // stake * multiplier, precomputed
-  predictedData   Json        // shape depends on betType (see settlement.ts)
-  status          BetStatus   @default(PENDING)
-  settledAt       DateTime?
-  createdAt       DateTime    @default(now())
-  transactions    Transaction[]
-
-  @@unique([userId, matchId, betType]) // one bet per type per match per user
-}
-
 enum BetType {
-  MATCH_WINNER          // 1X2: { outcome: "HOME"|"DRAW"|"AWAY" }
-  EXACT_SCORE           // { homeScore: 2, awayScore: 1 }
-  OVER_UNDER_GOALS      // { line: 2.5, side: "OVER"|"UNDER" }
-  BOTH_TEAMS_TO_SCORE   // { answer: true|false }
-  CORRECT_MARGIN        // { marginSide: "HOME"|"AWAY"|"DRAW", margin: 2 }
-  FIRST_TO_SCORE        // { team: "HOME"|"AWAY"|"NONE" }
-  DOUBLE_CHANCE         // { outcomes: ["HOME","DRAW"] }
+  MATCH_WINNER
+  EXACT_SCORE
+  OVER_UNDER_GOALS
+  BOTH_TEAMS_TO_SCORE
+  CORRECT_MARGIN
+  FIRST_TO_SCORE
+  DOUBLE_CHANCE
 }
 
 enum BetStatus {
   PENDING
   WON
   LOST
-  VOID // match postponed/cancelled → refund stake
-}
-
-model ApiSyncLog {
-  id        String   @id @default(uuid())
-  endpoint  String
-  status    String
-  message   String?
-  createdAt DateTime @default(now())
+  VOID
 }

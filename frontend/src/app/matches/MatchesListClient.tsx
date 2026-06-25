@@ -97,7 +97,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               const flag2Url = getFlagImgUrl(match.team2?.code);
 
               return (
-                <div key={match.id} style={{ marginBottom: '1.25rem' }}>
+                <Link href={`/matches/${match.id}`} key={match.id} style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
                   {/* TV Scoreboard Pill Graphic as the Card */}
                   <div className="scoreboard-pill-card">
                     {/* Team 1 Name & Flag */}
@@ -149,7 +149,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

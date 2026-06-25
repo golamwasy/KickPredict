@@ -75,6 +75,24 @@ function predictedDataSummary(type: BetType, data: Record<string, any>, team1: s
   }
 }
 
+function winningConditionText(type: BetType, data: Record<string, any>, team1: string, team2: string): string {
+  switch (type) {
+    case 'MATCH_WINNER':
+      return data.outcome === 'HOME' ? `You win if ${team1} wins the match.` : data.outcome === 'AWAY' ? `You win if ${team2} wins the match.` : 'You win if the match ends in a draw.';
+    case 'DOUBLE_CHANCE':
+      return `You win if the match ends in: ${(data.outcomes as string[]).map(o => o === 'HOME' ? `${team1} win` : o === 'AWAY' ? `${team2} win` : 'Draw').join(' or ')}.`;
+    case 'EXACT_SCORE': return `You win if the final score is exactly ${team1} ${data.homeScore} - ${data.awayScore} ${team2}.`;
+    case 'OVER_UNDER_GOALS': return `You win if the total goals scored by both teams is ${data.side === 'OVER' ? '3 or more' : '2 or fewer'}.`;
+    case 'BOTH_TEAMS_TO_SCORE': return data.answer ? `You win if both ${team1} and ${team2} score at least 1 goal.` : `You win if at least one team scores 0 goals.`;
+    case 'CORRECT_MARGIN':
+      if (data.marginSide === 'DRAW') return 'You win if the match is a draw.';
+      return `You win if ${data.marginSide === 'HOME' ? team1 : team2} wins by exactly ${data.margin} goal(s).`;
+    case 'FIRST_TO_SCORE':
+      return data.team === 'HOME' ? `You win if ${team1} scores the first goal.` : data.team === 'AWAY' ? `You win if ${team2} scores the first goal.` : 'You win if the match ends 0-0.';
+    default: return '';
+  }
+}
+
 // ─── Bet Form per type ────────────────────────────────────────────────────────
 
 function BetForm({
@@ -450,7 +468,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       {existingBets.map(bet => {
                         const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
                         return (
-                          <div key={bet.id} style={{ padding: '0.75rem 1rem', background: '#F8F9FA', border: '2px solid var(--fifa-black)', boxShadow: '3px 3px 0px var(--fifa-black)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <div key={bet.id} className="bet-list-item">
                             <div>
                               <div style={{ fontWeight: 900, fontSize: '0.9rem', color: 'var(--fifa-black)' }}>
                                 {BET_TABS.find(t => t.type === bet.betType)?.label}
@@ -458,11 +476,16 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555555', marginTop: '0.2rem' }}>
                                 {predictedDataSummary(bet.betType, bet.predictedData, match.team1?.name, match.team2?.name)}
                               </div>
+                              <div style={{ fontSize: '0.7rem', color: '#888888', marginTop: '0.35rem', fontStyle: 'italic', lineHeight: '1.2' }}>
+                                {winningConditionText(bet.betType, bet.predictedData, match.team1?.name, match.team2?.name)}
+                              </div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
+                             <div className="text-right">
                               <span style={{ padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.color, border: `1px solid ${s.color}` }}>{s.label}</span>
                               <div style={{ fontSize: '0.72rem', color: '#555555', marginTop: '0.35rem', fontWeight: 800 }}>
-                                {bet.stake.toLocaleString()} KC → {bet.potentialPayout.toLocaleString()} KC
+                                {bet.status === 'LOST' || bet.status === 'VOID'
+                                  ? `${bet.stake.toLocaleString()} KC`
+                                  : `${bet.stake.toLocaleString()} KC → ${bet.potentialPayout.toLocaleString()} KC`}
                               </div>
                             </div>
                           </div>
