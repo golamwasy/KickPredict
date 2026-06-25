@@ -274,15 +274,12 @@ button {
   transform: translateY(-50%);
   width: 2.25rem;
   height: 2.25rem;
-  border: 2px solid var(--fifa-black);
-  background: var(--fifa-white);
   color: var(--fifa-black);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.12);
 }
 
 .password-toggle:focus-visible {
