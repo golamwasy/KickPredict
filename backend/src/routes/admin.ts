@@ -151,4 +151,44 @@ router.get('/users/:id/bets', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Grant a loan to a user
+router.post('/users/:id/loan', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { loanAmount } = req.body;
+    
+    if (typeof loanAmount !== 'number' || loanAmount <= 0) {
+      return res.status(400).json({ error: 'Invalid loan amount' });
+    }
+
+    const wallet = await prisma.wallet.findUnique({ where: { userId: id } });
+    if (!wallet) return res.status(404).json({ error: 'Wallet not found' });
+
+    // Update wallet: increment balance and loan
+    const updatedWallet = await prisma.wallet.update({
+      where: { userId: id },
+      data: {
+        balance: wallet.balance + loanAmount,
+        loan: wallet.loan + loanAmount
+      }
+    });
+
+    // Optionally log a transaction
+    await prisma.transaction.create({
+      data: {
+        walletId: updatedWallet.id,
+        type: 'ADMIN_ADJUST',
+        amount: loanAmount,
+        balanceAfter: updatedWallet.balance,
+        note: `Loan granted by admin: ${loanAmount} KC`
+      }
+    });
+
+    res.json(updatedWallet);
+  } catch (error) {
+    console.error('[Admin Loan Error]', error);
+    res.status(500).json({ error: 'Failed to grant loan' });
+  }
+});
+
 export default router;

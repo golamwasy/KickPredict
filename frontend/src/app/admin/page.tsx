@@ -79,6 +79,36 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLoanChange = async (userId: string) => {
+    const loanAmountStr = prompt(`Enter loan amount to grant:`, "10000");
+    if (loanAmountStr === null) return;
+    
+    const loanAmount = parseInt(loanAmountStr, 10);
+    if (isNaN(loanAmount) || loanAmount <= 0) {
+      alert('Invalid loan amount');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/loan`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ loanAmount })
+      });
+      if (!res.ok) throw new Error('Failed to grant loan');
+      
+      const updatedWallet = await res.json();
+      setUsers(users.map(u => u.id === userId ? { ...u, wallet: { balance: updatedWallet.balance } } : u));
+      alert(`Successfully granted ${loanAmount.toLocaleString()} KC loan!`);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div style={{ textAlign: 'center', padding: '4rem' }}>Loading admin dashboard...</div>;
   if (error) return <div style={{ textAlign: 'center', padding: '4rem', color: 'red' }}>Error: {error}</div>;
 
@@ -122,9 +152,12 @@ export default function AdminDashboard() {
                       ✎ Edit
                     </button>
                   </td>
-                  <td style={{ padding: '0.5rem' }}>
+                  <td style={{ padding: '0.5rem', display: 'flex', gap: '10px' }}>
                     <button onClick={() => toggleUserStatus(u.id)} style={{ color: u.isActive ? 'var(--danger-color)' : 'var(--success-color)', textDecoration: 'underline' }}>
                       {u.isActive ? 'Disable' : 'Enable'}
+                    </button>
+                    <button onClick={() => handleLoanChange(u.id)} style={{ color: '#ff4d4d', textDecoration: 'underline' }}>
+                      Grant Loan
                     </button>
                   </td>
                 </tr>

@@ -46,7 +46,14 @@ export default async function LeaderboardPage() {
                     {i < 3 ? ["🥇", "🥈", "🥉"][i] : "#" + user.rank}
                   </div>
                 </div>
-                <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>{user.username}</div>
+                <div style={{ fontWeight: 900, fontSize: "1.2rem", textTransform: "uppercase" }}>
+                  {user.username}
+                  {user.loan > 0 && (
+                    <span style={{ color: '#ff4d4d', fontSize: '0.8rem', marginLeft: '8px', textTransform: 'lowercase' }}>
+                      ({user.loan.toLocaleString()} KC loan)
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center" }}>
                   {user.kickCoins.toLocaleString()} <span style={{ fontSize: "0.7rem", fontWeight: 600 }}>KC</span>
                 </div>

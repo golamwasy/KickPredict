@@ -74,7 +74,7 @@ export default function Navbar() {
         </button>
         <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
           {!isAdmin && <Link href="/matches" className={styles.link} onClick={closeMenu}>Matches</Link>}
-          <Link href="/leaderboard" className={styles.link} onClick={closeMenu}>Leaderboard</Link>
+          {isLoggedIn && <Link href="/leaderboard" className={styles.link} onClick={closeMenu}>Leaderboard</Link>}
           {isLoggedIn && !isAdmin && <Link href="/dashboard" className={styles.link} onClick={closeMenu}>Dashboard</Link>}
           {isAdmin && <Link href="/admin" className={styles.link} onClick={closeMenu}>Admin</Link>}
           {isAdmin && <Link href="/admin/bet-history" className={styles.link} onClick={closeMenu}>Bet History</Link>}
