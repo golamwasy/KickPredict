@@ -136,7 +136,7 @@ export const sendVerificationEmail = async (to: string, code: string) => {
       });
 
       console.log(`[Email] Verification email sent to ${to}`);
-      
+
       // Output test inbox preview link for Ethereal service
       if (info.messageId && nodemailer.getTestMessageUrl(info)) {
         console.log(`[Email] 📧 Preview mock email here: ${nodemailer.getTestMessageUrl(info)}`);
@@ -162,11 +162,11 @@ export const sendAccountActivatedEmail = async (to: string) => {
       </div>
       
       <p style="color: #475569; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
-        Great news! Your KickPredict account has been reviewed and <strong style="color: #10b981;">successfully activated</strong> by our admin team. You're all set to join the action.
+        Great news! Your KickPredict account has been reviewed and <strong style="color: #10b981;">successfully activated</strong> by the admin. You're all set to join the action.
       </p>
       
       <div style="text-align: center; margin-bottom: 35px;">
-        <a href="https://kickpredict.com/login" style="display: inline-block; background: linear-gradient(to right, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; padding: 14px 32px; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); font-family: inherit;">
+        <a href="https://kickpredict.golamwasy.dev/login" style="display: inline-block; background: linear-gradient(to right, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; padding: 14px 32px; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); font-family: inherit;">
           Log In Now
         </a>
       </div>
@@ -191,7 +191,7 @@ export const sendAccountActivatedEmail = async (to: string) => {
       });
 
       console.log(`[Email] Activation email sent to ${to}`);
-      
+
       if (info.messageId && nodemailer.getTestMessageUrl(info)) {
         console.log(`[Email] 📧 Preview mock email here: ${nodemailer.getTestMessageUrl(info)}`);
       }
