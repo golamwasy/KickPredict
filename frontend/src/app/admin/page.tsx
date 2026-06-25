@@ -146,7 +146,7 @@ export default function AdminDashboard() {
                 <div key={log.id} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span className="badge badge-locked">{log.status}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>{new Date(log.createdAt).toLocaleString('en-US', { timeZone: 'Europe/Helsinki' })} (FI Time)</span>
+                    <span style={{ color: '#555' }}>{new Date(log.createdAt).toLocaleString('en-US', { timeZone: 'Europe/Helsinki' })} (FI Time)</span>
                   </div>
                   <p style={{ color: '#ff6b6b' }}>{log.message}</p>
                 </div>

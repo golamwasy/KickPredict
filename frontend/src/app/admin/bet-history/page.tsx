@@ -119,7 +119,7 @@ export default function AdminBetHistory() {
                       {new Date(bet.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 900 }}>
+                  <span style={{ fontSize: '0.8rem', color: '#555', fontWeight: 900 }}>
                     ID: {bet.id}
                   </span>
                 </div>
