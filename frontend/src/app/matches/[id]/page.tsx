@@ -608,22 +608,20 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       </button>
                     );
                   })}
-                  {communityQuestions.length > 0 && (
-                    <button
-                      className="bet-tab-btn"
-                      onClick={() => document.getElementById('community-questions-section')?.scrollIntoView({ behavior: 'smooth' })}
-                      style={{
-                        background: '#FFFFFF',
-                        color: 'var(--fifa-black)',
-                        cursor: 'pointer',
-                        boxShadow: '4px 4px 0px var(--fifa-black)',
-                        transition: 'all 0.1s',
-                      }}
-                      title="View Community Questions"
-                    >
-                      <span style={{ fontSize: '1.1rem' }}>🗣️</span> <span>Questions</span>
-                    </button>
-                  )}
+                  <button
+                    className="bet-tab-btn"
+                    onClick={() => document.getElementById('community-questions-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    style={{
+                      background: '#FFFFFF',
+                      color: 'var(--fifa-black)',
+                      cursor: 'pointer',
+                      boxShadow: '4px 4px 0px var(--fifa-black)',
+                      transition: 'all 0.1s',
+                    }}
+                    title="View Community Questions"
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>🗣️</span> <span>Questions</span>
+                  </button>
                 </div>
 
                 {/* Active bet type info */}
