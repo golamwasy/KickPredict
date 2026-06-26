@@ -1221,3 +1221,28 @@ button {
     grid-column: span 2;
   }
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spinner-icon {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-right: 0.4rem;
+}
+
+.cq-multiplier-badge {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  align-self: center;
+}
+
+@media (max-width: 640px) {
+  .cq-multiplier-badge {
+    flex: 1 1 100%;
+    text-align: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+}

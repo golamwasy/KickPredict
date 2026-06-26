@@ -256,6 +256,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
   const [newQuestion, setNewQuestion] = useState('');
   const [cqError, setCqError] = useState('');
   const [cqBetForms, setCqBetForms] = useState<Record<string, { answer: string; stake: number | '' }>>({});
+  const [cqSubmitting, setCqSubmitting] = useState<string | null>(null);
 
   const fetchWalletAndBets = async (token: string) => {
     try {
@@ -434,6 +435,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
     if (!form || !form.answer.trim() || !form.stake || Number(form.stake) <= 0) return;
     const token = localStorage.getItem('token');
     if (!token) return;
+    setCqSubmitting(cqId);
     try {
       const method = existingBetId ? 'PUT' : 'POST';
       const url = existingBetId ? `${API_BASE_URL}/api/bets/${existingBetId}` : `${API_BASE_URL}/api/bets`;
@@ -459,7 +461,9 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       await fetchWalletAndBets(token);
       window.dispatchEvent(new Event('walletUpdated'));
     } catch (err: any) {
-      alert(err.message);
+      setBetError(err.message);
+    } finally {
+      setCqSubmitting(null);
     }
   };
 
@@ -617,6 +621,10 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       cursor: 'pointer',
                       boxShadow: '4px 4px 0px var(--fifa-black)',
                       transition: 'all 0.1s',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}
                     title="View Community Questions"
                   >
@@ -713,8 +721,9 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                   className="btn-primary"
                   onClick={submitBet}
                   disabled={submitting || !multiplier || !stake || Number(stake) <= 0}
-                  style={{ opacity: (!multiplier || !stake || Number(stake) <= 0) ? 0.5 : 1 }}
+                  style={{ opacity: (submitting || !multiplier || !stake || Number(stake) <= 0) ? 0.5 : 1 }}
                 >
+                  {submitting && <span className="spinner-icon">⏳</span>}
                   {submitting ? 'Processing...' : existingBets.some(b => b.betType === activeBetType) ? `Update Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×` : `Place Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×`}
                 </button>
               </div>
@@ -725,9 +734,12 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
         {/* ─── Community Questions ─── */}
         <div id="community-questions-section" style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
           <div className="card" style={{ width: '100%', maxWidth: '800px' }}>
-            <h3 style={{ marginBottom: '1.5rem', borderBottom: '3px solid var(--fifa-black)', paddingBottom: '0.75rem', textTransform: 'uppercase', fontWeight: 900 }}>
-              Community Betting Questions
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '3px solid var(--fifa-black)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, textTransform: 'uppercase', fontWeight: 900 }}>
+                Community Betting Questions
+              </h3>
+              <span className="badge badge-open cq-multiplier-badge">x3 Multiplier</span>
+            </div>
 
             {isLoggedIn && canBet && (
               <div style={{ marginBottom: '2rem', background: '#F8F9FA', padding: '1rem', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
@@ -764,9 +776,6 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                           <p style={{ fontSize: '1.1rem', fontWeight: 900 }}>{cq.question}</p>
                           <p style={{ fontSize: '0.75rem', color: '#666' }}>Asked by @{cq.creator?.username}</p>
                         </div>
-                        <div>
-                          <span className="badge badge-open">x3 Multiplier</span>
-                        </div>
                       </div>
 
                       {hasBet && !canBet ? (
@@ -787,8 +796,14 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                             <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Stake (KC)</label>
                             <input type="number" min="1" max={walletBalance ?? undefined} value={form.stake} onChange={e => setCqBetForms(p => ({ ...p, [cq.id]: { ...form, stake: e.target.value === '' ? '' : Number(e.target.value) } }))} placeholder="Amount" style={{ width: '100%', padding: '0.6rem', border: '2px solid var(--fifa-black)' }} />
                           </div>
-                          <button className="btn-primary" onClick={() => placeCommunityBet(cq.id, existingBet?.id)} style={{ padding: '0.6rem 1rem' }} disabled={!form.answer?.trim() || !form.stake}>
-                            {existingBet ? 'Update Bet' : 'Place Bet'}
+                          <button 
+                            className="btn-primary" 
+                            onClick={() => placeCommunityBet(cq.id, existingBet?.id)} 
+                            disabled={cqSubmitting === cq.id || !form.answer?.trim() || !form.stake}
+                            style={{ padding: '0.6rem 1rem', opacity: (cqSubmitting === cq.id || !form.answer?.trim() || !form.stake) ? 0.5 : 1 }}
+                          >
+                            {cqSubmitting === cq.id && <span className="spinner-icon">⏳</span>}
+                            {cqSubmitting === cq.id ? 'Processing...' : (existingBet ? 'Update Bet' : 'Place Bet')}
                           </button>
                         </div>
                       ) : (

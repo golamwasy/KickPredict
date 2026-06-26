@@ -11,6 +11,7 @@ export default function TermsEnforcer({ children }: { children: React.ReactNode 
   const [isClient, setIsClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsClient(true);
@@ -41,6 +42,7 @@ export default function TermsEnforcer({ children }: { children: React.ReactNode 
 
   const handleAccept = async () => {
     setIsSubmitting(true);
+    setError('');
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/auth/accept-terms`, {
@@ -59,11 +61,11 @@ export default function TermsEnforcer({ children }: { children: React.ReactNode 
         }
         setShowModal(false);
       } else {
-        alert('Failed to accept terms. Please try again.');
+        setError('Failed to accept terms. Please try again.');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred. Please try again.');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -146,46 +148,46 @@ export default function TermsEnforcer({ children }: { children: React.ReactNode 
           padding: '1.5rem',
           borderTop: '1px solid #333',
           display: 'flex',
-          flexWrap: 'wrap-reverse',
+          flexDirection: 'column',
           gap: '1rem',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
           backgroundColor: '#111'
         }}>
-          <button 
-            onClick={handleDecline}
-            disabled={isSubmitting}
-            style={{
-              padding: '0.8rem 1.5rem',
-              backgroundColor: 'transparent',
-              border: '1px solid #444',
-              color: '#fff',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
-          >
-            Decline & Log Out
-          </button>
-          
-          <button 
-            onClick={handleAccept}
-            disabled={isSubmitting || !hasScrolledToBottom}
-            style={{
-              padding: '0.8rem 2rem',
-              backgroundColor: hasScrolledToBottom ? 'var(--fifa-lime)' : '#333',
-              border: 'none',
-              color: hasScrolledToBottom ? '#000' : '#888',
-              borderRadius: '6px',
-              cursor: hasScrolledToBottom ? 'pointer' : 'not-allowed',
-              fontWeight: 800,
-              fontFamily: 'Outfit, sans-serif',
-              letterSpacing: '0.05em',
-              transition: 'all 0.2s'
-            }}
-          >
-            {!hasScrolledToBottom ? 'Scroll to bottom to accept' : isSubmitting ? 'Accepting...' : 'I Accept'}
-          </button>
+          {error && <p style={{ color: 'red', margin: 0, textAlign: 'center', fontSize: '0.9rem' }}>{error}</p>}
+          <div style={{ display: 'flex', flexWrap: 'wrap-reverse', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <button 
+              onClick={handleDecline}
+              disabled={isSubmitting}
+              style={{
+                padding: '0.8rem 1.5rem',
+                backgroundColor: 'transparent',
+                border: '1px solid #444',
+                color: '#fff',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Decline & Log Out
+            </button>
+            <button 
+              onClick={handleAccept}
+              disabled={isSubmitting || !hasScrolledToBottom}
+              style={{
+                padding: '0.8rem 2rem',
+                backgroundColor: hasScrolledToBottom ? 'var(--fifa-lime)' : '#333',
+                border: 'none',
+                color: hasScrolledToBottom ? '#000' : '#888',
+                borderRadius: '6px',
+                cursor: hasScrolledToBottom ? 'pointer' : 'not-allowed',
+                fontWeight: 800,
+                fontFamily: 'Outfit, sans-serif',
+                letterSpacing: '0.05em',
+                transition: 'all 0.2s'
+              }}
+            >
+              {!hasScrolledToBottom ? 'Scroll to bottom to accept' : isSubmitting ? 'Accepting...' : 'I Accept'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

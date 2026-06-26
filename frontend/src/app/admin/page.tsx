@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const [correctAnswerInput, setCorrectAnswerInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -57,7 +58,7 @@ export default function AdminDashboard() {
       const updatedUser = await res.json();
       setUsers(users.map(u => u.id === userId ? { ...u, isActive: updatedUser.isActive } : u));
     } catch (err: any) {
-      alert(err.message);
+      setError(err.message);
     }
   };
 
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
     
     const newBalance = parseInt(newBalanceStr, 10);
     if (isNaN(newBalance) || newBalance < 0) {
-      alert('Invalid balance amount');
+      setError('Invalid balance amount');
       return;
     }
 
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
       const updatedWallet = await res.json();
       setUsers(users.map(u => u.id === userId ? { ...u, wallet: { balance: updatedWallet.balance } } : u));
     } catch (err: any) {
-      alert(err.message);
+      setError(err.message);
     }
   };
 
@@ -96,7 +97,7 @@ export default function AdminDashboard() {
     
     const loanAmount = parseInt(loanAmountStr, 10);
     if (isNaN(loanAmount) || loanAmount <= 0) {
-      alert('Invalid loan amount');
+      setError('Invalid loan amount');
       return;
     }
 
@@ -114,9 +115,9 @@ export default function AdminDashboard() {
       
       const updatedWallet = await res.json();
       setUsers(users.map(u => u.id === userId ? { ...u, wallet: { balance: updatedWallet.balance } } : u));
-      alert(`Successfully granted ${loanAmount.toLocaleString()} KC loan!`);
+      setSuccess(`Successfully granted ${loanAmount.toLocaleString()} KC loan!`);
     } catch (err: any) {
-      alert(err.message);
+      setError(err.message);
     }
   };
 
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       setCqBets(data);
       setExpandedCq(cqId);
-    } catch (err) { alert('Failed to fetch bets'); }
+    } catch (err) { setError('Failed to fetch bets'); }
   };
 
   const handleMarkCqBet = async (cqId: string, betId: string, status: 'WON' | 'LOST') => {
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Failed to update bet status');
       const updatedBet = await res.json();
       setCqBets(cqBets.map(b => b.id === betId ? updatedBet : b));
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { setError(err.message); }
   };
 
   const openResolveModal = async (cq: any) => {
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
       setModalBets(data);
       setResolvingCq(cq);
       setCorrectAnswerInput(cq.correctAnswer || '');
-    } catch (err) { alert('Failed to fetch bets'); }
+    } catch (err) { setError('Failed to fetch bets'); }
   };
 
   const handleModalMarkBet = async (betId: string, status: 'WON' | 'LOST') => {
@@ -174,13 +175,13 @@ export default function AdminDashboard() {
       if (expandedCq === resolvingCq.id) {
         setCqBets(cqBets.map(b => b.id === betId ? updatedBet : b));
       }
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { setError(err.message); }
   };
 
   const handleFinalizeResolve = async () => {
     if (!resolvingCq) return;
     if (!correctAnswerInput.trim()) {
-      alert("Please enter a correct answer summary.");
+      setError("Please enter a correct answer summary.");
       return;
     }
     const token = localStorage.getItem('token');
@@ -193,7 +194,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Failed to resolve question');
       setCommunityQuestions(communityQuestions.map(q => q.id === resolvingCq.id ? { ...q, isResolved: true, correctAnswer: correctAnswerInput } : q));
       setResolvingCq(null);
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { setError(err.message); }
   };
 
   const handleCqStatus = async (cqId: string, status: string) => {
@@ -206,7 +207,7 @@ export default function AdminDashboard() {
       });
       if (!res.ok) throw new Error('Failed to update status');
       setCommunityQuestions(communityQuestions.map(q => q.id === cqId ? { ...q, status } : q));
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { setError(err.message); }
   };
 
   if (loading) return <LoadingSpinner text="Loading admin dashboard..." />;
