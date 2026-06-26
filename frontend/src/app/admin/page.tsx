@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '../utils/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '4rem' }}>Loading admin dashboard...</div>;
+  if (loading) return <LoadingSpinner text="Loading admin dashboard..." />;
   if (error) return <div style={{ textAlign: 'center', padding: '4rem', color: 'red' }}>Error: {error}</div>;
 
   return (

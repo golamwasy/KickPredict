@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '../utils/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
   SIGNUP_BONUS: { label: 'Welcome Bonus', color: '#6300E4', icon: '🎁' },
@@ -48,11 +49,7 @@ export default function WalletPage() {
       });
   }, []);
 
-  if (loading) return (
-    <div style={{ textAlign: 'center', padding: '4rem', color: 'white' }}>
-      Loading wallet...
-    </div>
-  );
+  if (loading) return <LoadingSpinner text="Loading wallet..." />;
   if (error) return (
     <div style={{ textAlign: 'center', padding: '4rem', color: '#E74C3C' }}>
       {error}

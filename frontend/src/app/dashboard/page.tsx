@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '../utils/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const BET_TYPE_LABELS: Record<string, string> = {
   MATCH_WINNER: '🏆 Match Winner',
@@ -43,13 +44,7 @@ export default function Dashboard() {
     }).catch(() => setLoading(false));
   }, [router]);
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ width: '48px', height: '48px', border: '3px solid var(--border)', borderTop: '3px solid var(--teal)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
-      <p style={{ color: '#FFFFFF' }}>Loading your stats...</p>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  if (loading) return <LoadingSpinner text="Loading your stats..." />;
 
   const validBets = bets.filter(b => b.status !== 'VOID');
   const totalBets = validBets.length;
