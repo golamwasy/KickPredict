@@ -1,6 +1,6 @@
 import prisma from '../prisma';
 import { BetType, BetStatus, TransactionType } from '@prisma/client';
-import { creditWallet } from './wallet';
+import { creditWallet, checkAndAutoGrantLoan } from './wallet';
 
 interface SettlementResult {
   status: BetStatus;
@@ -222,6 +222,16 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
     }
   }
 
+  // Auto grant loan if applicable
+  const uniqueUserIds = [...new Set(pendingBets.map((b) => b.userId))];
+  for (const userId of uniqueUserIds) {
+    try {
+      await checkAndAutoGrantLoan(userId);
+    } catch (err) {
+      console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
+    }
+  }
+
   console.log(`[Settlement] Completed settlement for match ${matchId}`);
 };
 
@@ -301,6 +311,16 @@ export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void>
       console.log(`[Settlement] Live bet ${bet.id} (${bet.betType}) → ${outcome}`);
     } catch (err) {
       console.error(`[Settlement Error] Failed to live settle bet ${bet.id}:`, err);
+    }
+  }
+
+  // Auto grant loan if applicable
+  const uniqueUserIds = [...new Set(pendingBets.map((b) => b.userId))];
+  for (const userId of uniqueUserIds) {
+    try {
+      await checkAndAutoGrantLoan(userId);
+    } catch (err) {
+      console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
     }
   }
 };

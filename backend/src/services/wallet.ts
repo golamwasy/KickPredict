@@ -108,10 +108,96 @@ export const creditWallet = async (
       },
     });
 
-    return newBalance;
+    return await checkAndAutoRepayLoan(userId, tx);
   };
 
   return txClient ? execute(txClient) : prisma.$transaction(execute);
+};
+
+/**
+ * Checks if a user's balance meets the criteria to auto-repay their loan.
+ * If so, deducts the loan amount from their balance.
+ * Returns the final adjusted balance.
+ */
+export const checkAndAutoRepayLoan = async (userId: string, tx: Prisma.TransactionClient): Promise<number> => {
+  const wallet = await tx.wallet.findUnique({ where: { userId } });
+  if (!wallet) return 0;
+  
+  if (wallet.loan <= 0) return wallet.balance;
+
+  const actualBalance = wallet.balance - wallet.loan;
+  
+  // Condition: (total balance - loan) >= loan/2
+  if (actualBalance >= wallet.loan / 2) {
+    const loanAmount = wallet.loan;
+    const newBalance = wallet.balance - loanAmount;
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: {
+        balance: newBalance,
+        loan: 0,
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        type: TransactionType.LOAN_REPAYMENT,
+        amount: -loanAmount,
+        balanceAfter: newBalance,
+        note: 'Auto loan repayment',
+      },
+    });
+
+    return newBalance;
+  }
+
+  return wallet.balance;
+};
+
+/**
+ * Checks if a user qualifies for an automatic loan grant (no pending bets, balance <= 1000).
+ * If qualified, grants a 10000 loan.
+ */
+export const checkAndAutoGrantLoan = async (userId: string): Promise<void> => {
+  const pendingBetsCount = await prisma.bet.count({
+    where: { userId, status: 'PENDING' },
+  });
+
+  if (pendingBetsCount > 0) return;
+
+  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+  if (!wallet || wallet.balance > 1000) return;
+
+  await prisma.$transaction(async (tx) => {
+    // Re-check inside transaction with a lock to be safe
+    await tx.$executeRaw`SELECT id FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE`;
+    const w = await tx.wallet.findUnique({ where: { userId } });
+    
+    if (w && w.balance <= 1000) {
+      const newBalance = w.balance + 10000;
+      const newLoan = w.loan + 10000;
+
+      await tx.wallet.update({
+        where: { id: w.id },
+        data: {
+          balance: newBalance,
+          loan: newLoan,
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          walletId: w.id,
+          type: TransactionType.LOAN_GRANTED,
+          amount: 10000,
+          balanceAfter: newBalance,
+          note: 'Auto 10000 loan granted',
+        },
+      });
+    }
+  });
 };
 
 /**

@@ -138,6 +138,8 @@ enum TransactionType {
   BET_LOST
   BET_REFUNDED
   ADMIN_ADJUST
+  LOAN_REPAYMENT
+  LOAN_GRANTED
 }
 
 enum BetType {
