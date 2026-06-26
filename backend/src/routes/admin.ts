@@ -151,6 +151,27 @@ router.get('/users/:id/bets', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Get a specific user's transaction history
+router.get('/users/:id/transactions', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId: id },
+    });
+    
+    if (!wallet) return res.json([]);
+
+    const transactions = await prisma.transaction.findMany({
+      where: { walletId: wallet.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(transactions);
+  } catch (error) {
+    console.error('[Admin User Transactions Error]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Grant a loan to a user
 router.post('/users/:id/loan', async (req: AuthRequest, res: Response) => {
   try {
