@@ -108,12 +108,12 @@ export default function AdminHistory() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           
           {/* Bet History Column */}
-          <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '3px solid #000', paddingBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '3px solid #000', paddingBottom: '0.5rem', flexShrink: 0 }}>
               Bet History ({bets.length})
             </h2>
             {bets.length === 0 && <p>No bets placed.</p>}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto', paddingRight: '0.5rem', flexGrow: 1 }}>
             {bets.map(bet => {
               return (
                 <div key={bet.id} className="card" style={{ padding: '1rem' }}>
@@ -190,12 +190,12 @@ export default function AdminHistory() {
           </div>
 
           {/* Transaction History Column */}
-          <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '3px solid #000', paddingBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '3px solid #000', paddingBottom: '0.5rem', flexShrink: 0 }}>
               Transaction History ({transactions.length})
             </h2>
             {transactions.length === 0 && <p>No transactions found.</p>}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '0.5rem', flexGrow: 1 }}>
             {transactions.map(tx => (
               <div key={tx.id} className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -220,7 +220,7 @@ export default function AdminHistory() {
                   </div>
                 </div>
 
-                {tx.note && (
+                {tx.note && !tx.type.startsWith('BET_') && (
                   <div style={{ fontSize: '0.85rem', color: '#555', fontStyle: 'italic', marginTop: '0.25rem' }}>
                     Note: {tx.note}
                   </div>

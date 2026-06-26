@@ -117,7 +117,7 @@ export default function Dashboard() {
           <Link href="/matches" className="btn-primary" style={{ width: 'auto', display: 'inline-flex', padding: '0.75rem 2rem' }}>Browse Matches</Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '0.5rem' }}>
           {sorted.map((bet, i) => {
             const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
             return (

@@ -94,7 +94,7 @@ export default function WalletPage() {
               No transactions yet. Place your first bet!
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '0.5rem' }}>
               {wallet.transactions.map((tx: any) => {
                 const meta = TYPE_LABELS[tx.type] || { label: tx.type, color: 'var(--fifa-black)', icon: '•' };
                 const isPositive = tx.amount > 0;
@@ -159,7 +159,7 @@ export default function WalletPage() {
                           {match.team1?.name} vs {match.team2?.name}
                         </div>
                       )}
-                      {tx.note && (
+                      {tx.note && !tx.type.startsWith('BET_') && (
                         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0056b3', marginTop: '0.2rem' }}>
                           {tx.note}
                         </div>
