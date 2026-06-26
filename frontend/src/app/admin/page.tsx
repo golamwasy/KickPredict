@@ -10,8 +10,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [communityQuestions, setCommunityQuestions] = useState<any[]>([]);
-  const [expandedCq, setExpandedCq] = useState<string | null>(null);
-  const [cqBets, setCqBets] = useState<any[]>([]);
+
 
   // Modal State
   const [resolvingCq, setResolvingCq] = useState<any | null>(null);
@@ -121,33 +120,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleViewCqBets = async (cqId: string) => {
-    if (expandedCq === cqId) {
-      setExpandedCq(null);
-      return;
-    }
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/community-questions/${cqId}/bets`, { headers: { 'Authorization': `Bearer ${token}` } });
-      const data = await res.json();
-      setCqBets(data);
-      setExpandedCq(cqId);
-    } catch (err) { setError('Failed to fetch bets'); }
-  };
-
-  const handleMarkCqBet = async (cqId: string, betId: string, status: 'WON' | 'LOST' | 'VOID') => {
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/community-questions/${cqId}/bets/${betId}/status`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      if (!res.ok) throw new Error('Failed to update bet status');
-      const updatedBet = await res.json();
-      setCqBets(cqBets.map(b => b.id === betId ? updatedBet : b));
-    } catch (err: any) { setError(err.message); }
-  };
 
   const openResolveModal = async (cq: any) => {
     const token = localStorage.getItem('token');
@@ -172,9 +144,6 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Failed to update bet status');
       const updatedBet = await res.json();
       setModalBets(modalBets.map(b => b.id === betId ? updatedBet : b));
-      if (expandedCq === resolvingCq.id) {
-        setCqBets(cqBets.map(b => b.id === betId ? updatedBet : b));
-      }
     } catch (err: any) { setError(err.message); }
   };
 
@@ -331,9 +300,6 @@ export default function AdminDashboard() {
                     </td>
                     <td style={{ padding: '0.5rem' }}>
                       {cq._count?.bets || 0}
-                      <button onClick={() => handleViewCqBets(cq.id)} style={{ marginLeft: '10px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
-                        {expandedCq === cq.id ? 'Hide' : 'View'}
-                      </button>
                     </td>
                     <td style={{ padding: '0.5rem' }}>
                       {!cq.isResolved && cq.status === 'APPROVED' && (
@@ -343,52 +309,7 @@ export default function AdminDashboard() {
                       )}
                     </td>
                   </tr>
-                  {expandedCq === cq.id && (
-                    <tr style={{ backgroundColor: '#f9f9f9', borderBottom: '2px solid #ccc' }}>
-                      <td colSpan={6} style={{ padding: '1rem' }}>
-                        <h4 style={{ marginBottom: '0.5rem' }}>Bets for: {cq.question}</h4>
-                        {cqBets.length === 0 ? <p>No bets placed.</p> : (
-                          <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
-                            <thead>
-                              <tr style={{ borderBottom: '1px solid #ddd' }}>
-                                <th style={{ padding: '0.4rem' }}>User</th>
-                                <th style={{ padding: '0.4rem' }}>Answer</th>
-                                <th style={{ padding: '0.4rem' }}>Stake</th>
-                                <th style={{ padding: '0.4rem' }}>Status</th>
-                                <th style={{ padding: '0.4rem' }}>Mark As</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {cqBets.map(bet => (
-                                <tr key={bet.id} style={{ borderBottom: '1px solid #eee' }}>
-                                  <td style={{ padding: '0.4rem' }}>@{bet.user?.username}</td>
-                                  <td style={{ padding: '0.4rem', fontWeight: 'bold' }}>{bet.predictedData?.answer}</td>
-                                  <td style={{ padding: '0.4rem' }}>{bet.stake} KC</td>
-                                  <td style={{ padding: '0.4rem' }}>
-                                    <span style={{ color: bet.status === 'WON' ? 'green' : bet.status === 'LOST' ? 'red' : 'orange' }}>{bet.status}</span>
-                                  </td>
-                                  <td style={{ padding: '0.4rem' }}>
-                                    {bet.status === 'PENDING' && !cq.isResolved && (
-                                      <>
-                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'WON')} style={{ backgroundColor: '#27AE60', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>WON</button>
-                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'LOST')} style={{ backgroundColor: '#E74C3C', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
-                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'VOID')} style={{ backgroundColor: '#95A5A6', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>REFUND</button>
-                                      </>
-                                    )}
-                                    {!cq.isResolved && (
-                                      <button onClick={() => openResolveModal(cq)} style={{ backgroundColor: '#F39C12', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>
-                                        Resolve Question
-                                      </button>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+
                 </React.Fragment>
               ))}
             </tbody>
@@ -419,9 +340,9 @@ export default function AdminDashboard() {
             {modalBets.length === 0 ? (
               <p style={{ color: '#666', fontStyle: 'italic', marginBottom: '1.5rem' }}>No bets placed on this question.</p>
             ) : (
-              <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1.5rem', border: '1px solid #eee', borderRadius: '4px' }}>
+              <div style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'auto', marginBottom: '1.5rem', border: '1px solid #eee', borderRadius: '4px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                  <thead style={{ backgroundColor: '#f9f9f9', position: 'sticky', top: 0 }}>
+                  <thead style={{ backgroundColor: '#f9f9f9', position: 'sticky', top: 0, zIndex: 10 }}>
                     <tr>
                       <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>User</th>
                       <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Answer</th>
@@ -432,15 +353,15 @@ export default function AdminDashboard() {
                   <tbody>
                     {modalBets.map(bet => (
                       <tr key={bet.id} style={{ borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '0.5rem' }}>@{bet.user?.username}</td>
-                        <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>{bet.predictedData?.answer}</td>
-                        <td style={{ padding: '0.5rem' }}>
+                        <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>@{bet.user?.username}</td>
+                        <td style={{ padding: '0.5rem', fontWeight: 'bold', minWidth: '150px' }}>{bet.predictedData?.answer}</td>
+                        <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>
                           <span style={{ color: bet.status === 'WON' ? 'green' : bet.status === 'LOST' ? 'red' : 'orange' }}>{bet.status}</span>
                         </td>
-                        <td style={{ padding: '0.5rem' }}>
-                          <button onClick={() => handleModalMarkBet(bet.id, 'WON')} style={{ backgroundColor: bet.status === 'WON' ? '#27AE60' : '#ddd', color: bet.status === 'WON' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>WON</button>
-                          <button onClick={() => handleModalMarkBet(bet.id, 'LOST')} style={{ backgroundColor: bet.status === 'LOST' ? '#E74C3C' : '#ddd', color: bet.status === 'LOST' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
-                          <button onClick={() => handleModalMarkBet(bet.id, 'VOID')} style={{ backgroundColor: bet.status === 'VOID' ? '#95A5A6' : '#ddd', color: bet.status === 'VOID' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>REFUND</button>
+                        <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>
+                          <button onClick={() => handleModalMarkBet(bet.id, 'WON')} style={{ backgroundColor: '#27AE60', color: '#fff', border: bet.status === 'WON' ? '2px solid #000' : 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>WON</button>
+                          <button onClick={() => handleModalMarkBet(bet.id, 'LOST')} style={{ backgroundColor: '#E74C3C', color: '#fff', border: bet.status === 'LOST' ? '2px solid #000' : 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
+                          <button onClick={() => handleModalMarkBet(bet.id, 'VOID')} style={{ backgroundColor: '#95A5A6', color: '#fff', border: bet.status === 'VOID' ? '2px solid #000' : 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>REFUND</button>
                         </td>
                       </tr>
                     ))}
