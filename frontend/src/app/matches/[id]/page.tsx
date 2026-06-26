@@ -249,6 +249,13 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
   const [betSuccess, setBetSuccess] = useState('');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [existingBets, setExistingBets] = useState<any[]>([]);
+  const standardBets = existingBets.filter(b => b.betType !== 'COMMUNITY_QUESTION');
+
+  // Community Questions state
+  const [communityQuestions, setCommunityQuestions] = useState<any[]>([]);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [cqError, setCqError] = useState('');
+  const [cqBetForms, setCqBetForms] = useState<Record<string, { answer: string; stake: number | '' }>>({});
 
   const fetchWalletAndBets = async (token: string) => {
     try {
@@ -272,6 +279,11 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
       .then(res => res.json())
       .then(data => { setMatch(data); setLoading(false); })
       .catch(() => setLoading(false));
+
+    fetch(`${API_BASE_URL}/api/matches/${id}/community-questions`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setCommunityQuestions(data); })
+      .catch(() => { });
 
     const token = localStorage.getItem('token');
     if (token) {
@@ -397,6 +409,60 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
     }
   };
 
+  const addCommunityQuestion = async () => {
+    if (!newQuestion.trim()) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/matches/${id}/community-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ question: newQuestion }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setCommunityQuestions([data, ...communityQuestions]);
+      setNewQuestion('');
+      setCqError('');
+    } catch (err: any) {
+      setCqError(err.message);
+    }
+  };
+
+  const placeCommunityBet = async (cqId: string, existingBetId?: string) => {
+    const form = cqBetForms[cqId];
+    if (!form || !form.answer.trim() || !form.stake || Number(form.stake) <= 0) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const method = existingBetId ? 'PUT' : 'POST';
+      const url = existingBetId ? `${API_BASE_URL}/api/bets/${existingBetId}` : `${API_BASE_URL}/api/bets`;
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          matchId: id,
+          betType: 'COMMUNITY_QUESTION',
+          communityQuestionId: cqId,
+          predictedData: { answer: form.answer },
+          stake: Number(form.stake),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to place bet');
+      setWalletBalance(data.newBalance);
+      setCqBetForms(prev => {
+        const next = { ...prev };
+        delete next[cqId];
+        return next;
+      });
+      await fetchWalletAndBets(token);
+      window.dispatchEvent(new Event('walletUpdated'));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div style={{ textAlign: 'center', padding: '4rem' }}>Loading match...</div>;
   if (!match || match.error) return <div style={{ textAlign: 'center', padding: '4rem' }}>Match not found</div>;
 
@@ -459,13 +525,13 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                   </div>
                 )}
                 {/* Show user's existing bets */}
-                {existingBets.length > 0 && (
+                {standardBets.length > 0 && (
                   <div>
                     <p style={{ fontSize: '0.8rem', fontWeight: 900, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
                       Your Bets on this Match
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {existingBets.map(bet => {
+                      {standardBets.map(bet => {
                         const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
                         return (
                           <div key={bet.id} className="bet-list-item">
@@ -480,7 +546,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                                 {winningConditionText(bet.betType, bet.predictedData, match.team1?.name, match.team2?.name)}
                               </div>
                             </div>
-                             <div className="text-right">
+                            <div className="text-right">
                               <span style={{ padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: s.bg, color: s.color, border: `1px solid ${s.color}` }}>{s.label}</span>
                               <div style={{ fontSize: '0.72rem', color: '#555555', marginTop: '0.35rem', fontWeight: 800 }}>
                                 {bet.status === 'LOST' || bet.status === 'VOID'
@@ -503,12 +569,12 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                 </div>
 
                 {/* Existing bets summary */}
-                {existingBets.length > 0 && (
+                {standardBets.length > 0 && (
                   <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: 'rgba(39,174,96,0.06)', border: '1px solid rgba(39,174,96,0.2)', borderRadius: '8px' }}>
                     <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#27AE60', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {existingBets.length} Bet{existingBets.length > 1 ? 's' : ''} Placed
+                      {standardBets.length} Bet{standardBets.length > 1 ? 's' : ''} Placed
                     </p>
-                    {existingBets.map(bet => (
+                    {standardBets.map(bet => (
                       <div key={bet.id} style={{ fontSize: '0.78rem', color: '#000', fontWeight: 700 }}>
                         {BET_TABS.find(t => t.type === bet.betType)?.label} — {bet.stake.toLocaleString()} KC @ {bet.multiplier}×
                       </div>
@@ -542,6 +608,22 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       </button>
                     );
                   })}
+                  {communityQuestions.length > 0 && (
+                    <button
+                      className="bet-tab-btn"
+                      onClick={() => document.getElementById('community-questions-section')?.scrollIntoView({ behavior: 'smooth' })}
+                      style={{
+                        background: '#FFFFFF',
+                        color: 'var(--fifa-black)',
+                        cursor: 'pointer',
+                        boxShadow: '4px 4px 0px var(--fifa-black)',
+                        transition: 'all 0.1s',
+                      }}
+                      title="View Community Questions"
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>🗣️</span> <span>Questions</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Active bet type info */}
@@ -639,6 +721,86 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ─── Community Questions ─── */}
+        <div id="community-questions-section" style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '800px' }}>
+            <h3 style={{ marginBottom: '1.5rem', borderBottom: '3px solid var(--fifa-black)', paddingBottom: '0.75rem', textTransform: 'uppercase', fontWeight: 900 }}>
+              Community Betting Questions
+            </h3>
+
+            {isLoggedIn && canBet && (
+              <div style={{ marginBottom: '2rem', background: '#F8F9FA', padding: '1rem', border: '2px solid var(--border-color)', borderRadius: '8px' }}>
+                <h4 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: 700 }}>Add a custom question</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <input
+                    type="text"
+                    value={newQuestion}
+                    onChange={e => setNewQuestion(e.target.value)}
+                    placeholder="e.g., Will Messi score a hattrick?"
+                    style={{ width: '100%', padding: '0.75rem', border: '2px solid var(--fifa-black)', borderRadius: '4px' }}
+                  />
+                  <button className="btn-primary" onClick={addCommunityQuestion} style={{ width: '100%', padding: '0.75rem 1.5rem', fontWeight: 900 }}>Ask Question</button>
+                </div>
+                {cqError && <p style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.8rem' }}>{cqError}</p>}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {communityQuestions.length === 0 ? (
+                <p style={{ color: '#555', textAlign: 'center', fontStyle: 'italic' }}>No community questions yet. Be the first to ask!</p>
+              ) : (
+                communityQuestions.map(cq => {
+                  const existingBet = existingBets.find(b => b.betType === 'COMMUNITY_QUESTION' && b.communityQuestionId === cq.id);
+                  const hasBet = !!existingBet;
+                  
+                  // Initialize form with existing bet data if available and not yet touched
+                  const form = cqBetForms[cq.id] ?? { answer: existingBet?.predictedData?.answer || '', stake: existingBet?.stake || '' };
+
+                  return (
+                    <div key={cq.id} style={{ padding: '1rem', border: '2px solid var(--fifa-black)', borderRadius: '8px', boxShadow: '4px 4px 0px var(--fifa-black)', background: '#fff' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <div>
+                          <p style={{ fontSize: '1.1rem', fontWeight: 900 }}>{cq.question}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#666' }}>Asked by @{cq.creator?.username}</p>
+                        </div>
+                        <div>
+                          <span className="badge badge-open">x3 Multiplier</span>
+                        </div>
+                      </div>
+
+                      {hasBet && !canBet ? (
+                        <div style={{ padding: '0.75rem', background: 'rgba(39,174,96,0.1)', border: '1px solid rgba(39,174,96,0.2)', borderRadius: '4px' }}>
+                          <p style={{ color: '#27AE60', fontWeight: 700, fontSize: '0.85rem' }}>✓ Your Answer: {existingBet.predictedData?.answer} (Stake: {existingBet.stake} KC)</p>
+                        </div>
+                      ) : !canBet ? (
+                        <div style={{ padding: '0.75rem', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px' }}>
+                          <p style={{ color: '#555', fontSize: '0.85rem' }}>Betting closed</p>
+                        </div>
+                      ) : isLoggedIn ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                          <div style={{ flex: 2, minWidth: '200px' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Your Answer</label>
+                            <input type="text" value={form.answer} onChange={e => setCqBetForms(p => ({ ...p, [cq.id]: { ...form, answer: e.target.value } }))} style={{ width: '100%', padding: '0.6rem', border: '2px solid var(--fifa-black)' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Stake (KC)</label>
+                            <input type="number" min="1" max={walletBalance ?? undefined} value={form.stake} onChange={e => setCqBetForms(p => ({ ...p, [cq.id]: { ...form, stake: e.target.value === '' ? '' : Number(e.target.value) } }))} placeholder="Amount" style={{ width: '100%', padding: '0.6rem', border: '2px solid var(--fifa-black)' }} />
+                          </div>
+                          <button className="btn-primary" onClick={() => placeCommunityBet(cq.id, existingBet?.id)} style={{ padding: '0.6rem 1rem' }} disabled={!form.answer?.trim() || !form.stake}>
+                            {existingBet ? 'Update Bet' : 'Place Bet'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: '0.85rem', color: '#555' }}>Log in to answer and place a bet.</p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>

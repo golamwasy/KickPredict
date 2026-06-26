@@ -1178,9 +1178,8 @@ button {
 
 /* === BET TABS MOBILE GRID === */
 .bet-tabs-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
   padding-top: 0.5rem;
@@ -1201,7 +1200,7 @@ button {
 @media (max-width: 640px) {
   .bet-tabs-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
   .bet-tab-btn {
@@ -1218,7 +1217,7 @@ button {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bet-tab-btn:last-child {
+  .bet-tab-btn:nth-child(odd):last-child {
     grid-column: span 2;
   }
 }

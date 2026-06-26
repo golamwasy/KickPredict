@@ -27,7 +27,7 @@ router.get('/wallet/me', authenticate, async (req: AuthRequest, res: Response) =
 router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { matchId, betType, predictedData, stake } = req.body;
+    const { matchId, betType, predictedData, stake, communityQuestionId } = req.body;
 
     // 1. Basic input validation
     if (!matchId || !betType || !predictedData || stake === undefined) {
@@ -42,8 +42,21 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     // 2. Validate predictedData shape for the given betType
-    const validationError = validatePredictedData(betType as BetType, predictedData);
-    if (validationError) return res.status(400).json({ error: validationError });
+    if (betType === 'COMMUNITY_QUESTION') {
+      if (!communityQuestionId) {
+        return res.status(400).json({ error: 'communityQuestionId is required for COMMUNITY_QUESTION bets' });
+      }
+      if (!predictedData || typeof predictedData.answer !== 'string' || predictedData.answer.trim() === '') {
+        return res.status(400).json({ error: 'Valid answer string in predictedData is required for COMMUNITY_QUESTION bets' });
+      }
+      const cq = await prisma.communityQuestion.findUnique({ where: { id: communityQuestionId } });
+      if (!cq) return res.status(404).json({ error: 'Community question not found' });
+      if (cq.status !== 'APPROVED') return res.status(400).json({ error: 'Community question is not approved' });
+      if (cq.isResolved) return res.status(400).json({ error: 'Community question has already been resolved' });
+    } else {
+      const validationError = validatePredictedData(betType as BetType, predictedData);
+      if (validationError) return res.status(400).json({ error: validationError });
+    }
 
     // 3. Validate match is OPEN and before kickoff
     const match = await prisma.match.findUnique({ 
@@ -66,19 +79,27 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     // 5. Check for duplicate bet (one bet per type per match per user)
-    const existingBet = await prisma.bet.findUnique({
-      where: { userId_matchId_betType: { userId, matchId, betType: betType as BetType } },
+    const existingBet = await prisma.bet.findFirst({
+      where: { 
+        userId, 
+        matchId, 
+        betType: betType as BetType,
+        ...(betType === 'COMMUNITY_QUESTION' ? { communityQuestionId } : { communityQuestionId: null })
+      },
     });
     if (existingBet) {
-      return res.status(409).json({ error: `You already have a ${betType} bet on this match.` });
+      return res.status(409).json({ error: `You already have a ${betType} bet on this match${betType === 'COMMUNITY_QUESTION' ? ' for this question' : ''}.` });
     }
 
     // 6. Compute and lock multiplier
-    const multiplier = getMultiplier(betType as BetType, { 
-      predictedData,
-      team1Code: match.team1.code,
-      team2Code: match.team2.code
-    });
+    let multiplier = 3.0;
+    if (betType !== 'COMMUNITY_QUESTION') {
+      multiplier = getMultiplier(betType as BetType, { 
+        predictedData,
+        team1Code: match.team1.code,
+        team2Code: match.team2.code
+      });
+    }
     const potentialPayout = Math.round(stakeNum * multiplier);
 
     // 7. Create bet and debit wallet atomically (rolls back bet if wallet debit fails)
@@ -94,6 +115,7 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
             multiplier,
             potentialPayout,
             predictedData,
+            communityQuestionId: betType === 'COMMUNITY_QUESTION' ? communityQuestionId : null,
           },
         });
         const updatedBalance = await debitWallet(userId, stakeNum, createdBet.id, tx);
@@ -135,7 +157,7 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
       return res.status(400).json({ error: 'stake must be a positive integer' });
     }
 
-    const bet = await prisma.bet.findUnique({
+    const bet = await prisma.bet.findFirst({
       where: { id: betId },
       include: { match: { include: { team1: true, team2: true } } },
     });
@@ -152,14 +174,22 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
       return res.status(400).json({ error: 'Bets can only be updated while the match is OPEN' });
     }
 
-    const validationError = validatePredictedData(bet.betType, predictedData);
-    if (validationError) return res.status(400).json({ error: validationError });
+    let multiplier;
+    if (bet.betType === 'COMMUNITY_QUESTION') {
+      if (!predictedData || typeof predictedData.answer !== 'string' || predictedData.answer.trim() === '') {
+        return res.status(400).json({ error: 'Valid answer string in predictedData is required for COMMUNITY_QUESTION bets' });
+      }
+      multiplier = 3.0;
+    } else {
+      const validationError = validatePredictedData(bet.betType, predictedData);
+      if (validationError) return res.status(400).json({ error: validationError });
 
-    const multiplier = getMultiplier(bet.betType, {
-      predictedData,
-      team1Code: bet.match.team1.code,
-      team2Code: bet.match.team2.code
-    });
+      multiplier = getMultiplier(bet.betType, {
+        predictedData,
+        team1Code: bet.match.team1.code,
+        team2Code: bet.match.team2.code
+      });
+    }
     const potentialPayout = Math.round(stakeNum * multiplier);
 
     const stakeDifference = stakeNum - bet.stake;

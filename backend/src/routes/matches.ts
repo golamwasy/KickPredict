@@ -3,6 +3,7 @@ import prisma from '../prisma';
 import { syncESPNData } from '../services/espnSync';
 import { getMultiplier } from '../services/multiplier';
 import { BetType } from '@prisma/client';
+import { authenticate, AuthRequest } from '../middlewares/auth';
 
 const router = Router();
 
@@ -120,6 +121,56 @@ router.post('/:id/odds', async (req: Request, res: Response) => {
     res.json({ multiplier });
   } catch (error) {
     console.error('Error fetching odds:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get approved community questions for a match
+router.get('/:id/community-questions', async (req: Request, res: Response) => {
+  try {
+    const matchId = req.params.id as string;
+    const questions = await prisma.communityQuestion.findMany({
+      where: { matchId, status: 'APPROVED' },
+      include: { creator: { select: { username: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(questions);
+  } catch (error) {
+    console.error('Error fetching community questions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Add a new community question for a match
+router.post('/:id/community-questions', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const matchId = req.params.id as string;
+    const userId = req.user!.id;
+    const { question } = req.body;
+
+    if (!question || typeof question !== 'string' || question.trim() === '') {
+      return res.status(400).json({ error: 'Valid question string is required' });
+    }
+
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+    if (match.status === 'LOCKED' || match.status === 'FINISHED') {
+      return res.status(400).json({ error: 'Match is locked or finished. Cannot add questions.' });
+    }
+
+    const newQuestion = await prisma.communityQuestion.create({
+      data: {
+        matchId,
+        creatorId: userId,
+        question: question.trim(),
+        status: 'APPROVED', // Auto-approved for now
+      },
+      include: { creator: { select: { username: true } } }
+    });
+
+    res.status(201).json(newQuestion);
+  } catch (error) {
+    console.error('Error creating community question:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

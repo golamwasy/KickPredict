@@ -3,6 +3,7 @@ import { authenticate, requireAdmin, AuthRequest } from '../middlewares/auth';
 import prisma from '../prisma';
 import { settleBetsForMatch } from '../services/settlement';
 import { sendAccountActivatedEmail } from '../services/email';
+import { creditWallet } from '../services/wallet';
 
 const router = Router();
 
@@ -213,3 +214,110 @@ router.post('/users/:id/loan', async (req: AuthRequest, res: Response) => {
 });
 
 export default router;
+
+// ─── Community Questions Admin Routes ────────────────────────────────────────
+
+// List all community questions
+router.get('/community-questions', async (req: AuthRequest, res: Response) => {
+  try {
+    const questions = await prisma.communityQuestion.findMany({
+      include: {
+        match: { select: { team1: true, team2: true, kickoffTime: true } },
+        creator: { select: { username: true } },
+        _count: { select: { bets: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(questions);
+  } catch (error) {
+    console.error('[Admin CQ Error]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update community question status (for future review system)
+router.put('/community-questions/:id/status', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { status } = req.body;
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    const question = await prisma.communityQuestion.update({
+      where: { id },
+      data: { status }
+    });
+    res.json(question);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get bets for a specific community question
+router.get('/community-questions/:id/bets', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const bets = await prisma.bet.findMany({
+      where: { communityQuestionId: id },
+      include: { user: { select: { username: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(bets);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Mark a specific bet for a community question as WON/LOST
+router.put('/community-questions/:id/bets/:betId/status', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const betId = req.params.betId as string;
+    const { status } = req.body; // 'WON' | 'LOST'
+    
+    if (!['WON', 'LOST'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be WON or LOST' });
+    }
+
+    const bet = await prisma.bet.findUnique({ where: { id: betId } });
+    if (!bet || bet.communityQuestionId !== id) {
+      return res.status(404).json({ error: 'Bet not found or mismatch' });
+    }
+    if (bet.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Bet is already settled' });
+    }
+
+    let updatedBet;
+    await prisma.$transaction(async (tx) => {
+      updatedBet = await tx.bet.update({
+        where: { id: betId },
+        data: { status, settledAt: new Date() }
+      });
+
+      if (status === 'WON') {
+        await creditWallet(bet.userId, bet.potentialPayout, 'BET_WON', bet.id, undefined, tx);
+      }
+    });
+
+    res.json(updatedBet);
+  } catch (error) {
+    console.error('[Admin Settle Bet Error]', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Resolve a community question (mark as resolved)
+router.put('/community-questions/:id/resolve', async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { correctAnswer } = req.body; // optional note
+    
+    const question = await prisma.communityQuestion.update({
+      where: { id },
+      data: { isResolved: true, correctAnswer }
+    });
+    res.json(question);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

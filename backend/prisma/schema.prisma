@@ -21,6 +21,7 @@ model User {
   bets             Bet[]
   passwordTokens   PasswordResetToken[]
   wallet           Wallet?
+  communityQuestions CommunityQuestion[]
 }
 
 model PendingRegistration {
@@ -62,6 +63,7 @@ model Match {
   apiFixtureId       Int?        @unique
   firstTeamToScoreId String?
   bets               Bet[]
+  communityQuestions CommunityQuestion[]
   team1              Team        @relation("Team1", fields: [team1Id], references: [id])
   team2              Team        @relation("Team2", fields: [team2Id], references: [id])
 }
@@ -102,11 +104,11 @@ model Bet {
   status          BetStatus     @default(PENDING)
   settledAt       DateTime?
   createdAt       DateTime      @default(now())
+  communityQuestionId String?
   match           Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityQuestion CommunityQuestion? @relation(fields: [communityQuestionId], references: [id])
   transactions    Transaction[]
-
-  @@unique([userId, matchId, betType])
 }
 
 model ApiSyncLog {
@@ -115,6 +117,27 @@ model ApiSyncLog {
   status    String
   message   String?
   createdAt DateTime @default(now())
+}
+
+model CommunityQuestion {
+  id            String         @id @default(uuid())
+  matchId       String
+  creatorId     String
+  question      String
+  status        QuestionStatus @default(APPROVED)
+  isResolved    Boolean        @default(false)
+  correctAnswer String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  match         Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  creator       User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  bets          Bet[]
+}
+
+enum QuestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum Role {
@@ -150,6 +173,7 @@ enum BetType {
   CORRECT_MARGIN
   FIRST_TO_SCORE
   DOUBLE_CHANCE
+  COMMUNITY_QUESTION
 }
 
 enum BetStatus {
