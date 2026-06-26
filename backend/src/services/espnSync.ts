@@ -58,24 +58,7 @@ export const syncESPNData = async () => {
         continue;
       }
 
-      // Self-healing: Check if match has unsettled eligible live bets when goals have been scored
-      if (existingMatch && (existingMatch.status === 'LIVE' || existingMatch.status === 'LOCKED') && ((existingMatch.team1Goals ?? 0) > 0 || (existingMatch.team2Goals ?? 0) > 0)) {
-        const hasUnsettledLiveBets = await prisma.bet.findFirst({
-          where: { 
-            matchId: existingMatch.id, 
-            status: 'PENDING', 
-            betType: { in: ['FIRST_TO_SCORE', 'OVER_UNDER_GOALS', 'BOTH_TEAMS_TO_SCORE'] } 
-          }
-        });
-        if (hasUnsettledLiveBets) {
-          console.log(`[Sync] Self-healing: Match ${existingMatch.id} has goals but unsettled live bets. Retrying live settlement...`);
-          try {
-            await settleLiveBetsForMatch(existingMatch.id);
-          } catch (liveSettleError) {
-            console.error(`[Sync Error] Self-healing live settlement failed for match ${existingMatch.id}:`, liveSettleError);
-          }
-        }
-      }
+      // Self-healing for LIVE matches removed to prevent DB DoS. Live settlement is now correctly handled by the diff-check below.
 
       let matchStatus: MatchStatus = MatchStatus.UPCOMING;
       

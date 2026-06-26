@@ -3,8 +3,18 @@ import prisma from '../prisma';
 
 const router = Router();
 
+// In-memory cache for leaderboard to prevent DB DoS
+let leaderboardCache: any[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 router.get('/', async (req: Request, res: Response) => {
   try {
+    const now = Date.now();
+    if (leaderboardCache && (now - lastCacheTime < CACHE_TTL_MS)) {
+      return res.json(leaderboardCache);
+    }
+
     // Leaderboard: rank by KickCoin wallet balance (highest first)
     const leaderboard: any[] = await prisma.$queryRaw`
       SELECT
@@ -47,6 +57,9 @@ router.get('/', async (req: Request, res: Response) => {
       ...user,
       rank: index + 1,
     }));
+
+    leaderboardCache = rankedLeaderboard;
+    lastCacheTime = Date.now();
 
     res.json(rankedLeaderboard);
   } catch (error) {

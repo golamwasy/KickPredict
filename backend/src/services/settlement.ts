@@ -259,14 +259,18 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
     }
   }
 
-  // Auto grant loan if applicable
+  // Auto grant loan if applicable using chunked concurrency
   const uniqueUserIds = [...new Set(pendingBets.map((b) => b.userId))];
-  for (const userId of uniqueUserIds) {
-    try {
-      await checkAndAutoGrantLoan(userId);
-    } catch (err) {
-      console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
-    }
+  const chunkSize = 10;
+  for (let i = 0; i < uniqueUserIds.length; i += chunkSize) {
+    const chunk = uniqueUserIds.slice(i, i + chunkSize);
+    await Promise.allSettled(chunk.map(async (userId) => {
+      try {
+        await checkAndAutoGrantLoan(userId);
+      } catch (err) {
+        console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
+      }
+    }));
   }
 
   console.log(`[Settlement] Completed settlement for match ${matchId}`);
@@ -354,13 +358,17 @@ export const settleLiveBetsForMatch = async (matchId: string): Promise<void> => 
     }
   }
 
-  // Auto grant loan if applicable
+  // Auto grant loan if applicable using chunked concurrency
   const uniqueUserIds = [...new Set(pendingBets.map((b) => b.userId))];
-  for (const userId of uniqueUserIds) {
-    try {
-      await checkAndAutoGrantLoan(userId);
-    } catch (err) {
-      console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
-    }
+  const chunkSize = 10;
+  for (let i = 0; i < uniqueUserIds.length; i += chunkSize) {
+    const chunk = uniqueUserIds.slice(i, i + chunkSize);
+    await Promise.allSettled(chunk.map(async (userId) => {
+      try {
+        await checkAndAutoGrantLoan(userId);
+      } catch (err) {
+        console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
+      }
+    }));
   }
 };
