@@ -724,7 +724,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                   style={{ opacity: (submitting || !multiplier || !stake || Number(stake) <= 0) ? 0.5 : 1 }}
                 >
                   {submitting && <span className="spinner-icon">⏳</span>}
-                  {submitting ? 'Processing...' : existingBets.some(b => b.betType === activeBetType) ? `Update Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×` : `Place Bet — ${Number(stake).toLocaleString()} KC @ ${multiplier}×`}
+                  {submitting ? 'Processing...' : existingBets.some(b => b.betType === activeBetType) ? `Update Bet` : `Place Bet`}
                 </button>
               </div>
             )}
@@ -765,7 +765,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                 communityQuestions.map(cq => {
                   const existingBet = existingBets.find(b => b.betType === 'COMMUNITY_QUESTION' && b.communityQuestionId === cq.id);
                   const hasBet = !!existingBet;
-                  
+
                   // Initialize form with existing bet data if available and not yet touched
                   const form = cqBetForms[cq.id] ?? { answer: existingBet?.predictedData?.answer || '', stake: existingBet?.stake || '' };
 
@@ -796,9 +796,9 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                             <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.2rem' }}>Stake (KC)</label>
                             <input type="number" min="1" max={walletBalance ?? undefined} value={form.stake} onChange={e => setCqBetForms(p => ({ ...p, [cq.id]: { ...form, stake: e.target.value === '' ? '' : Number(e.target.value) } }))} placeholder="Amount" style={{ width: '100%', padding: '0.6rem', border: '2px solid var(--fifa-black)' }} />
                           </div>
-                          <button 
-                            className="btn-primary" 
-                            onClick={() => placeCommunityBet(cq.id, existingBet?.id)} 
+                          <button
+                            className="btn-primary"
+                            onClick={() => placeCommunityBet(cq.id, existingBet?.id)}
                             disabled={cqSubmitting === cq.id || !form.answer?.trim() || !form.stake}
                             style={{ padding: '0.6rem 1rem', opacity: (cqSubmitting === cq.id || !form.answer?.trim() || !form.stake) ? 0.5 : 1 }}
                           >
