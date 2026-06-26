@@ -135,7 +135,7 @@ export default function AdminDashboard() {
     } catch (err) { setError('Failed to fetch bets'); }
   };
 
-  const handleMarkCqBet = async (cqId: string, betId: string, status: 'WON' | 'LOST') => {
+  const handleMarkCqBet = async (cqId: string, betId: string, status: 'WON' | 'LOST' | 'VOID') => {
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/community-questions/${cqId}/bets/${betId}/status`, {
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
     } catch (err) { setError('Failed to fetch bets'); }
   };
 
-  const handleModalMarkBet = async (betId: string, status: 'WON' | 'LOST') => {
+  const handleModalMarkBet = async (betId: string, status: 'WON' | 'LOST' | 'VOID') => {
     if (!resolvingCq) return;
     const token = localStorage.getItem('token');
     try {
@@ -371,7 +371,8 @@ export default function AdminDashboard() {
                                     {bet.status === 'PENDING' && !cq.isResolved && (
                                       <>
                                         <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'WON')} style={{ backgroundColor: '#27AE60', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>WON</button>
-                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'LOST')} style={{ backgroundColor: '#E74C3C', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
+                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'LOST')} style={{ backgroundColor: '#E74C3C', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
+                                        <button onClick={() => handleMarkCqBet(cq.id, bet.id, 'VOID')} style={{ backgroundColor: '#95A5A6', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>REFUND</button>
                                       </>
                                     )}
                                     {!cq.isResolved && (
@@ -438,7 +439,8 @@ export default function AdminDashboard() {
                         </td>
                         <td style={{ padding: '0.5rem' }}>
                           <button onClick={() => handleModalMarkBet(bet.id, 'WON')} style={{ backgroundColor: bet.status === 'WON' ? '#27AE60' : '#ddd', color: bet.status === 'WON' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>WON</button>
-                          <button onClick={() => handleModalMarkBet(bet.id, 'LOST')} style={{ backgroundColor: bet.status === 'LOST' ? '#E74C3C' : '#ddd', color: bet.status === 'LOST' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
+                          <button onClick={() => handleModalMarkBet(bet.id, 'LOST')} style={{ backgroundColor: bet.status === 'LOST' ? '#E74C3C' : '#ddd', color: bet.status === 'LOST' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', marginRight: '5px', borderRadius: '3px', cursor: 'pointer' }}>LOST</button>
+                          <button onClick={() => handleModalMarkBet(bet.id, 'VOID')} style={{ backgroundColor: bet.status === 'VOID' ? '#95A5A6' : '#ddd', color: bet.status === 'VOID' ? '#fff' : '#000', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '3px', cursor: 'pointer' }}>REFUND</button>
                         </td>
                       </tr>
                     ))}

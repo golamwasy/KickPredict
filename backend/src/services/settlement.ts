@@ -192,6 +192,9 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
       if (match.status === 'CANCELLED') {
         outcome = 'VOID';
       } else {
+        if (bet.betType === BetType.COMMUNITY_QUESTION) {
+          continue; // Skip automatic settlement; admin resolves manually
+        }
         outcome = settleSingleBet(
           bet.betType,
           bet.predictedData as Record<string, any>,

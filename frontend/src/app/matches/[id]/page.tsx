@@ -779,8 +779,21 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       </div>
 
                       {hasBet && !canBet ? (
-                        <div style={{ padding: '0.75rem', background: 'rgba(39,174,96,0.1)', border: '1px solid rgba(39,174,96,0.2)', borderRadius: '4px' }}>
-                          <p style={{ color: '#27AE60', fontWeight: 700, fontSize: '0.85rem' }}>✓ Your Answer: {existingBet.predictedData?.answer} (Stake: {existingBet.stake} KC)</p>
+                        <div style={{ 
+                          padding: '0.75rem', 
+                          background: existingBet.status === 'WON' ? 'rgba(39,174,96,0.1)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.1)' : 'rgba(230,126,34,0.1)', 
+                          border: `1px solid ${existingBet.status === 'WON' ? 'rgba(39,174,96,0.2)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.2)' : 'rgba(230,126,34,0.2)'}`, 
+                          borderRadius: '4px' 
+                        }}>
+                          <p style={{ 
+                            color: existingBet.status === 'WON' ? '#27AE60' : existingBet.status === 'LOST' ? '#E74C3C' : '#E67E22', 
+                            fontWeight: 700, 
+                            fontSize: '0.85rem' 
+                          }}>
+                            {existingBet.status === 'WON' ? '✓ ' : existingBet.status === 'LOST' ? '✗ ' : ''}
+                            Your Answer: {existingBet.predictedData?.answer} (Stake: {existingBet.stake} KC)
+                            <span style={{float: 'right'}}>[{existingBet.status === 'VOID' ? 'REFUND' : existingBet.status}]</span>
+                          </p>
                         </div>
                       ) : !canBet ? (
                         <div style={{ padding: '0.75rem', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px' }}>

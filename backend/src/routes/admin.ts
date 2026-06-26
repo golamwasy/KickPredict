@@ -273,10 +273,10 @@ router.put('/community-questions/:id/bets/:betId/status', async (req: AuthReques
   try {
     const id = req.params.id as string;
     const betId = req.params.betId as string;
-    const { status } = req.body; // 'WON' | 'LOST'
+    const { status } = req.body; // 'WON' | 'LOST' | 'VOID'
     
-    if (!['WON', 'LOST'].includes(status)) {
-      return res.status(400).json({ error: 'Status must be WON or LOST' });
+    if (!['WON', 'LOST', 'VOID'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be WON, LOST or VOID' });
     }
 
     const bet = await prisma.bet.findUnique({ where: { id: betId } });
@@ -296,6 +296,22 @@ router.put('/community-questions/:id/bets/:betId/status', async (req: AuthReques
 
       if (status === 'WON') {
         await creditWallet(bet.userId, bet.potentialPayout, 'BET_WON', bet.id, undefined, tx);
+      } else if (status === 'VOID') {
+        await creditWallet(bet.userId, bet.stake, 'BET_REFUNDED', bet.id, 'Refund for community question', tx);
+      } else if (status === 'LOST') {
+        // Record BET_LOST transaction with 0 amount for auditability
+        const wallet = await tx.wallet.findUnique({ where: { userId: bet.userId } });
+        if (wallet) {
+          await tx.transaction.create({
+            data: {
+              walletId: wallet.id,
+              type: 'BET_LOST',
+              amount: 0,
+              balanceAfter: wallet.balance,
+              betId: bet.id,
+            },
+          });
+        }
       }
     });
 
