@@ -89,6 +89,43 @@ const settleFirstToScore = (
   return predictedData.team === actualFirstScorer ? 'WON' : 'LOST';
 };
 
+// ─── Live settlement helper ─────────────────────────────────────────────────────
+
+const checkLiveBetSettlement = (
+  betType: BetType,
+  predictedData: Record<string, any>,
+  team1Goals: number,
+  team2Goals: number,
+  firstTeamToScoreId: string | null,
+  team1Id: string,
+  team2Id: string
+): 'WON' | 'LOST' | 'PENDING' => {
+  switch (betType) {
+    case BetType.FIRST_TO_SCORE:
+      if (firstTeamToScoreId) {
+        const actualFirstScorer = firstTeamToScoreId === team1Id ? 'HOME' : firstTeamToScoreId === team2Id ? 'AWAY' : 'NONE';
+        return predictedData.team === actualFirstScorer ? 'WON' : 'LOST';
+      }
+      return 'PENDING';
+
+    case BetType.OVER_UNDER_GOALS:
+      const total = team1Goals + team2Goals;
+      if (total > predictedData.line) {
+        return predictedData.side === 'OVER' ? 'WON' : 'LOST';
+      }
+      return 'PENDING';
+
+    case BetType.BOTH_TEAMS_TO_SCORE:
+      if (team1Goals > 0 && team2Goals > 0) {
+        return predictedData.answer === true ? 'WON' : 'LOST';
+      }
+      return 'PENDING';
+
+    default:
+      return 'PENDING';
+  }
+};
+
 // ─── Dispatch + wallet settlement ─────────────────────────────────────────────
 
 const settleSingleBet = (
@@ -236,29 +273,33 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
 };
 
 /**
- * Settles PENDING FIRST_TO_SCORE bets instantly while the match is LIVE.
+ * Settles PENDING bets instantly while the match is LIVE for eligible bet types.
  * This is triggered if a goal has been scored so users receive winnings mid-match.
  */
-export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void> => {
+export const settleLiveBetsForMatch = async (matchId: string): Promise<void> => {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || (match.status !== 'LIVE' && match.status !== 'LOCKED')) return;
   
-  if (!match.firstTeamToScoreId && match.team1Goals === 0 && match.team2Goals === 0) {
-    // Cannot settle FIRST_TO_SCORE if no goal has been scored yet and match is not finished
+  if (match.team1Goals === 0 && match.team2Goals === 0) {
+    // Cannot settle any live bets if no goal has been scored yet
     return;
   }
 
   const pendingBets = await prisma.bet.findMany({
-    where: { matchId, status: BetStatus.PENDING, betType: BetType.FIRST_TO_SCORE },
+    where: { 
+      matchId, 
+      status: BetStatus.PENDING, 
+      betType: { in: [BetType.FIRST_TO_SCORE, BetType.OVER_UNDER_GOALS, BetType.BOTH_TEAMS_TO_SCORE] } 
+    },
   });
 
   if (pendingBets.length === 0) return;
 
-  console.log(`[Settlement] Live settling ${pendingBets.length} FIRST_TO_SCORE bets for match ${matchId}`);
+  console.log(`[Settlement] Live settling up to ${pendingBets.length} eligible bets for match ${matchId}`);
 
   for (const bet of pendingBets) {
     try {
-      const outcome = settleSingleBet(
+      const outcome = checkLiveBetSettlement(
         bet.betType,
         bet.predictedData as Record<string, any>,
         match.team1Goals || 0,
@@ -268,11 +309,10 @@ export const settleLiveFirstToScoreBets = async (matchId: string): Promise<void>
         match.team2Id
       );
 
-      // If VOID (meaning firstTeamToScoreId was somehow missing despite a goal), wait until match finishes
-      if (outcome === 'VOID') continue;
+      if (outcome === 'PENDING') continue;
 
       await prisma.$transaction(async (tx) => {
-        const newStatus = outcome === 'WON' ? BetStatus.WON : outcome === 'LOST' ? BetStatus.LOST : BetStatus.VOID;
+        const newStatus = outcome === 'WON' ? BetStatus.WON : BetStatus.LOST;
         
         // Atomic update to prevent double-settling race conditions
         const updateResult = await tx.bet.updateMany({

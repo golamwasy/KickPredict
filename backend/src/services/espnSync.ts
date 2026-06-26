@@ -1,6 +1,6 @@
 import prisma from '../prisma';
 import { MatchStatus } from '@prisma/client';
-import { settleBetsForMatch, settleLiveFirstToScoreBets } from './settlement';
+import { settleBetsForMatch, settleLiveBetsForMatch } from './settlement';
 
 const ESPN_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100';
 
@@ -58,15 +58,19 @@ export const syncESPNData = async () => {
         continue;
       }
 
-      // Self-healing: Check if match has first scorer but unsettled FIRST_TO_SCORE bets
-      if (existingMatch && (existingMatch.status === 'LIVE' || existingMatch.status === 'LOCKED') && existingMatch.firstTeamToScoreId) {
-        const hasUnsettledFirstToScore = await prisma.bet.findFirst({
-          where: { matchId: existingMatch.id, status: 'PENDING', betType: 'FIRST_TO_SCORE' }
+      // Self-healing: Check if match has unsettled eligible live bets when goals have been scored
+      if (existingMatch && (existingMatch.status === 'LIVE' || existingMatch.status === 'LOCKED') && ((existingMatch.team1Goals ?? 0) > 0 || (existingMatch.team2Goals ?? 0) > 0)) {
+        const hasUnsettledLiveBets = await prisma.bet.findFirst({
+          where: { 
+            matchId: existingMatch.id, 
+            status: 'PENDING', 
+            betType: { in: ['FIRST_TO_SCORE', 'OVER_UNDER_GOALS', 'BOTH_TEAMS_TO_SCORE'] } 
+          }
         });
-        if (hasUnsettledFirstToScore) {
-          console.log(`[Sync] Self-healing: Match ${existingMatch.id} has first scorer but unsettled bets. Retrying live settlement...`);
+        if (hasUnsettledLiveBets) {
+          console.log(`[Sync] Self-healing: Match ${existingMatch.id} has goals but unsettled live bets. Retrying live settlement...`);
           try {
-            await settleLiveFirstToScoreBets(existingMatch.id);
+            await settleLiveBetsForMatch(existingMatch.id);
           } catch (liveSettleError) {
             console.error(`[Sync Error] Self-healing live settlement failed for match ${existingMatch.id}:`, liveSettleError);
           }
@@ -183,10 +187,13 @@ export const syncESPNData = async () => {
             console.error(`[Sync Error] Bet settlement failed for match ${updatedMatch.id}:`, settlementError);
             // Intentionally not re-throwing: self-healing above will retry on next sync tick
           }
-        } else if ((matchStatus === 'LIVE' || matchStatus === 'LOCKED') && updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId) {
-          // If a goal was just scored during a live match, instantly settle FIRST_TO_SCORE bets
+        } else if ((matchStatus === 'LIVE' || matchStatus === 'LOCKED') && 
+                   (updatedMatch.team1Goals !== existingMatch?.team1Goals || 
+                    updatedMatch.team2Goals !== existingMatch?.team2Goals || 
+                    (updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId))) {
+          // If a goal was just scored during a live match, try to instantly settle eligible live bets
           try {
-            await settleLiveFirstToScoreBets(updatedMatch.id);
+            await settleLiveBetsForMatch(updatedMatch.id);
           } catch (liveSettleError) {
             console.error(`[Sync Error] Live bet settlement failed for match ${updatedMatch.id}:`, liveSettleError);
           }
