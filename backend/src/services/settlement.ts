@@ -1,6 +1,7 @@
 import prisma from '../prisma';
 import { BetType, BetStatus, TransactionType } from '@prisma/client';
 import { creditWallet, checkAndAutoGrantLoan } from './wallet';
+import { updateUserLeaderboardScore } from './leaderboardScore';
 
 interface SettlementResult {
   status: BetStatus;
@@ -270,8 +271,10 @@ export const settleBetsForMatch = async (matchId: string): Promise<void> => {
     await Promise.allSettled(chunk.map(async (userId) => {
       try {
         await checkAndAutoGrantLoan(userId);
+        // Also recalculate the user's leaderboard score after settlements
+        await updateUserLeaderboardScore(userId);
       } catch (err) {
-        console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
+        console.error(`[Settlement Error] Failed to auto grant loan or update score for user ${userId}:`, err);
       }
     }));
   }
@@ -369,8 +372,10 @@ export const settleLiveBetsForMatch = async (matchId: string): Promise<void> => 
     await Promise.allSettled(chunk.map(async (userId) => {
       try {
         await checkAndAutoGrantLoan(userId);
+        // Also recalculate the user's leaderboard score after settlements
+        await updateUserLeaderboardScore(userId);
       } catch (err) {
-        console.error(`[Settlement Error] Failed to auto grant loan for user ${userId}:`, err);
+        console.error(`[Settlement Error] Failed to auto grant loan or update score for user ${userId}:`, err);
       }
     }));
   }

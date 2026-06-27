@@ -15,6 +15,7 @@ model User {
   passwordHash     String
   isActive         Boolean              @default(false)
   role             Role                 @default(USER)
+  leaderboardScore Float                @default(0)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   hasAcceptedTerms Boolean              @default(false)

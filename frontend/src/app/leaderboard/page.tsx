@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../utils/api";
 import BetPrompt from "./BetPrompt";
 import LeaderboardAuthGuard from "./LeaderboardAuthGuard";
+import FormulaModal from "./FormulaModal";
 
 async function getLeaderboard() {
   try {
@@ -20,8 +21,9 @@ export default async function LeaderboardPage() {
         <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🪙</div>
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--gold)", textShadow: "0 0 30px rgba(255,214,0,0.3)", marginBottom: "0.75rem" }}>Global Leaderboard</h1>
         <p style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 600, textShadow: '0 2px 8px #000000, 0 0 4px #000000', letterSpacing: '0.02em' }}>
-          Ranked by KickCoin wallet balance — predict, win, rise.
+          Ranked by Manager Score (Performance x Activity)
         </p>
+        <FormulaModal />
       </div>
 
       <BetPrompt leaderboard={leaderboard} />
@@ -30,6 +32,7 @@ export default async function LeaderboardPage() {
         <div className="lb-header" style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)", color: "#555555", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           <span>Rank</span>
           <span>Player</span>
+          <span style={{ textAlign: "center", color: "var(--gold)" }}>Kick Score</span>
           <span style={{ textAlign: "center" }}>KickCoins</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Total Bets (Done)</span>
           <span className="lb-col-hide" style={{ textAlign: "center" }}>Won</span>
@@ -55,6 +58,9 @@ export default async function LeaderboardPage() {
                       ({user.loan.toLocaleString()} KC loan)
                     </span>
                   )}
+                </div>
+                <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center", color: "var(--gold)" }}>
+                  {user.leaderboardScore ? user.leaderboardScore.toFixed(2) : "0.00"}
                 </div>
                 <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center" }}>
                   {user.kickCoins.toLocaleString()} <span style={{ fontSize: "0.7rem", fontWeight: 600 }}>KC</span>
