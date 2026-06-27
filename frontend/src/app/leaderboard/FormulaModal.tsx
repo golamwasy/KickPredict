@@ -14,7 +14,7 @@ export default function FormulaModal() {
   const modalContent = (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)', 
+      backgroundColor: 'rgba(0,0,0,0.7)',
       backdropFilter: 'blur(8px)',
       zIndex: 99999, // Ensure it's above everything
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -36,11 +36,11 @@ export default function FormulaModal() {
         boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
         textAlign: 'left'
       }}>
-        <button 
+        <button
           onClick={() => setIsOpen(false)}
-          style={{ 
-            position: 'absolute', top: '1.25rem', right: '1.25rem', 
-            background: 'rgba(255,255,255,0.1)', border: 'none', 
+          style={{
+            position: 'absolute', top: '1.25rem', right: '1.25rem',
+            background: 'rgba(255,255,255,0.1)', border: 'none',
             color: '#fff', width: '32px', height: '32px', borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '1.2rem', cursor: 'pointer', transition: 'background 0.2s'
@@ -50,9 +50,9 @@ export default function FormulaModal() {
         >
           &times;
         </button>
-        
+
         <h2 style={{ color: 'var(--gold)', marginBottom: '1rem', fontSize: '1.6rem', fontWeight: 800 }}>Your Kick Score is based on three things:</h2>
-        
+
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. How well you're doing, not how much you have</div>
@@ -71,19 +71,19 @@ export default function FormulaModal() {
         <p style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
           <b>Put simply:</b> Kick Score rewards players who predict well, consistently, over the course of the tournament — not players who got lucky once. That's why someone with a smaller balance but a longer track record of smart picks might rank higher than someone sitting on a big balance from a single lucky bet.
         </p>
-        
-        <div style={{ 
-          background: 'linear-gradient(90deg, rgba(255,214,0,0.1) 0%, rgba(255,214,0,0.05) 100%)', 
+
+        <div style={{
+          background: 'linear-gradient(90deg, rgba(255,214,0,0.1) 0%, rgba(255,214,0,0.05) 100%)',
           border: '1px solid rgba(255,214,0,0.3)',
-          padding: '1.25rem', 
-          borderRadius: '12px', 
-          textAlign: 'center', 
-          fontWeight: 800, 
+          padding: '1.25rem',
+          borderRadius: '12px',
+          textAlign: 'center',
+          fontWeight: 800,
           color: 'var(--gold)',
           fontSize: '1.2rem',
           letterSpacing: '0.05em'
         }}>
-          KICK SCORE = ROI × CONFIDENCE × ACTIVITY
+          KICK SCORE = 100 + (ROI × CONFIDENCE × ACTIVITY)
         </div>
       </div>
     </div>
@@ -91,7 +91,7 @@ export default function FormulaModal() {
 
   return (
     <>
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
         style={{
           background: '#fc8803',
@@ -118,10 +118,10 @@ export default function FormulaModal() {
           e.currentTarget.style.transform = 'translate(0px, 0px)';
           e.currentTarget.style.boxShadow = '6px 6px 0px var(--fifa-black)';
         }}
-        onMouseOver={(e) => { 
+        onMouseOver={(e) => {
           e.currentTarget.style.background = '#fda43a'; // Slightly brighter orange on hover
         }}
-        onMouseOut={(e) => { 
+        onMouseOut={(e) => {
           e.currentTarget.style.background = '#fc8803';
           e.currentTarget.style.transform = 'translate(0px, 0px)';
           e.currentTarget.style.boxShadow = '6px 6px 0px var(--fifa-black)';
@@ -131,7 +131,7 @@ export default function FormulaModal() {
       </button>
 
       {mounted && isOpen && createPortal(modalContent, document.body)}
-      
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }

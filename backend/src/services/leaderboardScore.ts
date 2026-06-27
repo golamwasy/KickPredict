@@ -16,16 +16,21 @@ export interface LeaderboardStats {
  */
 export const calculateLeaderboardScore = ({ betsPlaced, totalStaked, totalWon }: LeaderboardStats): number => {
   if (betsPlaced === 0 || totalStaked === 0) {
-    return 0;
+    return 100; // Base score for everyone
   }
 
+  // Calculate true Profit Margin (ROI)
   const roi = (totalWon - totalStaked) / totalStaked;
   const cappedRoi = Math.max(MIN_ROI, Math.min(roi, MAX_ROI));
+  
   const confidence = Math.sqrt(betsPlaced) / (Math.sqrt(betsPlaced) + Math.sqrt(CONFIDENCE_BASE));
   const volumeFactor = Math.log(1 + totalStaked / VOLUME_DIVISOR); // ln(1 + ...)
   
-  const score = cappedRoi * confidence * volumeFactor * 100;
-  return score;
+  // Base 100. Winners add to it, losers subtract from it.
+  const rawScore = 100 + (cappedRoi * confidence * volumeFactor * 100);
+  
+  // Floor at 0 so nobody ever has a negative score
+  return Math.max(0, rawScore);
 };
 
 /**
