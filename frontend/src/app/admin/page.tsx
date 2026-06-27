@@ -198,9 +198,9 @@ export default function AdminDashboard() {
 
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <h2 style={{ marginBottom: '1.5rem' }}>User Management</h2>
-          <div style={{ overflowX: 'auto' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+          <h2 style={{ marginBottom: '1.5rem', flexShrink: 0 }}>User Management</h2>
+          <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -246,9 +246,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="card">
-          <h2 style={{ marginBottom: '1.5rem', color: 'var(--danger-color)' }}>Recent API Sync Errors (ESPN)</h2>
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+          <h2 style={{ marginBottom: '1.5rem', color: 'var(--danger-color)', flexShrink: 0 }}>Recent API Sync Errors (ESPN)</h2>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
             {summary?.recentSyncLogs?.length === 0 ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                 ✅ No sync errors logged. Background APIs are running smoothly!
@@ -268,11 +268,11 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: '2rem', overflow: 'hidden' }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Community Questions Management</h2>
-        <div style={{ overflowX: 'auto' }}>
+      <div className="card" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', maxHeight: '600px' }}>
+        <h2 style={{ marginBottom: '1.5rem', flexShrink: 0 }}>Community Questions Management</h2>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
-            <thead>
+            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 10 }}>
               <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ padding: '0.5rem' }}>Match</th>
                 <th style={{ padding: '0.5rem' }}>Question</th>
