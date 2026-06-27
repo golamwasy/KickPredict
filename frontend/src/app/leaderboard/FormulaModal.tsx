@@ -25,70 +25,89 @@ export default function FormulaModal() {
         background: 'linear-gradient(180deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)',
         border: '1px solid rgba(255, 214, 0, 0.2)',
         borderRadius: '20px',
-        padding: '2.5rem 2rem',
         maxWidth: '550px',
         width: '100%',
         maxHeight: '85vh',
-        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
         color: '#fff',
         position: 'relative',
         animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
         textAlign: 'left'
       }}>
-        <button
-          onClick={() => setIsOpen(false)}
-          style={{
-            position: 'absolute', top: '1.25rem', right: '1.25rem',
-            background: 'rgba(255,255,255,0.1)', border: 'none',
-            color: '#fff', width: '32px', height: '32px', borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2rem', cursor: 'pointer', transition: 'background 0.2s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-        >
-          &times;
-        </button>
-
-        <h2 style={{ color: 'var(--gold)', marginBottom: '1rem', fontSize: '1.6rem', fontWeight: 800 }}>The KickScore calculation is based on three factors:</h2>
-
-        <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Accuracy & Profitability</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>
-              The system evaluates both <b>Win Rate</b> (prediction accuracy frequency) and <b>Profit</b> (winnings relative to risk). This ensures high-accuracy predictions are not penalized by missing a single massive multiplier bet. Consistent prediction strategies are rewarded over a single lucky guess.
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', color: '#fff' }}>
-                ROI = (Total Won - Total Staked) / Total Staked
-              </div>
-            </div>
-          </li>
-          <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3498DB' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. Betting Volume</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>A score based on 1 or 2 bets lacks statistical significance and could simply be variance. As more bets are placed, the score increasingly reflects actual predictive capability rather than isolated outcomes. Consistent participation throughout the tournament increases the "trust" factor of the score.</div>
-          </li>
-          <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #E74C3C' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>3. Active Participation</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>Maintaining activity and placing real stakes over time is factored into the calculation. Holding a large balance without active participation does not positively impact the score.</div>
-          </li>
-        </ul>
-
-        <p style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
-          <b>Summary:</b> Kick Score is designed to highlight accounts that predict accurately and consistently over the course of the tournament. Therefore, an account with a smaller balance but a high hit-rate can rank higher than an account holding a large balance from a single fortunate bet.
-        </p>
-
+        {/* Fixed Header */}
         <div style={{
-          background: 'linear-gradient(90deg, rgba(255,214,0,0.1) 0%, rgba(255,214,0,0.05) 100%)',
-          border: '1px solid rgba(255,214,0,0.3)',
-          padding: '1.25rem',
-          borderRadius: '12px',
-          textAlign: 'center',
-          fontWeight: 800,
-          color: 'var(--gold)',
-          fontSize: '1.2rem',
-          letterSpacing: '0.05em'
+          padding: '2rem 2rem 1.5rem 2rem',
+          position: 'relative',
+          flexShrink: 0,
+          borderBottom: '1px solid rgba(255, 214, 0, 0.1)',
+          background: 'rgba(0,0,0,0.2)'
         }}>
-          SCORE = 100 + ( [ROI + ACCURACY] × CONFIDENCE × ACTIVITY )
+          <button
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: 'absolute', top: '1.5rem', right: '1.5rem',
+              background: 'rgba(255,255,255,0.1)', border: 'none',
+              color: '#fff', width: '32px', height: '32px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.2rem', cursor: 'pointer', transition: 'background 0.2s',
+              zIndex: 10
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            &times;
+          </button>
+          <h2 style={{ color: 'var(--gold)', margin: 0, fontSize: '1.4rem', fontWeight: 800, paddingRight: '2.5rem', textTransform: 'uppercase', lineHeight: 1.3 }}>
+            The KickScore calculation is based on three factors:
+          </h2>
+        </div>
+
+        {/* Scrollable Content */}
+        <div style={{
+          padding: '1.5rem 2rem 2.5rem 2rem',
+          overflowY: 'auto',
+          flexGrow: 1
+        }}>
+          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Accuracy & Profitability</div>
+              <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                The system evaluates both <b>Win Rate</b> (prediction accuracy frequency) and <b>Profit</b> (winnings relative to risk). This ensures high-accuracy predictions are not penalized by missing a single massive multiplier bet. Consistent prediction strategies are rewarded over a single lucky guess.
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', color: '#fff' }}>
+                  ROI = (Total Won - Total Staked) / Total Staked
+                </div>
+              </div>
+            </li>
+            <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3498DB' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. Betting Volume</div>
+              <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>A score based on 1 or 2 bets lacks statistical significance and could simply be variance. As more bets are placed, the score increasingly reflects actual predictive capability rather than isolated outcomes. Consistent participation throughout the tournament increases the "trust" factor of the score.</div>
+            </li>
+            <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #E74C3C' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>3. Active Participation</div>
+              <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>Maintaining activity and placing real stakes over time is factored into the calculation. Holding a large balance without active participation does not positively impact the score.</div>
+            </li>
+          </ul>
+
+          <p style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
+            <b>Summary:</b> Kick Score is designed to highlight accounts that predict accurately and consistently over the course of the tournament. Therefore, an account with a smaller balance but a high hit-rate can rank higher than an account holding a large balance from a single fortunate bet.
+          </p>
+
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(255,214,0,0.1) 0%, rgba(255,214,0,0.05) 100%)',
+            border: '1px solid rgba(255,214,0,0.3)',
+            padding: '1.25rem',
+            borderRadius: '12px',
+            textAlign: 'center',
+            fontWeight: 800,
+            color: 'var(--gold)',
+            fontSize: '1.2rem',
+            letterSpacing: '0.05em'
+          }}>
+            SCORE = 100 + ( [ROI + ACCURACY] × CONFIDENCE × ACTIVITY )
+          </div>
         </div>
       </div>
     </div>
