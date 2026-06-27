@@ -60,7 +60,7 @@ export default async function LeaderboardPage() {
                   )}
                 </div>
                 <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center", color: "var(--gold)" }}>
-                  {user.leaderboardScore ? user.leaderboardScore.toFixed(2) : "0.00"}
+                  {user.leaderboardScore ? Math.round(user.leaderboardScore) : "0"}
                 </div>
                 <div style={{ fontWeight: 900, fontSize: "1.1rem", fontFamily: "Outfit, sans-serif", textAlign: "center" }}>
                   {user.kickCoins.toLocaleString()} <span style={{ fontSize: "0.7rem", fontWeight: 600 }}>KC</span>
