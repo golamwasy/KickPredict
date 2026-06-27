@@ -131,6 +131,8 @@ export const syncESPNData = async () => {
         else if ((team2Goals ?? 0) > 0 && (team1Goals ?? 0) === 0) firstTeamToScoreId = team2.id;
       }
 
+      const stage = event.season?.slug || 'group-stage';
+
       // Diff Check: Only update the database if the status, score, or kickoff time has changed
       const hasChanged =
         !existingMatch ||
@@ -138,6 +140,7 @@ export const syncESPNData = async () => {
         existingMatch.team1Goals !== team1Goals ||
         existingMatch.team2Goals !== team2Goals ||
         existingMatch.firstTeamToScoreId !== firstTeamToScoreId ||
+        existingMatch.stage !== stage ||
         existingMatch.kickoffTime.getTime() !== date.getTime();
 
       if (hasChanged) {
@@ -149,6 +152,7 @@ export const syncESPNData = async () => {
             team1Goals,
             team2Goals,
             firstTeamToScoreId,
+            stage,
           },
           create: {
             apiFixtureId,
@@ -159,6 +163,7 @@ export const syncESPNData = async () => {
             team1Goals,
             team2Goals,
             firstTeamToScoreId,
+            stage,
           }
         });
 

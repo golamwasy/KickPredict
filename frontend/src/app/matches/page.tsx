@@ -9,8 +9,17 @@ async function getMatches() {
   } catch { return []; }
 }
 
+async function getSettings() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/settings`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed');
+    return res.json();
+  } catch { return {}; }
+}
+
 export default async function MatchesPage() {
   const matches = await getMatches();
+  const settings = await getSettings();
 
   return (
     <div className="container">
@@ -24,7 +33,7 @@ export default async function MatchesPage() {
         </p>
       </div>
 
-      <MatchesListClient matches={matches} />
+      <MatchesListClient matches={matches} settings={settings} />
       
       <style>{`@keyframes floatIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }`}</style>
     </div>

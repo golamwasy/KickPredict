@@ -7,6 +7,7 @@ import betRoutes from './routes/bets';
 import leaderboardRoutes from './routes/leaderboard';
 import adminRoutes from './routes/admin';
 import tournamentRoutes from './routes/tournament';
+import settingsRoutes from './routes/settings';
 import { startCronJobs } from './services/cron';
 import { syncESPNData } from './services/espnSync';
 
@@ -30,6 +31,7 @@ app.use('/api', betRoutes); // covers /api/bets and /api/wallet
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tournament', tournamentRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check
 app.get('/healthz', (req, res) => {

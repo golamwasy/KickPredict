@@ -10,6 +10,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [communityQuestions, setCommunityQuestions] = useState<any[]>([]);
+  const [settings, setSettings] = useState<Record<string, string>>({});
 
 
   // Modal State
@@ -33,12 +34,14 @@ export default function AdminDashboard() {
     Promise.all([
       fetch(`${API_BASE_URL}/api/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
       fetch(`${API_BASE_URL}/api/admin/summary`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${API_BASE_URL}/api/admin/community-questions`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
-    ]).then(([usersData, summaryData, cqData]) => {
+      fetch(`${API_BASE_URL}/api/admin/community-questions`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/settings`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
+    ]).then(([usersData, summaryData, cqData, settingsData]) => {
       if (usersData.error) throw new Error(usersData.error);
       setUsers(usersData);
       setSummary(summaryData);
       setCommunityQuestions(cqData || []);
+      setSettings(settingsData || {});
       setLoading(false);
     }).catch(err => {
       setError(err.message);
@@ -188,6 +191,20 @@ export default function AdminDashboard() {
     } catch (err: any) { setError(err.message); }
   };
 
+  const handleSettingToggle = async (stageKey: string, newValue: boolean) => {
+    const token = localStorage.getItem('token');
+    const settingKey = `show_${stageKey}`;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: settingKey, value: newValue.toString() })
+      });
+      if (!res.ok) throw new Error(`Failed to update setting for ${stageKey}`);
+      setSettings({ ...settings, [settingKey]: newValue.toString() });
+    } catch (err: any) { setError(err.message); }
+  };
+
   if (loading) return <LoadingSpinner text="Loading admin dashboard..." />;
   if (error) return <div style={{ textAlign: 'center', padding: '4rem', color: 'red' }}>Error: {error}</div>;
 
@@ -266,6 +283,35 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ marginBottom: '1.5rem', flexShrink: 0 }}>Tournament Stage Visibility</h2>
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Round of 32', key: 'round-of-32' },
+            { label: 'Round of 16', key: 'round-of-16' },
+            { label: 'Quarterfinals', key: 'quarterfinals' },
+            { label: 'Semifinals', key: 'semifinals' },
+            { label: 'Finals', key: 'final' }
+          ].map(stage => {
+            const isVisible = settings[`show_${stage.key}`] === 'true';
+            return (
+              <label key={stage.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <input 
+                  type="checkbox" 
+                  checked={isVisible}
+                  onChange={(e) => handleSettingToggle(stage.key, e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span style={{ fontWeight: 'bold' }}>{stage.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p style={{ marginTop: '1rem', color: '#888', fontSize: '0.85rem' }}>
+          Toggling these OFF will completely hide matches belonging to that stage from the user-facing match list.
+        </p>
       </div>
 
       <div className="card" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', maxHeight: '600px' }}>

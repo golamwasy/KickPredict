@@ -184,7 +184,6 @@ export default function TournamentQuestions() {
 
               return (
                 <div key={cq.id} className="card" style={{ position: 'relative' }}>
-
                   <div style={{ marginBottom: '1rem' }}>
                     <p style={{ fontSize: '1.25rem', fontWeight: 900 }}>{cq.question}</p>
                     <p style={{ fontSize: '0.85rem', color: '#666' }}>Asked by @{cq.creator?.username} • Placed bets: {cq._count?.bets || 0}</p>

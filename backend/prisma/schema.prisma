@@ -63,6 +63,7 @@ model Match {
   team2Goals         Int?
   apiFixtureId       Int?        @unique
   firstTeamToScoreId String?
+  stage              String      @default("group-stage")
   bets               Bet[]
   communityQuestions CommunityQuestion[]
   team1              Team        @relation("Team1", fields: [team1Id], references: [id])
@@ -141,6 +142,11 @@ enum QuestionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model SystemSetting {
+  key   String @id
+  value String
 }
 
 enum Role {

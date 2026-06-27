@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../utils/api';
 
 type TabType = 'open' | 'upcoming' | 'past';
 
-export default function MatchesListClient({ matches }: { matches: any[] }) {
+export default function MatchesListClient({ matches, settings = {} }: { matches: any[], settings?: Record<string, string> }) {
   const [activeTab, setActiveTab] = useState<TabType>('open');
   const [predictedMatchIds, setPredictedMatchIds] = useState<Set<string>>(new Set());
   const [userPredictions, setUserPredictions] = useState<any[]>([]);
@@ -46,12 +46,12 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
       .catch(console.error);
   }, []);
 
-  const filteredMatches = matches.filter((m: any) => {
-    if (activeTab === 'open') return m.status === 'OPEN';
-    if (activeTab === 'upcoming') return m.status === 'UPCOMING';
-    if (activeTab === 'past') return m.status === 'FINISHED';
-    return false;
-  }).sort((a: any, b: any) => {
+  const now = new Date().toISOString();
+  const openMatches = matches.filter(m => m.status === 'OPEN' && m.kickoffTime > now && (m.stage === 'group-stage' || settings[`show_${m.stage}`] === 'true'));
+  const upcomingMatches = matches.filter(m => m.status === 'UPCOMING' && (m.stage === 'group-stage' || settings[`show_${m.stage}`] === 'true'));
+  const pastMatches = matches.filter(m => ['FINISHED', 'LIVE', 'LOCKED'].includes(m.status) && (m.stage === 'group-stage' || settings[`show_${m.stage}`] === 'true'));
+
+  const filteredMatches = (activeTab === 'open' ? openMatches : activeTab === 'upcoming' ? upcomingMatches : pastMatches).sort((a: any, b: any) => {
     const timeA = new Date(a.kickoffTime).getTime();
     const timeB = new Date(b.kickoffTime).getTime();
     if (activeTab === 'upcoming' || activeTab === 'open') {
@@ -288,14 +288,20 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
                 {group.matches.map((match: any) => {
                   const isUpcoming = match.status === 'UPCOMING';
-                  const CardWrapper = isUpcoming ? 'div' : Link;
-                  const wrapperProps = isUpcoming
+                  const isPlaceholder = (name: string) => name && (name.includes('Place') || name.includes('Winner'));
+                  const isGroup32Match = isPlaceholder(match.team1?.name) || isPlaceholder(match.team2?.name);
+                  
+                  // Disable if upcoming OR if it's a placeholder (like Group 32 matches)
+                  const isDisabled = isUpcoming || (activeTab === 'open' && isGroup32Match);
+                  
+                  const CardWrapper = isDisabled ? 'div' : Link;
+                  const wrapperProps = isDisabled
                     ? { style: { display: 'block', cursor: 'default', opacity: 0.85 } }
                     : { href: !isLoggedIn && match.status === 'OPEN' ? '/login' : `/matches/${match.id}`, style: { display: 'block' } };
 
                   return (
                     <CardWrapper key={match.id} {...(wrapperProps as any)}>
-                      <div className="premium-match-card" style={{ height: '100%', ...(isUpcoming ? { boxShadow: 'none' } : {}) }}>
+                      <div className="premium-match-card" style={{ height: '100%', ...(isDisabled ? { boxShadow: 'none' } : {}) }}>
                         <div className="match-content">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -303,7 +309,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                                 predictedMatchIds.has(match.id) ? (
                                   <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ BET PLACED</span>
                                 ) : (
-                                  <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
+                                  <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem', opacity: isGroup32Match ? 0.5 : 1 }}>⚡ OPEN</span>
                                 )
                               )}
                               {activeTab === 'upcoming' && <span className="badge badge-upcoming" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>📅 UPCOMING</span>}
@@ -360,8 +366,8 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
                         {activeTab === 'open' && (
                           <div className="action-area">
-                            <span className="action-text" style={{ color: 'var(--fifa-lime)' }}>
-                              {predictedMatchIds.has(match.id) ? 'View / Add Bets →' : 'Bet Now →'}
+                            <span className="action-text" style={{ color: isGroup32Match ? '#888888' : 'var(--fifa-lime)' }}>
+                              {isGroup32Match ? 'TEAMS TBD' : (predictedMatchIds.has(match.id) ? 'View / Add Bets →' : 'Bet Now →')}
                             </span>
                           </div>
                         )}
