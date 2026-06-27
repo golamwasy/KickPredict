@@ -177,8 +177,8 @@ export default function AdminHistory() {
                       if (data.team) parts.push(`Team: ${getTeamName(data.team)}`);
                       if (data.homeScore !== undefined) parts.push(`Score: ${bet.match.team1?.code} ${data.homeScore} - ${data.awayScore} ${bet.match.team2?.code}`);
                       if (data.side && data.line) parts.push(`${data.side} ${data.line} Goals`);
+                      if (data.margin !== undefined && data.marginSide) parts.push(`Margin: ${getTeamName(data.marginSide)} by ${data.margin} Goal${data.margin === 1 ? '' : 's'}`);
                       if (data.answer !== undefined) parts.push(data.answer ? 'Yes' : 'No');
-                      if (data.marginSide) parts.push(`Margin: ${getTeamName(data.marginSide)} by ${data.margin}`);
 
                       return parts.join(' | ') || JSON.stringify(data);
                     })()}

@@ -125,8 +125,36 @@ export default function Dashboard() {
                     <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.3rem', color: 'var(--fifa-black)' }}>
                       {bet.match?.team1?.name} <span style={{ color: '#888888' }}>vs</span> {bet.match?.team2?.name}
                     </div>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#555555' }}>
-                      {BET_TYPE_LABELS[bet.betType] || bet.betType}
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#555555', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span>{BET_TYPE_LABELS[bet.betType] || bet.betType}</span>
+                      <span style={{ color: '#ccc' }}>•</span>
+                      <span style={{ color: 'var(--fifa-black)' }}>
+                        {(() => {
+                          const data = bet.predictedData as any;
+                          if (!data) return null;
+                          const getTeamName = (side: string) => {
+                            if (side === 'HOME') return bet.match?.team1?.name || bet.match?.team1?.code || 'Home';
+                            if (side === 'AWAY') return bet.match?.team2?.name || bet.match?.team2?.code || 'Away';
+                            if (side === 'DRAW') return 'Draw';
+                            return side;
+                          };
+                          
+                          let parts = [];
+                          if (data.outcome) parts.push(getTeamName(data.outcome));
+                          if (data.outcomes) parts.push(data.outcomes.map((o: string) => getTeamName(o)).join(' or '));
+                          if (data.team) parts.push(getTeamName(data.team));
+                          if (data.homeScore !== undefined) parts.push(`${bet.match?.team1?.code || 'Home'} ${data.homeScore} - ${data.awayScore} ${bet.match?.team2?.code || 'Away'}`);
+                          if (data.side && data.line) parts.push(`${data.side} ${data.line}`);
+                          if (data.margin !== undefined && data.marginSide) parts.push(`${getTeamName(data.marginSide)} by ${data.margin} Goal${data.margin === 1 ? '' : 's'}`);
+                          if (data.answer !== undefined) parts.push(data.answer ? 'Yes' : 'No');
+                          
+                          if (bet.betType === 'COMMUNITY_QUESTION') {
+                             return bet.communityQuestion?.question ? `Ans: ${data.answer ? 'Yes' : 'No'}` : (parts.length > 0 ? parts.join(', ') : 'Yes/No');
+                          }
+                          
+                          return parts.length > 0 ? parts.join(', ') : JSON.stringify(data);
+                        })()}
+                      </span>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
