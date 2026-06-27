@@ -21,7 +21,7 @@ export default async function LeaderboardPage() {
           <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🪙</div>
           <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--gold)", textShadow: "0 0 30px rgba(255,214,0,0.3)", marginBottom: "0.75rem" }}>Global Leaderboard</h1>
           <p style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 600, textShadow: '0 2px 8px #000000, 0 0 4px #000000', letterSpacing: '0.02em' }}>
-            Ranked by Manager Score (Performance x Activity)
+            Ranked by KickScore
           </p>
           <FormulaModal />
         </div>

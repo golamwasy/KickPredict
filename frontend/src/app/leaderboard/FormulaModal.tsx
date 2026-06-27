@@ -51,30 +51,30 @@ export default function FormulaModal() {
           &times;
         </button>
 
-        <h2 style={{ color: 'var(--gold)', marginBottom: '1rem', fontSize: '1.6rem', fontWeight: 800 }}>Your Kick Score is based on three things:</h2>
+        <h2 style={{ color: 'var(--gold)', marginBottom: '1rem', fontSize: '1.6rem', fontWeight: 800 }}>The KickScore calculation is based on three factors:</h2>
 
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Your Accuracy & Profitability</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Accuracy & Profitability</div>
             <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>
-              We look at both your <b>Win Rate</b> (how often you predict correctly) and your <b>Profit</b> (how much you've won compared to what you've risked). This ensures a high-accuracy player isn't penalized just because they didn't hit one massive multiplier bet. We reward consistent prediction strategies over a single lucky guess.
+              The system evaluates both <b>Win Rate</b> (prediction accuracy frequency) and <b>Profit</b> (winnings relative to risk). This ensures high-accuracy predictions are not penalized by missing a single massive multiplier bet. Consistent prediction strategies are rewarded over a single lucky guess.
               <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', color: '#fff' }}>
                 ROI = (Total Won - Total Staked) / Total Staked
               </div>
             </div>
           </li>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3498DB' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. How many bets you've placed</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>A score based on just 1 or 2 bets isn't very meaningful yet — it could easily be luck. The more bets you place, the more your score reflects real skill instead of one good or bad result. Keep predicting throughout the tournament and your score becomes more "trusted."</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. Betting Volume</div>
+            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>A score based on 1 or 2 bets lacks statistical significance and could simply be variance. As more bets are placed, the score increasingly reflects actual predictive capability rather than isolated outcomes. Consistent participation throughout the tournament increases the "trust" factor of the score.</div>
           </li>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #E74C3C' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>3. How much you've actually played</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>Staying active and placing real stakes over time is rewarded. Sitting on a big balance without playing doesn't move your score.</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>3. Active Participation</div>
+            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>Maintaining activity and placing real stakes over time is factored into the calculation. Holding a large balance without active participation does not positively impact the score.</div>
           </li>
         </ul>
 
         <p style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
-          <b>Put simply:</b> Kick Score rewards players who predict accurately and consistently over the course of the tournament. That's why someone with a smaller balance but a high hit-rate might rank higher than someone sitting on a big balance from a single lucky bet.
+          <b>Summary:</b> Kick Score is designed to highlight accounts that predict accurately and consistently over the course of the tournament. Therefore, an account with a smaller balance but a high hit-rate can rank higher than an account holding a large balance from a single fortunate bet.
         </p>
 
         <div style={{
