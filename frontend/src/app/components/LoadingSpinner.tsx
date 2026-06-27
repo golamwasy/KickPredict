@@ -2,35 +2,16 @@
 
 import { useEffect, useState } from 'react';
 
-export default function LoadingSpinner({ text = 'Loading...', onComplete }: { text?: string, onComplete?: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const [isGoal, setIsGoal] = useState(false);
+export default function LoadingSpinner({ text = 'Loading...' }: { text?: string }) {
+  const [showGoal, setShowGoal] = useState(false);
 
   useEffect(() => {
-    // Simulate loading progress approaching 100%
-    const duration = 2500; // 2.5 seconds to reach 100%
-    const interval = 30;
-    const steps = duration / interval;
-    const increment = 100 / steps;
-
+    // Toggle between bouncing balls and GOAL! every 1.5 seconds
     const timer = setInterval(() => {
-      setProgress(p => {
-        const next = p + increment;
-        if (next >= 100) {
-          clearInterval(timer);
-          setIsGoal(true);
-          
-          if (onComplete) {
-            setTimeout(onComplete, 1000); // Show goal animation for 1 second before calling onComplete
-          }
-          return 100;
-        }
-        return next;
-      });
-    }, interval);
-
+      setShowGoal(prev => !prev);
+    }, 1500);
     return () => clearInterval(timer);
-  }, [onComplete]);
+  }, []);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
@@ -49,46 +30,45 @@ export default function LoadingSpinner({ text = 'Loading...', onComplete }: { te
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
       }}>
         
-        {isGoal ? (
-          <div style={{ position: 'relative', width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {/* Goalpost at the back (Bigger) */}
-            <div style={{ position: 'absolute', fontSize: '6.5rem', zIndex: 1, animation: 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
-              🥅
+        <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {showGoal ? (
+            <div style={{ position: 'relative', width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Goalpost at the back */}
+              <div style={{ position: 'absolute', fontSize: '6.5rem', zIndex: 1, animation: 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+                🥅
+              </div>
+              {/* Blast in the middle */}
+              <div style={{ position: 'absolute', fontSize: '2.5rem', zIndex: 2, marginTop: '20px', animation: 'blast 0.4s ease-out 0.1s both' }}>
+                💥
+              </div>
+              {/* Football in the front */}
+              <div style={{ position: 'absolute', fontSize: '2rem', zIndex: 3, marginTop: '20px', animation: 'shootIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both' }}>
+                ⚽️
+              </div>
             </div>
-            {/* Blast in the middle (Slightly smaller, moved down) */}
-            <div style={{ position: 'absolute', fontSize: '2.5rem', zIndex: 2, marginTop: '20px', animation: 'blast 0.4s ease-out 0.1s both' }}>
-              💥
+          ) : (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <div className="football fb-1">⚽️</div>
+              <div className="football fb-2">⚽️</div>
+              <div className="football fb-3">⚽️</div>
             </div>
-            {/* Football in the front (Smaller, moved down) */}
-            <div style={{ position: 'absolute', fontSize: '2rem', zIndex: 3, marginTop: '20px', animation: 'shootIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both' }}>
-              ⚽️
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <div className="football fb-1">⚽️</div>
-            <div className="football fb-2">⚽️</div>
-            <div className="football fb-3">⚽️</div>
-          </div>
-        )}
+          )}
+        </div>
 
         <p style={{ color: '#FFFFFF', margin: 0, fontWeight: 700, fontSize: '1.1rem', letterSpacing: '0.05em' }}>
-          {isGoal ? 'GOAL!' : text}
+          {showGoal ? 'GOAL!' : text}
         </p>
         
-        {/* Progress Bar Container */}
-        <div style={{ width: '220px', height: '8px', backgroundColor: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ 
+        {/* Indeterminate Progress Bar Container */}
+        <div style={{ width: '220px', height: '8px', backgroundColor: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
+          <div className="indeterminate-bar" style={{ 
             height: '100%', 
-            width: `${progress}%`, 
-            backgroundColor: isGoal ? 'var(--success, #0ED64B)' : 'var(--warning, #FFC107)', 
-            transition: 'width 0.1s linear, background-color 0.3s ease',
-            boxShadow: isGoal ? '0 0 15px var(--success, #0ED64B)' : '0 0 10px var(--warning, #FFC107)'
+            width: '40%', 
+            backgroundColor: 'var(--fifa-lime, #D4FF00)', 
+            borderRadius: '4px',
+            boxShadow: '0 0 10px var(--fifa-lime, #D4FF00)',
+            position: 'absolute'
           }} />
-        </div>
-        
-        <div style={{ color: '#FFFFFF', fontSize: '0.9rem', fontWeight: 600 }}>
-          {Math.round(progress)}%
         </div>
 
         <style>{`
@@ -121,6 +101,15 @@ export default function LoadingSpinner({ text = 'Loading...', onComplete }: { te
           @keyframes shootIn {
             0% { transform: scale(3) translateY(50px); opacity: 0; }
             100% { transform: scale(1) translateY(0); opacity: 1; }
+          }
+
+          .indeterminate-bar {
+            animation: scan 1.5s cubic-bezier(0.65, 0.05, 0.36, 1) infinite alternate;
+          }
+
+          @keyframes scan {
+            0% { left: -10%; }
+            100% { left: 70%; }
           }
         `}</style>
       </div>
