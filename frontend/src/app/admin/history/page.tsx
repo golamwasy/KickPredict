@@ -160,15 +160,15 @@ export default function AdminHistory() {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', background: '#F8F9FA', padding: '0.5rem', border: '2px solid #000' }}>
                     <div style={{ textAlign: 'center', flex: 1 }}>
-                      <div style={{ fontSize: '2rem' }}>{getFlag(bet.match.team1?.code)}</div>
-                      <div style={{ fontWeight: 900, color: '#000' }}>{bet.match.team1?.code}</div>
+                      <div style={{ fontSize: '2rem' }}>{bet.match ? getFlag(bet.match.team1?.code) : '🏆'}</div>
+                      <div style={{ fontWeight: 900, color: '#000' }}>{bet.match ? bet.match.team1?.code : 'TRN'}</div>
                     </div>
                     <div style={{ textAlign: 'center', padding: '0 1rem', fontWeight: 900, color: '#000' }}>
-                      {bet.match.status === 'FINISHED' || bet.match.status === 'LIVE' ? `${bet.match.team1Goals} - ${bet.match.team2Goals}` : 'VS'}
+                      {bet.match ? (bet.match.status === 'FINISHED' || bet.match.status === 'LIVE' ? `${bet.match.team1Goals} - ${bet.match.team2Goals}` : 'VS') : 'WORLD CUP'}
                     </div>
                     <div style={{ textAlign: 'center', flex: 1 }}>
-                      <div style={{ fontSize: '2rem' }}>{getFlag(bet.match.team2?.code)}</div>
-                      <div style={{ fontWeight: 900, color: '#000' }}>{bet.match.team2?.code}</div>
+                      <div style={{ fontSize: '2rem' }}>{bet.match ? getFlag(bet.match.team2?.code) : '🏆'}</div>
+                      <div style={{ fontWeight: 900, color: '#000' }}>{bet.match ? bet.match.team2?.code : 'TRN'}</div>
                     </div>
                   </div>
 

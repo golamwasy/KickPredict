@@ -290,8 +290,14 @@ export default function AdminDashboard() {
                 <React.Fragment key={cq.id}>
                   <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '0.5rem', fontSize: '0.85rem' }}>
-                      {cq.match?.team1?.code} vs {cq.match?.team2?.code}<br/>
-                      <span style={{ color: '#888', fontSize: '0.75rem' }}>{new Date(cq.match?.kickoffTime).toLocaleDateString()}</span>
+                      {cq.isTournament ? (
+                        <span style={{ fontWeight: 900, color: 'var(--fifa-purple)', textTransform: 'uppercase' }}>🏆 TOURNAMENT</span>
+                      ) : (
+                        <>
+                          {cq.match?.team1?.code || 'TBD'} vs {cq.match?.team2?.code || 'TBD'}<br/>
+                          {cq.match?.kickoffTime && <span style={{ color: '#888', fontSize: '0.75rem' }}>{new Date(cq.match.kickoffTime).toLocaleDateString()}</span>}
+                        </>
+                      )}
                     </td>
                     <td style={{ padding: '0.5rem' }}>
                       <strong>{cq.question}</strong><br/>

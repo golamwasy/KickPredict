@@ -30,8 +30,11 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     const { matchId, betType, predictedData, stake, communityQuestionId } = req.body;
 
     // 1. Basic input validation
-    if (!matchId || !betType || !predictedData || stake === undefined) {
-      return res.status(400).json({ error: 'matchId, betType, predictedData, and stake are required' });
+    if (!betType || !predictedData || stake === undefined) {
+      return res.status(400).json({ error: 'betType, predictedData, and stake are required' });
+    }
+    if (betType !== 'COMMUNITY_QUESTION' && !matchId) {
+      return res.status(400).json({ error: 'matchId is required for regular bets' });
     }
     if (!Object.values(BetType).includes(betType)) {
       return res.status(400).json({ error: `Invalid betType. Must be one of: ${Object.values(BetType).join(', ')}` });
@@ -42,6 +45,7 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     // 2. Validate predictedData shape for the given betType
+    let isTournament = false;
     if (betType === 'COMMUNITY_QUESTION') {
       if (!communityQuestionId) {
         return res.status(400).json({ error: 'communityQuestionId is required for COMMUNITY_QUESTION bets' });
@@ -53,22 +57,29 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
       if (!cq) return res.status(404).json({ error: 'Community question not found' });
       if (cq.status !== 'APPROVED') return res.status(400).json({ error: 'Community question is not approved' });
       if (cq.isResolved) return res.status(400).json({ error: 'Community question has already been resolved' });
+      isTournament = cq.isTournament;
+      if (!isTournament && !matchId) {
+        return res.status(400).json({ error: 'matchId is required for non-tournament community questions' });
+      }
     } else {
       const validationError = validatePredictedData(betType as BetType, predictedData);
       if (validationError) return res.status(400).json({ error: validationError });
     }
 
-    // 3. Validate match is OPEN and before kickoff
-    const match = await prisma.match.findUnique({ 
-      where: { id: matchId },
-      include: { team1: true, team2: true }
-    });
-    if (!match) return res.status(404).json({ error: 'Match not found' });
-    if (match.status !== 'OPEN') {
-      return res.status(400).json({ error: `Match is ${match.status}. Bets can only be placed on OPEN matches.` });
-    }
-    if (new Date() > new Date(match.kickoffTime)) {
-      return res.status(400).json({ error: 'Match has already kicked off. Bets are closed.' });
+    // 3. Validate match is OPEN and before kickoff (if matchId is provided)
+    let match = null;
+    if (matchId) {
+      match = await prisma.match.findUnique({ 
+        where: { id: matchId },
+        include: { team1: true, team2: true }
+      });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+      if (match.status !== 'OPEN') {
+        return res.status(400).json({ error: `Match is ${match.status}. Bets can only be placed on OPEN matches.` });
+      }
+      if (new Date() > new Date(match.kickoffTime)) {
+        return res.status(400).json({ error: 'Match has already kicked off. Bets are closed.' });
+      }
     }
 
     // 4. Check wallet balance
@@ -82,7 +93,7 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
     const existingBet = await prisma.bet.findFirst({
       where: { 
         userId, 
-        matchId, 
+        matchId: matchId || null, 
         betType: betType as BetType,
         ...(betType === 'COMMUNITY_QUESTION' ? { communityQuestionId } : { communityQuestionId: null })
       },
@@ -93,7 +104,11 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
 
     // 6. Compute and lock multiplier
     let multiplier = 3.0;
-    if (betType !== 'COMMUNITY_QUESTION') {
+    if (betType === 'COMMUNITY_QUESTION') {
+      if (isTournament) {
+        multiplier = 5.0;
+      }
+    } else if (match) {
       multiplier = getMultiplier(betType as BetType, { 
         predictedData,
         team1Code: match.team1.code,
@@ -109,7 +124,8 @@ router.post('/bets', authenticate, async (req: AuthRequest, res: Response) => {
         const createdBet = await tx.bet.create({
           data: {
             userId,
-            matchId,
+            matchId: matchId || null,
+            isTournament,
             betType: betType as BetType,
             stake: stakeNum,
             multiplier,
@@ -170,8 +186,10 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
       return res.status(400).json({ error: 'Only PENDING bets can be updated' });
     }
 
-    if (bet.match.status !== 'OPEN') {
-      return res.status(400).json({ error: 'Bets can only be updated while the match is OPEN' });
+    if (bet.matchId && bet.match) {
+      if (bet.match.status !== 'OPEN') {
+        return res.status(400).json({ error: 'Bets can only be updated while the match is OPEN' });
+      }
     }
 
     let multiplier;
@@ -179,8 +197,8 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
       if (!predictedData || typeof predictedData.answer !== 'string' || predictedData.answer.trim() === '') {
         return res.status(400).json({ error: 'Valid answer string in predictedData is required for COMMUNITY_QUESTION bets' });
       }
-      multiplier = 3.0;
-    } else {
+      multiplier = bet.isTournament ? 5.0 : 3.0;
+    } else if (bet.match) {
       const validationError = validatePredictedData(bet.betType, predictedData);
       if (validationError) return res.status(400).json({ error: validationError });
 
@@ -189,6 +207,8 @@ router.put('/bets/:id', authenticate, async (req: AuthRequest, res: Response) =>
         team1Code: bet.match.team1.code,
         team2Code: bet.match.team2.code
       });
+    } else {
+      multiplier = 1.0; // Fallback
     }
     const potentialPayout = Math.round(stakeNum * multiplier);
 
@@ -251,6 +271,7 @@ router.get('/bets/me', authenticate, async (req: AuthRequest, res: Response) => 
       where: { userId: req.user!.id },
       include: {
         match: { include: { team1: true, team2: true } },
+        communityQuestion: { select: { question: true } }
       },
       orderBy: { createdAt: 'desc' },
     });

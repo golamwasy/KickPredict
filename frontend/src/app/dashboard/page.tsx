@@ -122,14 +122,14 @@ export default function Dashboard() {
           {sorted.map((bet, i) => {
             const s = BET_STATUS_STYLE[bet.status] || BET_STATUS_STYLE.PENDING;
             return (
-              <Link key={bet.id} href={`/matches/${bet.matchId}`} style={{ textDecoration: 'none' }}>
+              <Link key={bet.id} href={bet.matchId ? `/matches/${bet.matchId}` : '/tournament'} style={{ textDecoration: 'none' }}>
                 <div className="card" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', animation: `floatIn 0.5s ease ${0.3 + i * 0.04}s both`, cursor: 'pointer', transition: 'border-color 0.2s', padding: '1rem 1.25rem', marginBottom: 0 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--fifa-orange)', marginBottom: '0.2rem', letterSpacing: '0.05em' }}>
-                      {new Date(bet.match?.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                      {bet.match ? new Date(bet.match.kickoffTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : 'WORLD CUP TOURNAMENT'}
                     </div>
                     <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.3rem', color: 'var(--fifa-black)' }}>
-                      {bet.match?.team1?.name} <span style={{ color: '#888888' }}>vs</span> {bet.match?.team2?.name}
+                      {bet.match ? <>{bet.match.team1?.name} <span style={{ color: '#888888' }}>vs</span> {bet.match.team2?.name}</> : 'Tournament Question'}
                     </div>
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#555555', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span>{BET_TYPE_LABELS[bet.betType] || bet.betType}</span>
@@ -155,7 +155,7 @@ export default function Dashboard() {
                           if (data.answer !== undefined) parts.push(data.answer ? 'Yes' : 'No');
                           
                           if (bet.betType === 'COMMUNITY_QUESTION') {
-                             return bet.communityQuestion?.question ? `Ans: ${data.answer ? 'Yes' : 'No'}` : (parts.length > 0 ? parts.join(', ') : 'Yes/No');
+                             return bet.communityQuestion?.question ? `Q: ${bet.communityQuestion.question} | Ans: ${data.answer}` : (parts.length > 0 ? parts.join(', ') : `Ans: ${data.answer}`);
                           }
                           
                           return parts.length > 0 ? parts.join(', ') : JSON.stringify(data);

@@ -12,8 +12,19 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
   const [predictedMatchIds, setPredictedMatchIds] = useState<Set<string>>(new Set());
   const [userPredictions, setUserPredictions] = useState<any[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [tournamentQuestionCount, setTournamentQuestionCount] = useState<number>(0);
 
   useEffect(() => {
+    // Fetch tournament questions count
+    fetch(`${API_BASE_URL}/api/tournament/questions`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTournamentQuestionCount(data.length);
+        }
+      })
+      .catch(console.error);
+
     const token = localStorage.getItem('token');
     if (!token) {
       setIsLoggedIn(false);
@@ -115,16 +126,16 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
 
                       <div className="live-score-capsule">
                         <span className="live-score-text">{match.team1Goals ?? 0}</span>
-                        
+
                         {/* FIFA 26 Logo Badge */}
                         <div className="fifa-logo-badge">
-                          <img 
-                            src="/fifa-logo-2026.png" 
-                            alt="FIFA 2026" 
+                          <img
+                            src="/fifa-logo-2026.png"
+                            alt="FIFA 2026"
                             className="fifa-logo-img"
                           />
                         </div>
-                        
+
                         <span className="live-score-text">{match.team2Goals ?? 0}</span>
                       </div>
                     </div>
@@ -156,64 +167,106 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
         </div>
       )}
 
-      <div className="match-tabs">
-        <button
-          onClick={() => setActiveTab('open')}
-          style={{
-            background: activeTab === 'open' ? 'var(--fifa-lime)' : '#FFFFFF',
-            color: '#000000',
-            border: '3px solid #000000',
-            padding: '0.75rem 1.5rem',
-            fontFamily: 'Outfit, sans-serif',
-            fontWeight: 900,
-            fontSize: '1rem',
-            textTransform: 'uppercase',
-            boxShadow: activeTab === 'open' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
-            transform: activeTab === 'open' ? 'translate(4px, 4px)' : 'none',
-            cursor: 'pointer',
-            transition: 'all 0.15s'
-          }}
-        >
-          Today's Matches
-        </button>
-        <button
-          onClick={() => setActiveTab('upcoming')}
-          style={{
-            background: activeTab === 'upcoming' ? 'var(--fifa-purple)' : '#FFFFFF',
-            color: activeTab === 'upcoming' ? '#FFFFFF' : '#000000',
-            border: '3px solid #000000',
-            padding: '0.75rem 1.5rem',
-            fontFamily: 'Outfit, sans-serif',
-            fontWeight: 900,
-            fontSize: '1rem',
-            textTransform: 'uppercase',
-            boxShadow: activeTab === 'upcoming' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
-            transform: activeTab === 'upcoming' ? 'translate(4px, 4px)' : 'none',
-            cursor: 'pointer',
-            transition: 'all 0.15s'
-          }}
-        >
-          Upcoming
-        </button>
-        <button
-          onClick={() => setActiveTab('past')}
-          style={{
-            background: activeTab === 'past' ? 'var(--fifa-red)' : '#FFFFFF',
-            color: activeTab === 'past' ? '#FFFFFF' : '#000000',
-            border: '3px solid #000000',
-            padding: '0.75rem 1.5rem',
-            fontFamily: 'Outfit, sans-serif',
-            fontWeight: 900,
-            fontSize: '1rem',
-            textTransform: 'uppercase',
-            boxShadow: activeTab === 'past' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
-            transform: activeTab === 'past' ? 'translate(4px, 4px)' : 'none',
-            cursor: 'pointer',
-            transition: 'all 0.15s'
-          }}
-        >
-          Past Results
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', maxWidth: '100%' }}>
+          <div className="match-tabs" style={{ marginBottom: '1rem' }}>
+            <button
+              onClick={() => setActiveTab('open')}
+              style={{
+                background: activeTab === 'open' ? 'var(--fifa-lime)' : '#FFFFFF',
+                color: '#000000',
+                border: '3px solid #000000',
+                padding: '0.75rem 1.5rem',
+                fontFamily: 'Outfit, sans-serif',
+                fontWeight: 900,
+                fontSize: '1rem',
+                textTransform: 'uppercase',
+                boxShadow: activeTab === 'open' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
+                transform: activeTab === 'open' ? 'translate(4px, 4px)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              Today's Matches
+            </button>
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              style={{
+                background: activeTab === 'upcoming' ? 'var(--fifa-purple)' : '#FFFFFF',
+                color: activeTab === 'upcoming' ? '#FFFFFF' : '#000000',
+                border: '3px solid #000000',
+                padding: '0.75rem 1.5rem',
+                fontFamily: 'Outfit, sans-serif',
+                fontWeight: 900,
+                fontSize: '1rem',
+                textTransform: 'uppercase',
+                boxShadow: activeTab === 'upcoming' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
+                transform: activeTab === 'upcoming' ? 'translate(4px, 4px)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              Upcoming
+            </button>
+            <button
+              onClick={() => setActiveTab('past')}
+              style={{
+                background: activeTab === 'past' ? 'var(--fifa-red)' : '#FFFFFF',
+                color: activeTab === 'past' ? '#FFFFFF' : '#000000',
+                border: '3px solid #000000',
+                padding: '0.75rem 1.5rem',
+                fontFamily: 'Outfit, sans-serif',
+                fontWeight: 900,
+                fontSize: '1rem',
+                textTransform: 'uppercase',
+                boxShadow: activeTab === 'past' ? 'inset 0 0 0 0 transparent' : '4px 4px 0px #000000',
+                transform: activeTab === 'past' ? 'translate(4px, 4px)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              Past Results
+            </button>
+          </div>
+
+          {/* ── World Cup Tournament Questions Banner ── */}
+          <Link
+            href="/tournament"
+            style={{
+              display: 'block',
+              position: 'relative',
+              width: '100%',
+              background: 'var(--fifa-purple)',
+              color: '#FFFFFF',
+              border: '3px solid #000000',
+              padding: '1rem',
+              textAlign: 'center',
+              textDecoration: 'none',
+              boxShadow: '4px 4px 0px #000000',
+              transition: 'transform 0.15s, box-shadow 0.15s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translate(-2px, -2px)';
+              e.currentTarget.style.boxShadow = '6px 6px 0px #000000';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '4px 4px 0px #000000';
+            }}
+          >
+            <div style={{ position: 'absolute', top: '-12px', right: '1rem', display: 'flex', gap: '0.5rem' }}>
+              {tournamentQuestionCount > 0 && (
+                <div style={{ background: 'var(--fifa-cyan)', color: '#000', padding: '0.2rem 0.8rem', borderRadius: '20px', fontWeight: 900, border: '2px solid #000', fontSize: '0.75rem' }}>
+                  {tournamentQuestionCount} {tournamentQuestionCount === 1 ? 'QUESTION' : 'QUESTIONS'}
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontSize: '1.25rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              🏆 World Cup Tournament Questions
+            </div>
+          </Link>
+        </div>
       </div>
 
       {filteredMatches.length === 0 ? (
@@ -287,17 +340,17 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                           {/* Community Questions Badge below teams */}
                           {activeTab === 'open' && match._count?.communityQuestions > 0 && (
                             <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                              <span style={{ 
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
-                                gap: '6px', 
-                                background: 'rgba(0, 229, 255, 0.1)', 
-                                color: 'var(--fifa-cyan)', 
-                                padding: '0.4rem 0.8rem', 
-                                borderRadius: '20px', 
-                                fontSize: '0.85rem', 
-                                fontWeight: 700, 
-                                border: '1px solid rgba(0, 229, 255, 0.3)' 
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'rgba(0, 229, 255, 0.1)',
+                                color: 'var(--fifa-cyan)',
+                                padding: '0.4rem 0.8rem',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                border: '1px solid rgba(0, 229, 255, 0.3)'
                               }}>
                                 💬 {match._count.communityQuestions} Community {match._count.communityQuestions === 1 ? 'Question' : 'Questions'}
                               </span>

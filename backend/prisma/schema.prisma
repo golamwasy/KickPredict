@@ -96,7 +96,8 @@ model Transaction {
 model Bet {
   id              String        @id @default(uuid())
   userId          String
-  matchId         String
+  matchId         String?
+  isTournament    Boolean       @default(false)
   betType         BetType
   stake           Int
   multiplier      Float
@@ -106,7 +107,7 @@ model Bet {
   settledAt       DateTime?
   createdAt       DateTime      @default(now())
   communityQuestionId String?
-  match           Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match           Match?        @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   communityQuestion CommunityQuestion? @relation(fields: [communityQuestionId], references: [id])
   transactions    Transaction[]
@@ -122,7 +123,8 @@ model ApiSyncLog {
 
 model CommunityQuestion {
   id            String         @id @default(uuid())
-  matchId       String
+  matchId       String?
+  isTournament  Boolean        @default(false)
   creatorId     String
   question      String
   status        QuestionStatus @default(APPROVED)
@@ -130,7 +132,7 @@ model CommunityQuestion {
   correctAnswer String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  match         Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  match         Match?         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   creator       User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   bets          Bet[]
 }
