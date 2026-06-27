@@ -15,12 +15,12 @@ export default function LoadingSpinner({ text = 'Loading...' }: { text?: string 
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
-      
+
       {/* Container with dark glass background for readability */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         gap: '1.5rem',
         background: 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(8px)',
@@ -29,7 +29,7 @@ export default function LoadingSpinner({ text = 'Loading...' }: { text?: string 
         border: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
       }}>
-        
+
         <div style={{ height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {showGoal ? (
             <div style={{ position: 'relative', width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -56,15 +56,15 @@ export default function LoadingSpinner({ text = 'Loading...' }: { text?: string 
         </div>
 
         <p style={{ color: '#FFFFFF', margin: 0, fontWeight: 700, fontSize: '1.1rem', letterSpacing: '0.05em' }}>
-          {showGoal ? 'GOAL!' : text}
+          {text}
         </p>
-        
+
         {/* Indeterminate Progress Bar Container */}
         <div style={{ width: '220px', height: '8px', backgroundColor: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
-          <div className="indeterminate-bar" style={{ 
-            height: '100%', 
-            width: '40%', 
-            backgroundColor: 'var(--fifa-lime, #D4FF00)', 
+          <div className="indeterminate-bar" style={{
+            height: '100%',
+            width: '40%',
+            backgroundColor: 'var(--fifa-lime, #D4FF00)',
             borderRadius: '4px',
             boxShadow: '0 0 10px var(--fifa-lime, #D4FF00)',
             position: 'absolute'
