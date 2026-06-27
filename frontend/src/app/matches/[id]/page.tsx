@@ -774,7 +774,7 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                         <div>
                           <p style={{ fontSize: '1.1rem', fontWeight: 900 }}>{cq.question}</p>
-                          <p style={{ fontSize: '0.75rem', color: '#666' }}>Asked by @{cq.creator?.username}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#666' }}>Asked by @{cq.creator?.username} • Placed bets: {cq._count?.bets || 0}</p>
                         </div>
                       </div>
 

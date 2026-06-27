@@ -131,7 +131,10 @@ router.get('/:id/community-questions', async (req: Request, res: Response) => {
     const matchId = req.params.id as string;
     const questions = await prisma.communityQuestion.findMany({
       where: { matchId, status: 'APPROVED' },
-      include: { creator: { select: { username: true } } },
+      include: { 
+        creator: { select: { username: true } },
+        _count: { select: { bets: true } }
+      },
       orderBy: { createdAt: 'desc' },
     });
     res.json(questions);
