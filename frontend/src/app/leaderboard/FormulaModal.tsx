@@ -56,7 +56,12 @@ export default function FormulaModal() {
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Your Accuracy & Profitability</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>We look at both your <b>Win Rate</b> (how often you predict correctly) and your <b>Profit</b> (how much you've won compared to what you've risked). This ensures a high-accuracy player isn't penalized just because they didn't hit one massive multiplier bet. We reward genuine skill over pure luck.</div>
+            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>
+              We look at both your <b>Win Rate</b> (how often you predict correctly) and your <b>Profit</b> (how much you've won compared to what you've risked). This ensures a high-accuracy player isn't penalized just because they didn't hit one massive multiplier bet. We reward genuine skill over pure luck.
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', color: '#fff' }}>
+                ROI = (Total Won - Total Staked) / Total Staked
+              </div>
+            </div>
           </li>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3498DB' }}>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. How many bets you've placed</div>
