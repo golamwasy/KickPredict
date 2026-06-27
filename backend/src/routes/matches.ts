@@ -41,6 +41,9 @@ router.get('/', async (req: Request, res: Response) => {
       include: {
         team1: true,
         team2: true,
+        _count: {
+          select: { communityQuestions: { where: { status: 'APPROVED' } } }
+        }
       },
       orderBy: {
         kickoffTime: 'asc',

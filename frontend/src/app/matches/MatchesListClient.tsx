@@ -232,7 +232,7 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
               <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
                 {group.date}
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
                 {group.matches.map((match: any) => {
                   const isUpcoming = match.status === 'UPCOMING';
                   const CardWrapper = isUpcoming ? 'div' : Link;
@@ -245,17 +245,19 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                       <div className="premium-match-card" style={{ height: '100%', ...(isUpcoming ? { boxShadow: 'none' } : {}) }}>
                         <div className="match-content">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                            {activeTab === 'open' && (
-                              predictedMatchIds.has(match.id) ? (
-                                <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ BET PLACED</span>
-                              ) : (
-                                <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
-                              )
-                            )}
-                            {activeTab === 'upcoming' && <span className="badge badge-upcoming" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>📅 UPCOMING</span>}
-                            {activeTab === 'past' && <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🏆 FINISHED</span>}
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {activeTab === 'open' && (
+                                predictedMatchIds.has(match.id) ? (
+                                  <span className="badge" style={{ background: 'var(--fifa-green)', color: '#000000', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>✓ BET PLACED</span>
+                                ) : (
+                                  <span className="badge badge-open" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>⚡ OPEN</span>
+                                )
+                              )}
+                              {activeTab === 'upcoming' && <span className="badge badge-upcoming" style={{ boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>📅 UPCOMING</span>}
+                              {activeTab === 'past' && <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', boxShadow: 'none', border: 'none', padding: '0.4rem 0.8rem' }}>🏆 FINISHED</span>}
+                            </div>
 
-                            <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
+                            <span style={{ fontSize: '0.85rem', color: '#AAAAAA', fontWeight: 700, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                               {new Date(match.kickoffTime).toLocaleString('en-US', { timeZone: 'Europe/Helsinki', hour: 'numeric', minute: '2-digit', hour12: true })}
                             </span>
                           </div>
@@ -281,6 +283,26 @@ export default function MatchesListClient({ matches }: { matches: any[] }) {
                               <div style={{ fontSize: '0.85rem', color: '#888888', marginTop: '0.2rem' }}>{match.team2?.name}</div>
                             </div>
                           </div>
+
+                          {/* Community Questions Badge below teams */}
+                          {activeTab === 'open' && match._count?.communityQuestions > 0 && (
+                            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                              <span style={{ 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '6px', 
+                                background: 'rgba(0, 229, 255, 0.1)', 
+                                color: 'var(--fifa-cyan)', 
+                                padding: '0.4rem 0.8rem', 
+                                borderRadius: '20px', 
+                                fontSize: '0.85rem', 
+                                fontWeight: 700, 
+                                border: '1px solid rgba(0, 229, 255, 0.3)' 
+                              }}>
+                                💬 {match._count.communityQuestions} Community {match._count.communityQuestions === 1 ? 'Question' : 'Questions'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {activeTab === 'open' && (
