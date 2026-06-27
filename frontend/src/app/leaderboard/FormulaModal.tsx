@@ -55,11 +55,11 @@ export default function FormulaModal() {
 
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #27AE60' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. How well you're doing, not how much you have</div>
-            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>We look at your profit compared to how much you've staked overall — basically, are you winning more than you're risking? This matters more than your raw coin balance, because balance alone can be misleading. Someone could get one huge lucky win early in the tournament and just stop playing — they'd have a big balance, but that's not really "doing well," that's one lucky moment. Kick Score looks past that.</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>1. Your Accuracy & Profitability</div>
+            <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>We look at both your <b>Win Rate</b> (how often you predict correctly) and your <b>Profit</b> (how much you've won compared to what you've risked). This ensures a high-accuracy player isn't penalized just because they didn't hit one massive multiplier bet. We reward genuine skill over pure luck.</div>
           </li>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3498DB' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. How many bets you've actually placed</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>2. How many bets you've placed</div>
             <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.5 }}>A score based on just 1 or 2 bets isn't very meaningful yet — it could easily be luck. The more bets you place, the more your score reflects real skill instead of one good or bad result. Keep predicting throughout the tournament and your score becomes more "trusted."</div>
           </li>
           <li style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #E74C3C' }}>
@@ -69,7 +69,7 @@ export default function FormulaModal() {
         </ul>
 
         <p style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
-          <b>Put simply:</b> Kick Score rewards players who predict well, consistently, over the course of the tournament — not players who got lucky once. That's why someone with a smaller balance but a longer track record of smart picks might rank higher than someone sitting on a big balance from a single lucky bet.
+          <b>Put simply:</b> Kick Score rewards players who predict accurately and consistently over the course of the tournament. That's why someone with a smaller balance but a high hit-rate might rank higher than someone sitting on a big balance from a single lucky bet.
         </p>
 
         <div style={{
@@ -83,7 +83,7 @@ export default function FormulaModal() {
           fontSize: '1.2rem',
           letterSpacing: '0.05em'
         }}>
-          KICK SCORE = 100 + (ROI × CONFIDENCE × ACTIVITY)
+          SCORE = 100 + ( [ROI + ACCURACY] × CONFIDENCE × ACTIVITY )
         </div>
       </div>
     </div>
