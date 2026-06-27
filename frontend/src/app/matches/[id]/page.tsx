@@ -779,20 +779,21 @@ export default function MatchDetail({ params }: { params: Promise<{ id: string }
                       </div>
 
                       {hasBet && !canBet ? (
-                        <div style={{ 
-                          padding: '0.75rem', 
-                          background: existingBet.status === 'WON' ? 'rgba(39,174,96,0.1)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.1)' : 'rgba(230,126,34,0.1)', 
-                          border: `1px solid ${existingBet.status === 'WON' ? 'rgba(39,174,96,0.2)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.2)' : 'rgba(230,126,34,0.2)'}`, 
-                          borderRadius: '4px' 
+                        <div style={{
+                          padding: '0.75rem',
+                          background: existingBet.status === 'WON' ? 'rgba(39,174,96,0.1)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.1)' : 'rgba(230,126,34,0.1)',
+                          border: `1px solid ${existingBet.status === 'WON' ? 'rgba(39,174,96,0.2)' : existingBet.status === 'LOST' ? 'rgba(231,76,60,0.2)' : 'rgba(230,126,34,0.2)'}`,
+                          borderRadius: '4px'
                         }}>
-                          <p style={{ 
-                            color: existingBet.status === 'WON' ? '#27AE60' : existingBet.status === 'LOST' ? '#E74C3C' : '#E67E22', 
-                            fontWeight: 700, 
-                            fontSize: '0.85rem' 
+                          <p style={{
+                            color: existingBet.status === 'WON' ? '#27AE60' : existingBet.status === 'LOST' ? '#E74C3C' : '#E67E22',
+                            fontWeight: 700,
+                            fontSize: '0.85rem'
                           }}>
                             {existingBet.status === 'WON' ? '✓ ' : existingBet.status === 'LOST' ? '✗ ' : ''}
-                            Your Answer: {existingBet.predictedData?.answer} (Stake: {existingBet.stake} KC)
-                            <span style={{float: 'right'}}>[{existingBet.status === 'VOID' ? 'REFUND' : existingBet.status}]</span>
+                            Your Answer: {existingBet.predictedData?.answer} (Stake: {existingBet.stake} {existingBet.status === 'WON' && existingBet.potentialPayout ? `-> ${existingBet.potentialPayout}` : ''} KC)
+                            {(existingBet.status === 'LOST' || existingBet.status === 'VOID') && cq.correctAnswer ? <span style={{ marginLeft: '8px', color: '#555', fontStyle: 'italic' }}>Correct: {cq.correctAnswer}</span> : null}
+                            <span style={{ float: 'right' }}>{existingBet.status === 'VOID' ? 'REFUND' : existingBet.status}</span>
                           </p>
                         </div>
                       ) : !canBet ? (
