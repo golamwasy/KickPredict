@@ -42,8 +42,26 @@ const getStrength = (code?: string) => (code && TEAM_STRENGTHS[code]) ? TEAM_STR
 const HOUSE_EDGE = 0.08;
 const MIN_MULTIPLIER = 1.01;
 const STANDARD_MARKET_CAP = 25;
-const HARD_MARKET_CAP = 100;
+const HARD_MARKET_CAP = 50;
 const POISSON_MAX_GOALS = 10;
+
+// --- Expected goals model tuning constants ---
+// BASELINE_STRENGTH: the strength value treated as "league average" for
+// attack/defense purposes. Roughly the median of the 48-team pool.
+const BASELINE_STRENGTH = 75;
+// BASE_GOALS_PER_TEAM: how many goals an average-strength team scores
+// against an average-strength opponent. Two baseline teams facing each
+// other therefore average ~2.4-2.7 total goals, consistent with real-world
+// football scoring rates (most competitions average ~2.2-2.8 goals/match).
+const BASE_GOALS_PER_TEAM = 1.3;
+// STRENGTH_SENSITIVITY: how strongly a team's own attack and its
+// opponent's defensive weakness scale expected goals. Tuned so a ~20-point
+// strength gap (a clear favorite vs a clear underdog) produces a
+// meaningfully lopsided goals split without becoming absurd.
+const STRENGTH_SENSITIVITY = 50;
+// Floor so expected goals never collapses to ~0 or goes negative for
+// extreme mismatches (e.g. a 95 vs a 60 team).
+const MIN_EXPECTED_GOALS = 0.15;
 
 interface MultiplierContext {
   predictedData: Record<string, any>;
@@ -83,9 +101,48 @@ export const matchOutcomeProbabilities = (
   };
 };
 
+/**
+ * Expected goals for ONE team, as a function of its own attacking
+ * strength and its opponent's defensive weakness.
+ *
+ * FIX (previous bug): the old model derived each team's expected goals by
+ * splitting one shared "total goals" pool by strength ratio. That made
+ * total goals barely move with team strength (a 95 vs a 70 team only
+ * added ~+0.25 goals over baseline), which in turn made every single
+ * match converge toward similar low totals -- causing OVER_UNDER_GOALS
+ * to make "Over 2.5" the underdog outcome in literally every matchup,
+ * BOTH_TEAMS_TO_SCORE to barely react to mismatches, and EXACT_SCORE /
+ * CORRECT_MARGIN probabilities to collapse so fast above ~3 goals that
+ * many different scorelines all hit the same capped multiplier.
+ *
+ * NEW model: each team gets its own expected goals from an attack factor
+ * (its own strength relative to baseline) multiplied by an opponent
+ * defensive-weakness factor (how far BELOW baseline the opponent is).
+ * This makes strength gaps show up directly in goals, not just in how a
+ * fixed pool gets divided -- so total goals genuinely rises for
+ * attacking mismatches and falls for two strong defensive sides, and the
+ * favorite's expected goals rise independently of the underdog's.
+ */
+export const teamExpectedGoalsFor = (ownStrength: number, opponentStrength: number): number => {
+  const attackFactor = 1 + (ownStrength - BASELINE_STRENGTH) / STRENGTH_SENSITIVITY;
+  const opponentDefenseWeakness = 1 + (BASELINE_STRENGTH - opponentStrength) / STRENGTH_SENSITIVITY;
+  const expected = BASE_GOALS_PER_TEAM * attackFactor * opponentDefenseWeakness;
+  return Math.max(MIN_EXPECTED_GOALS, expected);
+};
+
+const teamExpectedGoals = (team1Strength: number, team2Strength: number): TeamExpectedGoals => ({
+  team1ExpectedGoals: teamExpectedGoalsFor(team1Strength, team2Strength),
+  team2ExpectedGoals: teamExpectedGoalsFor(team2Strength, team1Strength),
+});
+
+/**
+ * Total combined expected goals for both teams, used by OVER_UNDER_GOALS.
+ * Kept as a named export since OVER_UNDER_GOALS cares about the combined
+ * total rather than the per-team split.
+ */
 export const expectedTotalGoals = (team1Strength: number, team2Strength: number): number => {
-  const avgStrength = (team1Strength + team2Strength) / 2;
-  return 2.0 + (avgStrength - 70) / 100;
+  const { team1ExpectedGoals, team2ExpectedGoals } = teamExpectedGoals(team1Strength, team2Strength);
+  return team1ExpectedGoals + team2ExpectedGoals;
 };
 
 const factorial = (n: number): number => {
@@ -97,16 +154,6 @@ const factorial = (n: number): number => {
 export const poissonProbability = (lambda: number, goals: number): number => {
   if (goals < 0 || !Number.isInteger(goals)) return 0;
   return (Math.pow(lambda, goals) * Math.exp(-lambda)) / factorial(goals);
-};
-
-const teamExpectedGoals = (team1Strength: number, team2Strength: number): TeamExpectedGoals => {
-  const total = expectedTotalGoals(team1Strength, team2Strength);
-  const strengthSum = team1Strength + team2Strength;
-
-  return {
-    team1ExpectedGoals: total * (team1Strength / strengthSum),
-    team2ExpectedGoals: total * (team2Strength / strengthSum),
-  };
 };
 
 export const probabilityToMultiplier = (
@@ -185,8 +232,33 @@ const firstToScoreProbabilities = (team1ExpectedGoals: number, team2ExpectedGoal
 };
 
 /**
+ * Thrown when getMultiplier is called with a BetType that has no pricing
+ * logic implemented.
+ *
+ * FIX (previous bug): the old switch statement had a `default: return 1.5`
+ * branch. That meant ANY unhandled BetType -- whether from a future bet
+ * type added to the Prisma enum without updating this file, a typo, or a
+ * bad deploy -- would silently price a bet at a flat 1.5x multiplier with
+ * no error and no log. That's a silent correctness bug: it would never
+ * surface in testing unless someone specifically checked the multiplier
+ * value, and in production it could quietly mis-price real bets. Failing
+ * loudly here is intentional -- an unhandled bet type should break visibly
+ * during development, not pay out an arbitrary number forever.
+ */
+export class UnsupportedBetTypeError extends Error {
+  constructor(betType: string) {
+    super(`getMultiplier: no pricing logic implemented for BetType "${betType}"`);
+    this.name = 'UnsupportedBetTypeError';
+  }
+}
+
+/**
  * Returns the multiplier for a given bet type and predicted data.
  * The multiplier is a Float >= 1.0.
+ *
+ * Throws UnsupportedBetTypeError if betType has no pricing logic --
+ * callers should treat this as a 500-level server error, not a user
+ * input problem, since it means the bet type itself is misconfigured.
  */
 export const getMultiplier = (betType: BetType, context: MultiplierContext): number => {
   const { predictedData, team1Code, team2Code } = context;
@@ -213,8 +285,14 @@ export const getMultiplier = (betType: BetType, context: MultiplierContext): num
     }
 
     case BetType.OVER_UNDER_GOALS: {
+      // FIX (previous bug): this used to call expectedTotalGoals() with the
+      // raw average-strength formula directly. It now derives the total
+      // from the same per-team expected goals used everywhere else, so
+      // Over/Under is consistent with Exact Score, BTTS, etc., and
+      // actually responds to attacking mismatches instead of nearly every
+      // match landing near the same total.
       const probability = overUnderProbability(
-        expectedTotalGoals(team1Strength, team2Strength),
+        team1ExpectedGoals + team2ExpectedGoals,
         predictedData.line as number,
         predictedData.side as 'OVER' | 'UNDER'
       );
@@ -257,7 +335,7 @@ export const getMultiplier = (betType: BetType, context: MultiplierContext): num
     }
 
     default:
-      return 1.5;
+      throw new UnsupportedBetTypeError(betType);
   }
 };
 
