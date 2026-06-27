@@ -57,7 +57,13 @@ export default function Dashboard() {
   const settledBets = wonBets.length + lostBets.length;
   const accuracy = settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
 
-  const sorted = [...bets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const sorted = [...bets].sort((a, b) => {
+    if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+    if (b.status === 'PENDING' && a.status !== 'PENDING') return 1;
+    const timeA = a.settledAt ? new Date(a.settledAt).getTime() : new Date(a.createdAt).getTime();
+    const timeB = b.settledAt ? new Date(b.settledAt).getTime() : new Date(b.createdAt).getTime();
+    return timeB - timeA;
+  });
 
   const stats = [
     { label: 'Total Won', value: totalWon.toLocaleString() + ' KC', accent: 'stat-accent-purple', color: 'var(--fifa-purple)' },
