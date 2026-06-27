@@ -4,9 +4,13 @@ export const MAX_ROI = 1.5;
 export const MIN_ROI = -1.0;
 export const CONFIDENCE_BASE = 15;
 export const VOLUME_DIVISOR = 1000;
+export const ROI_WEIGHT = 0.5;
+export const WIN_RATE_WEIGHT = 0.5;
+export const SCORE_BASE = 100;
 
 export interface LeaderboardStats {
   betsPlaced: number;
+  wins: number;
   totalStaked: number;
   totalWon: number;
 }
@@ -14,22 +18,33 @@ export interface LeaderboardStats {
 /**
  * Pure function to calculate leaderboard score based on user stats.
  */
-export const calculateLeaderboardScore = ({ betsPlaced, totalStaked, totalWon }: LeaderboardStats): number => {
+export const calculateLeaderboardScore = ({
+  betsPlaced,
+  wins,
+  totalStaked,
+  totalWon,
+}: LeaderboardStats): number => {
   if (betsPlaced === 0 || totalStaked === 0) {
-    return 100; // Base score for everyone
+    return 0; // Unplayed players get 0
   }
 
-  // Calculate true Profit Margin (ROI)
+  // ROI
   const roi = (totalWon - totalStaked) / totalStaked;
   const cappedRoi = Math.max(MIN_ROI, Math.min(roi, MAX_ROI));
-  
+
+  // Win Rate
+  const winRate = wins / betsPlaced;
+  const centeredWinRate = (winRate - 0.5) * 2;
+
+  // Blend
+  const blended = ROI_WEIGHT * cappedRoi + WIN_RATE_WEIGHT * centeredWinRate;
+
+  // Multipliers
   const confidence = Math.sqrt(betsPlaced) / (Math.sqrt(betsPlaced) + Math.sqrt(CONFIDENCE_BASE));
-  const volumeFactor = Math.log(1 + totalStaked / VOLUME_DIVISOR); // ln(1 + ...)
-  
-  // Base 100. Winners add to it, losers subtract from it.
-  const rawScore = 100 + (cappedRoi * confidence * volumeFactor * 100);
-  
-  // Floor at 0 so nobody ever has a negative score
+  const volumeFactor = Math.log(1 + totalStaked / VOLUME_DIVISOR);
+
+  const rawScore = SCORE_BASE + blended * confidence * volumeFactor * 100;
+
   return Math.max(0, rawScore);
 };
 
@@ -38,7 +53,6 @@ export const calculateLeaderboardScore = ({ betsPlaced, totalStaked, totalWon }:
  */
 export const updateUserLeaderboardScore = async (userId: string): Promise<void> => {
   try {
-    // 1. Get total bets and staked amount for SETTLED bets
     const totalStats = await prisma.bet.aggregate({
       where: {
         userId,
@@ -52,11 +66,13 @@ export const updateUserLeaderboardScore = async (userId: string): Promise<void> 
       },
     });
 
-    // 2. Get total amount won (only for WON bets)
     const wonStats = await prisma.bet.aggregate({
       where: {
         userId,
         status: 'WON',
+      },
+      _count: {
+        id: true,
       },
       _sum: {
         potentialPayout: true,
@@ -64,18 +80,16 @@ export const updateUserLeaderboardScore = async (userId: string): Promise<void> 
     });
 
     const betsPlaced = totalStats._count.id;
+    const wins = wonStats._count.id;
     const totalStaked = totalStats._sum.stake || 0;
     const totalWon = wonStats._sum.potentialPayout || 0;
 
-    const newScore = calculateLeaderboardScore({ betsPlaced, totalStaked, totalWon });
+    const newScore = calculateLeaderboardScore({ betsPlaced, wins, totalStaked, totalWon });
 
     await prisma.user.update({
       where: { id: userId },
       data: { leaderboardScore: newScore },
     });
-
-    // Optional: console.log for debugging/tracing
-    // console.log(`[Leaderboard] Updated user ${userId} score to ${newScore.toFixed(2)} (Bets: ${betsPlaced}, Staked: ${totalStaked}, Won: ${totalWon})`);
   } catch (error) {
     console.error(`[Leaderboard Error] Failed to update score for user ${userId}:`, error);
   }
