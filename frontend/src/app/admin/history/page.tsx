@@ -108,9 +108,10 @@ export default function AdminHistory() {
         <>
           <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             {(() => {
-              const totalStaked = bets.reduce((acc, bet) => acc + bet.stake, 0);
-              const totalWon = bets.filter(b => b.status === 'WON').reduce((acc, bet) => acc + bet.potentialPayout, 0);
-              const totalLost = bets.filter(b => b.status === 'LOST').reduce((acc, bet) => acc + bet.stake, 0);
+              const settledBets = bets.filter(b => b.status === 'WON' || b.status === 'LOST');
+              const totalStaked = settledBets.reduce((acc, bet) => acc + bet.stake, 0);
+              const totalWon = settledBets.filter(b => b.status === 'WON').reduce((acc, bet) => acc + bet.potentialPayout, 0);
+              const totalLost = settledBets.filter(b => b.status === 'LOST').reduce((acc, bet) => acc + bet.stake, 0);
               return (
                 <>
                   <div className="card" style={{ flex: 1, minWidth: '200px', padding: '1rem', textAlign: 'center', border: '2px solid #000', background: '#fff' }}>
