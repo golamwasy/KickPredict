@@ -105,7 +105,32 @@ export default function AdminHistory() {
       )}
 
       {!loadingData && selectedUserId && (bets.length > 0 || transactions.length > 0) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+        <>
+          <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            {(() => {
+              const totalStaked = bets.reduce((acc, bet) => acc + bet.stake, 0);
+              const totalWon = bets.filter(b => b.status === 'WON').reduce((acc, bet) => acc + bet.potentialPayout, 0);
+              const totalLost = bets.filter(b => b.status === 'LOST').reduce((acc, bet) => acc + bet.stake, 0);
+              return (
+                <>
+                  <div className="card" style={{ flex: 1, minWidth: '200px', padding: '1rem', textAlign: 'center', border: '2px solid #000', background: '#fff' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#555', textTransform: 'uppercase', fontWeight: 900 }}>Total Staked</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#000' }}>{totalStaked.toLocaleString()} KC</div>
+                  </div>
+                  <div className="card" style={{ flex: 1, minWidth: '200px', padding: '1rem', textAlign: 'center', border: '2px solid var(--success-color)', background: '#fff' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#555', textTransform: 'uppercase', fontWeight: 900 }}>Total Won</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--success-color)' }}>{totalWon.toLocaleString()} KC</div>
+                  </div>
+                  <div className="card" style={{ flex: 1, minWidth: '200px', padding: '1rem', textAlign: 'center', border: '2px solid #E74C3C', background: '#fff' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#555', textTransform: 'uppercase', fontWeight: 900 }}>Total Lost</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#E74C3C' }}>{totalLost.toLocaleString()} KC</div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           
           {/* Bet History Column */}
           <div style={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
@@ -231,6 +256,7 @@ export default function AdminHistory() {
           </div>
 
         </div>
+        </>
       )}
     </div>
   );
