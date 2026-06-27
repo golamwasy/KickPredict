@@ -174,12 +174,16 @@ export const syncESPNData = async () => {
                    (updatedMatch.team1Goals !== existingMatch?.team1Goals || 
                     updatedMatch.team2Goals !== existingMatch?.team2Goals || 
                     (updatedMatch.firstTeamToScoreId && !existingMatch?.firstTeamToScoreId))) {
-          // If a goal was just scored during a live match, try to instantly settle eligible live bets
-          try {
-            await settleLiveBetsForMatch(updatedMatch.id);
-          } catch (liveSettleError) {
-            console.error(`[Sync Error] Live bet settlement failed for match ${updatedMatch.id}:`, liveSettleError);
-          }
+          // If a goal was just scored during a live match, delay settlement by 5 minutes to account for VAR rule-outs.
+          // This ensures that if a goal is ruled out, the DB will have reverted back before the settlement executes.
+          console.log(`[Sync] Goal detected for match ${updatedMatch.id}. Scheduling live settlement in 5 minutes (VAR protection)...`);
+          setTimeout(async () => {
+            try {
+              await settleLiveBetsForMatch(updatedMatch.id);
+            } catch (liveSettleError) {
+              console.error(`[Sync Error] Live bet settlement failed for match ${updatedMatch.id}:`, liveSettleError);
+            }
+          }, 5 * 60 * 1000); // 5 minutes delay
         }
       }
     }
